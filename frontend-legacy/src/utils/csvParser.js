@@ -19,6 +19,7 @@ export const parseCSV = (file) => {
                 const headers = rows[0].map(h => h.trim().toLowerCase().replace(/"/g, ''));
 
                 const dateIdx = headers.findIndex(h => h.includes('date') || h.includes('fecha'));
+                const timeIdx = headers.findIndex(h => h.includes('time') || h.includes('hora'));
                 const descIdx = headers.findIndex(h => h.includes('service') || h.includes('servicio') || h.includes('description') || h.includes('descripción'));
                 const priceIdx = headers.findIndex(h => h.includes('price') || h.includes('precio') || h.includes('amount') || h.includes('monto'));
                 const clientIdx = headers.findIndex(h => h.includes('client') || h.includes('cliente'));
@@ -30,6 +31,7 @@ export const parseCSV = (file) => {
                         const safeGet = (idx) => idx !== -1 && row[idx] ? row[idx].replace(/"/g, '').trim() : '';
 
                         const rawDate = safeGet(dateIdx);
+                        const rawTime = safeGet(timeIdx);
                         const description = safeGet(descIdx) || 'Importación CSV';
                         const client = safeGet(clientIdx);
                         const rawPrice = safeGet(priceIdx).replace(/[^0-9.-]/g, ''); // Remove currency symbols
@@ -47,15 +49,65 @@ export const parseCSV = (file) => {
 
                         return {
                             date: formattedDate,
+                            time: rawTime || '10:00', // Default time if missing
                             category: 'Cobros Booksy', // Default for imports
                             amount: parseFloat(rawPrice) || 0,
                             type: 'income',
                             description: client ? `${description} - ${client}` : description,
-                            client_name: client // Helper for future linking
+                            client_name: client, // Helper for future linking
+                            service_name: description
                         };
                     });
 
                 resolve({ data: transactions, count: transactions.length });
+            } catch (err) {
+                reject(err);
+            }
+        };
+
+        reader.onerror = (err) => reject(err);
+        reader.readAsText(file);
+    });
+};
+
+/**
+ * Utility to parse CSV files related to Providers.
+ * Expected columns: 'Nombre', 'Telefono', 'Empresa', 'Categoria'
+ */
+export const parseProviderCSV = (file) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const text = e.target.result;
+                const rows = text.split('\n').map(row => row.split(','));
+
+                if (rows.length < 2) {
+                    return resolve({ data: [], error: 'Archivo vacío o formato incorrecto' });
+                }
+
+                const headers = rows[0].map(h => h.trim().toLowerCase().replace(/"/g, ''));
+
+                const nameIdx = headers.findIndex(h => h.includes('nombre') || h.includes('name') || h.includes('contacto'));
+                const phoneIdx = headers.findIndex(h => h.includes('telefono') || h.includes('phone') || h.includes('móvil'));
+                const companyIdx = headers.findIndex(h => h.includes('empresa') || h.includes('company') || h.includes('negocio'));
+                const catIdx = headers.findIndex(h => h.includes('categoria') || h.includes('category') || h.includes('tipo'));
+
+                const providers = rows.slice(1)
+                    .filter(r => r.length > 1 && r.join('').trim() !== '')
+                    .map((row) => {
+                        const safeGet = (idx) => idx !== -1 && row[idx] ? row[idx].replace(/"/g, '').trim() : '';
+
+                        return {
+                            nombre: safeGet(nameIdx) || 'Sin Nombre',
+                            telefono: safeGet(phoneIdx),
+                            empresa: safeGet(companyIdx),
+                            categoria: safeGet(catIdx) || 'Suministros'
+                        };
+                    });
+
+                resolve({ data: providers, count: providers.length });
             } catch (err) {
                 reject(err);
             }

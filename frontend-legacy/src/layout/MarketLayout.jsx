@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, LogOut, User, BarChart2, Package } from 'lucide-react';
+import { ShoppingCart, LogOut, User, BarChart2, Package, Wrench } from 'lucide-react';
 
 const MarketLayout = () => {
     const location = useLocation();
@@ -8,7 +8,9 @@ const MarketLayout = () => {
 
     const menuItems = [
         { name: 'Pedidos', path: '/market/pedidos', icon: ShoppingCart },
+        { name: 'Proveedores', path: '/market/proveedores', icon: User },
         { name: 'Inventario', path: '/market/inventario', icon: Package },
+        { name: 'Herramientas', path: '/market/herramientas', icon: Wrench },
         { name: 'Estadísticas', path: '/market/estadisticas', icon: BarChart2 },
     ];
 

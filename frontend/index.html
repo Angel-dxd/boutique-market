@@ -2,14 +2,41 @@
 <html lang="es">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Boutique & Market</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marquez Family Business</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Use Tailwind config to extend colors if needed, for simplicity we rely on standard classes + inline styles for specific colors if complex -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        boutique: '#059669', // Emerald 600
+                        market: '#0077b6',   // Custom Blue
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
 </head>
 
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
+<body class="bg-gray-100 text-slate-900">
+
+    <!-- Root Container -->
+    <div id="app" class="min-h-screen">
+        <!-- Views will be rendered here -->
+    </div>
+
+    <!-- Modules are loaded here. We use type="module" to use ES6 imports -->
+    <script type="module" src="js/app.js"></script>
 </body>
 
 </html>

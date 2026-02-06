@@ -14,6 +14,7 @@ const FinanceDashboard = () => {
 
     const summary = getFinancialSummary();
     const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
+    const [defaultCat, setDefaultCat] = useState('');
 
     // Módulo Arelys: Categorías Específicas
     const expenseCategories = [
@@ -25,22 +26,22 @@ const FinanceDashboard = () => {
 
     return (
         <div className="space-y-6 pb-24 md:pb-0">
-            {/* Header y KPIs */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                        Finanzas
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${isSupabaseConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                            {isSupabaseConnected ? 'CLOUD' : 'OFFLINE'}
-                        </span>
-                    </h2>
+            {/* Header */}
+            <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    Finanzas <span className="text-sm font-normal text-gray-400">| Panel de Control</span>
+                </h2>
+                <div className={`px-3 py-1 rounded-full text-xs font-bold ${isSupabaseConnected ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {isSupabaseConnected ? 'CONECTADO' : 'OFFLINE'}
                 </div>
-                <button
-                    onClick={() => setIsIncomeModalOpen(true)}
-                    className="w-full md:w-auto px-6 py-2 bg-boutique text-white rounded-xl hover:opacity-90 font-bold shadow-lg shadow-boutique/20 flex items-center justify-center gap-2"
-                >
-                    <Plus size={20} /> Registrar Movimiento
-                </button>
+            </div>
+
+            {/* Accesos Rápidos (Nivel Arelys) */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <QuickAction icon={ShoppingBag} label="Comprar Prod." color="bg-orange-100 text-orange-700" onClick={() => { setIsIncomeModalOpen(true); setDefaultCat('Compra Productos'); }} />
+                <QuickAction icon={Users} label="Pagar Nómina" color="bg-blue-100 text-blue-700" onClick={() => { setIsIncomeModalOpen(true); setDefaultCat('Nóminas'); }} />
+                <QuickAction icon={Home} label="Pago IPC" color="bg-purple-100 text-purple-700" onClick={() => { setIsIncomeModalOpen(true); setDefaultCat('IPC'); }} />
+                <QuickAction icon={PieChart} label="Trimestre" color="bg-red-100 text-red-700" onClick={() => { setIsIncomeModalOpen(true); setDefaultCat('Trimestre'); }} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -100,6 +101,7 @@ const FinanceDashboard = () => {
                             onClose={() => setIsIncomeModalOpen(false)}
                             onAdd={addTransaction}
                             categories={expenseCategories}
+                            defaultCategory={defaultCat}
                         />
                     </div>
                 </div>
@@ -108,10 +110,17 @@ const FinanceDashboard = () => {
     );
 };
 
-const ExpenseForm = ({ onClose, onAdd, categories }) => {
+const QuickAction = ({ icon: Icon, label, color, onClick }) => (
+    <button onClick={onClick} className={`p-4 rounded-xl flex items-center justify-center gap-3 transition-transform active:scale-95 shadow-sm border border-transparent hover:border-gray-200 ${color}`}>
+        <Icon size={24} />
+        <span className="font-bold text-sm uppercase">{label}</span>
+    </button>
+);
+
+const ExpenseForm = ({ onClose, onAdd, categories, defaultCategory }) => {
     const [type, setType] = useState('expense');
     const [amount, setAmount] = useState('');
-    const [category, setCategory] = useState('');
+    const [category, setCategory] = useState(defaultCategory || '');
     const [description, setDescription] = useState('');
 
     const handleSubmit = (e) => {
