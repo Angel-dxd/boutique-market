@@ -2,6 +2,7 @@ import { store } from '../../store.js';
 
 export const renderPedidos = (container) => {
     let isModalOpen = false;
+    let editingId = null;
 
     const render = () => {
         const state = store.getState();
@@ -54,19 +55,28 @@ export const renderPedidos = (container) => {
                                     <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Proveedor</th>
                                     <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Monto</th>
                                     <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Referencia</th>
+                                    <th class="p-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50">
                                 ${invoices.length > 0 ? invoices.map(inv => `
-                                    <tr class="hover:bg-blue-50/30 transition-colors">
+                                    <tr class="hover:bg-blue-50/30 transition-colors group">
                                         <td class="p-4 font-bold text-gray-700">
                                             ${suppliers.find(s => s.id == inv.proveedor_id)?.nombre || 'S/N'}
                                         </td>
                                         <td class="p-4 font-black text-gray-900">${inv.monto}€</td>
                                         <td class="p-4 text-gray-400 font-mono text-xs">${inv.referencia}</td>
+                                        <td class="p-4 text-right flex justify-end gap-2 transition-opacity">
+                                             <button class="text-blue-500 hover:bg-blue-50 p-2 rounded-lg edit-inv" data-id="${inv.id}">
+                                                <i data-lucide="edit-2" width="16"></i>
+                                            </button>
+                                            <button class="text-red-500 hover:bg-red-50 p-2 rounded-lg delete-inv" data-id="${inv.id}">
+                                                <i data-lucide="trash" width="16"></i>
+                                            </button>
+                                        </td>
                                     </tr>
                                 `).join('') : `
-                                    <tr><td colspan="3" class="p-12 text-center text-gray-300">No hay facturas.</td></tr>
+                                    <tr><td colspan="4" class="p-12 text-center text-gray-300">No hay facturas.</td></tr>
                                 `}
                             </tbody>
                         </table>
@@ -76,14 +86,15 @@ export const renderPedidos = (container) => {
                 <!-- Modal -->
                 <div id="invoiceModal" class="fixed inset-0 z-50 bg-black/50 ${isModalOpen ? 'flex' : 'hidden'} items-center justify-center p-4">
                     <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-                        <h3 class="text-xl font-bold text-gray-800 mb-6">Nueva Factura</h3>
+                        <h3 class="text-xl font-bold text-gray-800 mb-6" id="modalTitle">${editingId ? 'Editar Factura' : 'Nueva Factura'}</h3>
                         <form id="invoiceForm" class="space-y-4">
-                            <input name="referencia" class="w-full px-4 py-2 border rounded-xl" placeholder="Ref Factura" required />
-                            <select name="proveedor_id" class="w-full px-4 py-2 border rounded-xl bg-white" required>
+                            <input type="hidden" name="id" id="invId">
+                            <input name="referencia" id="invRef" class="w-full px-4 py-2 border rounded-xl" placeholder="Ref Factura" required />
+                            <select name="proveedor_id" id="invProv" class="w-full px-4 py-2 border rounded-xl bg-white" required>
                                 <option value="">Selecciona Proveedor</option>
                                 ${suppliers.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('')}
                             </select>
-                            <input name="monto" type="number" step="0.01" class="w-full px-4 py-2 border rounded-xl" placeholder="Monto €" required />
+                            <input name="monto" id="invMonto" type="number" step="0.01" class="w-full px-4 py-2 border rounded-xl" placeholder="Monto €" required />
                             
                              <div class="flex gap-3 pt-4">
                                 <button type="button" id="closeInvoiceModal" class="flex-1 py-2 bg-gray-100 rounded-xl font-bold">Cancelar</button>
@@ -97,6 +108,7 @@ export const renderPedidos = (container) => {
         lucide.createIcons();
 
         document.getElementById('addInvoiceBtn').addEventListener('click', () => {
+            editingId = null;
             isModalOpen = true;
             render();
         });
@@ -104,21 +116,76 @@ export const renderPedidos = (container) => {
         if (isModalOpen) {
             document.getElementById('closeInvoiceModal').addEventListener('click', () => {
                 isModalOpen = false;
+                editingId = null;
                 render();
             });
 
             document.getElementById('invoiceForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
-                store.addInvoice({
+                const data = {
                     referencia: formData.get('referencia'),
                     proveedor_id: formData.get('proveedor_id'),
                     monto: parseFloat(formData.get('monto'))
-                });
+                };
+
+                if (editingId) {
+                    // Update logic - store.updateInvoice doesn't exist yet in snippets?
+                    // Assuming similar pattern to others or add helper. 
+                    // Checking store... store usually has generic methods.
+                    // I will inject update logic directly via state if method missing, or assume adding it to store is fine.
+                    // Since I can't edit store easily without seeing it, I'll rely on what I saw earlier or standard patterns.
+                    // Actually let's assume `store.updateInvoice` exists or I'll add it via state manipulation here if needed.
+                    // The safe bet is to modify local state copy and save.
+                    const state = store.getState();
+                    const idx = state.invoices.findIndex(i => i.id === editingId);
+                    if (idx !== -1) {
+                        state.invoices[idx] = { ...state.invoices[idx], ...data };
+                        store.saveState();
+                    }
+                    editingId = null;
+                } else {
+                    store.addInvoice(data);
+                }
+
                 isModalOpen = false;
                 render();
             });
+
+            // Pre-fill if editing
+            if (editingId) {
+                const inv = invoices.find(i => i.id === editingId);
+                if (inv) {
+                    document.getElementById('invId').value = inv.id;
+                    document.getElementById('invRef').value = inv.referencia;
+                    document.getElementById('invProv').value = inv.proveedor_id;
+                    document.getElementById('invMonto').value = inv.monto;
+                }
+            }
         }
+
+        document.querySelectorAll('.delete-inv').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm('¿Eliminar factura?')) {
+                    // Manual delete if no helper
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    const state = store.getState();
+                    state.invoices = state.invoices.filter(i => i.id !== id);
+                    store.saveState();
+                    render();
+                }
+            });
+        });
+
+        document.querySelectorAll('.edit-inv').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                editingId = parseInt(btn.getAttribute('data-id'));
+                isModalOpen = true;
+                render();
+            });
+        });
     };
     render();
 };

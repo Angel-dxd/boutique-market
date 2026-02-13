@@ -70,7 +70,7 @@ export const renderBoutiqueLayout = () => {
     });
 
     // Determine sub-route content
-    const path = window.location.pathname;
+    const path = window.location.pathname.replace(/\/+$/, '') || '/';
     const contentContainer = document.getElementById('layout-content');
 
     if (path === '/boutique-welcome') {

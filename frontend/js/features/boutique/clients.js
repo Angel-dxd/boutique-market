@@ -1,164 +1,398 @@
 import { store } from '../../store.js';
 
 export const renderClients = (container) => {
+    // State
     let searchTerm = '';
+    let editingId = null;
+
+    // Helper to get fresh data
+    const getClients = () => store.getState().clients || [];
 
     const render = () => {
-        const clients = store.getState().clients;
-
+        const clients = getClients();
         const filtered = clients.filter(c =>
-            c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.phone.includes(searchTerm)
+            (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (c.phone || '').includes(searchTerm)
         );
 
+        const currentUser = localStorage.getItem('currentUser') || 'arelys';
+
+        // Main Container
         container.innerHTML = `
-             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 h-[calc(100vh-140px)] flex flex-col">
-                <!-- Header -->
-                <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between gap-4 items-center">
+            <div class="space-y-6 h-full flex flex-col min-h-[600px] animate-fade-in-up">
+                <!-- Header Section -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between gap-4 items-center">
                     <div>
-                        <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                             Listado de Clientes
-                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700">LOCAL</span>
+                        <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                             Cartera de Clientes
+                            <span class="text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">Activos</span>
                         </h2>
-                        <p class="text-sm text-gray-500">${filtered.length} clientes encontrados</p>
+                        <p class="text-gray-500 mt-1">${filtered.length} clientes registrados</p>
                     </div>
 
-                    <div class="flex gap-3 w-full md:w-auto">
+                    <div class="flex flex-wrap gap-3 w-full md:w-auto">
+                        <!-- Search -->
                         <div class="relative flex-1 md:w-64">
                              <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" width="18"></i>
                             <input
                                 type="text"
                                 id="searchInput"
-                                placeholder="Buscar..."
-                                class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-sm"
+                                placeholder="Buscar cliente..."
+                                class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                                 value="${searchTerm}"
                             />
                         </div>
+
+                         <!-- Actions -->
+                         <button
+                            id="importBtn"
+                            class="bg-blue-50 text-blue-600 px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors flex items-center gap-2 border border-blue-100"
+                        >
+                            <i data-lucide="upload" width="18"></i> <span class="hidden sm:inline">Importar</span>
+                        </button>
+                        <input type="file" id="importInput" accept=".csv" class="hidden" />
+
                         <button
                             id="newClientBtn"
-                            class="bg-[#d4a373] text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
+                            class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 flex items-center gap-2"
                         >
-                            <i data-lucide="plus" width="16"></i> Nuevo
+                            <i data-lucide="plus" width="18"></i> Nuevo Cliente
                         </button>
+                        
+                        ${currentUser === 'santi' ? `
+                            <button
+                                id="exportBtn"
+                                class="bg-gray-100 text-gray-600 px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors flex items-center gap-2"
+                            >
+                                <i data-lucide="download" width="18"></i>
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
 
-                <!-- List -->
-                <div class="flex-1 overflow-y-auto">
+                <!-- Clients List -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 flex-1 overflow-hidden flex flex-col">
                      ${filtered.length > 0 ? `
-                        <div class="md:w-full">
-                            <div class="hidden md:grid grid-cols-12 bg-gray-50/50 text-gray-500 text-xs uppercase p-4 font-semibold border-b border-gray-100">
-                                <div class="col-span-4">Cliente</div>
-                                <div class="col-span-3">Contacto</div>
-                                <div class="col-span-3">Notas</div>
-                                <div class="col-span-2 text-right">Acciones</div>
-                            </div>
-                             <div class="divide-y divide-gray-50">
-                                ${filtered.map(client => `
-                                    <div class="p-4 md:grid md:grid-cols-12 md:items-center hover:bg-gray-50/50 transition-colors group">
-                                         <div class="col-span-4 flex items-center gap-3 mb-2 md:mb-0">
-                                            <div class="w-10 h-10 rounded-full bg-orange-50 text-[#d4a373] flex items-center justify-center font-bold text-sm shrink-0">
-                                                ${client.name.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div>
-                                                <p class="font-medium text-gray-800">${client.name}</p>
-                                            </div>
-                                        </div>
-                                         <div class="col-span-3 text-sm text-gray-600 mb-2 md:mb-0">
-                                            <p>${client.phone || '-'}</p>
-                                            <p class="text-xs text-gray-400">${client.email || ''}</p>
-                                        </div>
-                                        <div class="col-span-3 text-sm text-gray-500 italic truncate mb-2 md:mb-0">
-                                            ${client.notes || 'Sin notas'}
-                                        </div>
-                                        <div class="col-span-2 flex justify-end gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                             <button class="p-2 text-red-600 hover:bg-red-50 rounded-lg delete-btn" data-id="${client.id}">
-                                                <i data-lucide="trash" width="16"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                             </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-gray-50/50 border-b border-gray-100 text-gray-400 text-xs uppercase tracking-wider font-semibold">
+                                    <tr>
+                                        <th class="p-5">Cliente</th>
+                                        <th class="p-5">Contacto</th>
+                                        <th class="p-5">Notas / Preferencias</th>
+                                        <th class="p-5 text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50 text-sm">
+                                    ${filtered.map(client => `
+                                        <tr class="hover:bg-emerald-50/30 transition-colors group">
+                                            <td class="p-5">
+                                                <div class="flex items-center gap-4">
+                                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center font-bold shadow-sm">
+                                                        ${client.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <span class="font-bold text-gray-700 text-base">${client.name}</span>
+                                                </div>
+                                            </td>
+                                            <td class="p-5">
+                                                <div class="flex flex-col gap-1">
+                                                    <div class="flex items-center gap-2 text-gray-700 font-medium">
+                                                        <i data-lucide="phone" width="14" class="text-emerald-500"></i> ${client.phone || 'Sin móvil'}
+                                                    </div>
+                                                    ${client.email ? `
+                                                        <div class="flex items-center gap-2 text-gray-400 text-xs">
+                                                            <i data-lucide="mail" width="12"></i> ${client.email}
+                                                        </div>
+                                                    ` : ''}
+                                                </div>
+                                            </td>
+                                            <td class="p-5">
+                                                <p class="text-gray-500 italic line-clamp-2 max-w-xs">
+                                                    ${client.notes || '<span class="text-gray-300">Sin notas adicionales</span>'}
+                                                </p>
+                                            </td>
+                                            <td class="p-5 text-right">
+                                                <div class="flex justify-end gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all">
+                                                    <button class="p-2 text-blue-500 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors edit-client-btn" data-id="${client.id}" title="Editar">
+                                                        <i data-lucide="pencil" width="16"></i>
+                                                    </button>
+                                                    <button class="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors delete-client-btn" data-id="${client.id}" title="Eliminar">
+                                                        <i data-lucide="trash-2" width="16"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
                         </div>
                      ` : `
-                        <div class="flex flex-col items-center justify-center h-64 text-gray-400">
-                            <i data-lucide="user" width="48" class="opacity-20 mb-2"></i>
-                            <p>No se encontraron clientes</p>
+                        <div class="flex flex-col items-center justify-center flex-1 p-12 text-center">
+                            <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                <i data-lucide="users" width="32" class="text-gray-300"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-800 mb-2">No se encontraron clientes</h3>
+                            <p class="text-gray-500 max-w-xs mx-auto">Prueba a buscar con otro término o añade un nuevo cliente a tu cartera.</p>
                         </div>
                      `}
                 </div>
-             </div>
+            </div>
 
-             <!-- Modal Container (Hidden by default) -->
-             <div id="modalOverlay" class="fixed inset-0 z-50 bg-black/50 hidden items-center justify-center p-4">
-                <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-200">
-                    <h3 class="text-xl font-bold text-gray-800 mb-6">Nuevo Cliente</h3>
-                    <form id="clientForm" class="space-y-4">
-                        <input type="text" name="name" placeholder="Nombre completo" required class="w-full px-4 py-2 border rounded-xl" />
-                        <input type="text" name="phone" placeholder="Teléfono" class="w-full px-4 py-2 border rounded-xl" />
-                        <input type="email" name="email" placeholder="Email" class="w-full px-4 py-2 border rounded-xl" />
-                        <textarea name="notes" placeholder="Notas..." class="w-full px-4 py-2 border rounded-xl"></textarea>
+            <!-- Modal for Create/Edit -->
+            <div id="clientModalOverlay" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <h3 class="text-xl font-bold text-gray-800" id="modalTitle">${editingId ? 'Editar Cliente' : 'Nuevo Cliente'}</h3>
+                        <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <i data-lucide="x" width="24"></i>
+                        </button>
+                    </div>
+                    
+                    <form id="clientForm" class="p-6 space-y-5">
+                        <input type="hidden" name="id" id="clientIdInput">
                         
-                        <div class="flex gap-3 pt-4">
-                            <button type="button" id="closeModal" class="flex-1 py-2 bg-gray-100 rounded-xl font-bold">Cancelar</button>
-                            <button type="submit" class="flex-1 py-2 bg-[#d4a373] text-white rounded-xl font-bold">Guardar</button>
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Nombre Completo</label>
+                            <input type="text" name="name" id="clientNameInput" placeholder="Ej: María García" required 
+                                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium text-gray-800" />
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                             <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Teléfono</label>
+                                <input type="tel" name="phone" id="clientPhoneInput" placeholder="600 000 000" 
+                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
+                            </div>
+                             <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Email</label>
+                                <input type="email" name="email" id="clientEmailInput" placeholder="maria@email.com" 
+                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Notas / Preferencias</label>
+                            <textarea name="notes" id="clientNotesInput" rows="3" placeholder="Ej: Alérgica al látex, prefiere citas por la mañana..." 
+                                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"></textarea>
+                        </div>
+                        
+                        <div class="pt-4 flex gap-3">
+                            <button type="button" id="cancelModalBtn" class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-colors">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold shadow-lg shadow-slate-900/20 transition-all">
+                                Guardar Cliente
+                            </button>
                         </div>
                     </form>
                 </div>
-             </div>
+            </div>
         `;
 
         lucide.createIcons();
 
-        // Attach Listeners
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            searchTerm = e.target.value;
-            render();
-            // Focus back after re-render (naive approach, better to diff DOM but acceptable for VanJS)
-            const input = document.getElementById('searchInput');
-            input.focus();
-            input.setSelectionRange(input.value.length, input.value.length);
-        });
-
-        document.getElementById('newClientBtn').addEventListener('click', () => {
-            document.getElementById('modalOverlay').classList.remove('hidden');
-            document.getElementById('modalOverlay').classList.add('flex');
-        });
-
-        document.getElementById('closeModal').addEventListener('click', () => {
-            document.getElementById('modalOverlay').classList.add('hidden');
-            document.getElementById('modalOverlay').classList.remove('flex');
-        });
-
-        document.getElementById('clientForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            store.addClient({
-                name: formData.get('name'),
-                phone: formData.get('phone'),
-                email: formData.get('email'),
-                notes: formData.get('notes')
-            });
-            render(); // Close modal logic inside render or just re-render clears it? 
-            // Better to re-render to state update and close modal manually
-            document.getElementById('modalOverlay').classList.add('hidden');
-            document.getElementById('modalOverlay').classList.remove('flex');
-        });
-
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (confirm('¿Eliminar cliente?')) {
-                    store.deleteClient(parseInt(btn.getAttribute('data-id')));
+        const attachListeners = () => {
+            // 1. Search
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    searchTerm = e.target.value;
                     render();
-                }
+                    const newHeader = document.getElementById('searchInput');
+                    if (newHeader) {
+                        newHeader.focus();
+                        newHeader.setSelectionRange(newHeader.value.length, newHeader.value.length);
+                    }
+                });
+            }
+
+            // 2. Open Modal (New)
+            const newClientBtn = document.getElementById('newClientBtn');
+            if (newClientBtn) {
+                newClientBtn.addEventListener('click', () => {
+                    editingId = null;
+                    toggleModal(true);
+                });
+            }
+
+            // 3. Close Modal
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            if (closeModalBtn) closeModalBtn.addEventListener('click', () => toggleModal(false));
+
+            const cancelModalBtn = document.getElementById('cancelModalBtn');
+            if (cancelModalBtn) cancelModalBtn.addEventListener('click', () => toggleModal(false));
+
+            const overlay = document.getElementById('clientModalOverlay');
+            if (overlay) {
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) toggleModal(false);
+                });
+            }
+
+            // 4. Submit Form
+            const clientForm = document.getElementById('clientForm');
+            if (clientForm) {
+                clientForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    const clientData = {
+                        name: formData.get('name'),
+                        phone: formData.get('phone'),
+                        email: formData.get('email'),
+                        notes: formData.get('notes')
+                    };
+
+                    if (editingId) {
+                        store.updateClient(editingId, clientData);
+                    } else {
+                        store.addClient(clientData);
+                    }
+
+                    toggleModal(false);
+                    render();
+                });
+            }
+
+            // 5. Edit Buttons
+            document.querySelectorAll('.edit-client-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    const client = store.getState().clients.find(c => c.id === id);
+                    if (client) {
+                        editingId = id;
+                        toggleModal(true);
+                    }
+                });
             });
-        });
+
+            // 6. Delete Buttons
+            document.querySelectorAll('.delete-client-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm('¿Seguro que deseas eliminar este cliente?')) {
+                        const id = parseInt(btn.getAttribute('data-id'));
+                        store.deleteClient(id);
+                        render();
+                    }
+                });
+            });
+
+            // 7. Import CSV
+            const importBtn = document.getElementById('importBtn');
+            const importInput = document.getElementById('importInput');
+            if (importBtn && importInput) {
+                importBtn.onclick = () => importInput.click(); // Simple onclick to avoid dups
+                importInput.onchange = handleImport;
+            }
+
+            // Export (Santi)
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) {
+                exportBtn.onclick = handleExport;
+            }
+        };
+
+        attachListeners();
     };
 
-    // Initial Render
-    render();
+    // Helper: Toggle Modal
+    const toggleModal = (show) => {
+        const modal = document.getElementById('clientModalOverlay');
+        const title = document.getElementById('modalTitle');
 
-    // Subscribe to store changes to auto-update view?
-    // For now we trigger re-renders manually on actions within this component or use subscribe
-    // store.subscribe(render); // Careful with infinite loops or losing focus
+        if (show) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            if (title) title.textContent = editingId ? 'Editar Cliente' : 'Nuevo Cliente';
+
+            // If editing, fill data
+            if (editingId) {
+                const client = store.getState().clients.find(c => c.id === editingId);
+                if (client) {
+                    const clientIdInput = document.getElementById('clientIdInput');
+                    const clientNameInput = document.getElementById('clientNameInput');
+                    const clientPhoneInput = document.getElementById('clientPhoneInput');
+                    const clientEmailInput = document.getElementById('clientEmailInput');
+                    const clientNotesInput = document.getElementById('clientNotesInput');
+
+                    if (clientIdInput) clientIdInput.value = client.id;
+                    if (clientNameInput) clientNameInput.value = client.name;
+                    if (clientPhoneInput) clientPhoneInput.value = client.phone || '';
+                    if (clientEmailInput) clientEmailInput.value = client.email || '';
+                    if (clientNotesInput) clientNotesInput.value = client.notes || '';
+                }
+            } else {
+                // Clean form
+                const form = document.getElementById('clientForm');
+                if (form) form.reset();
+                const clientIdInput = document.getElementById('clientIdInput');
+                if (clientIdInput) clientIdInput.value = '';
+            }
+        } else {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            editingId = null;
+        }
+    };
+
+    // Helper: CSV Import
+    const handleImport = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const csv = event.target.result;
+            const lines = csv.split('\n');
+            let count = 0;
+
+            lines.forEach((line, index) => {
+                if (!line.trim()) return;
+                // Skip header if detected
+                if (index === 0 && line.toLowerCase().includes('nombre') && line.toLowerCase().includes('email')) return;
+
+                // Better Regex for CSV
+                const matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+                const cols = matches ? matches.map(m => m.replace(/^"|"$/g, '').trim()) : line.split(',');
+
+                // Basic assume: Name, Phone, Email, Notes
+                if (cols.length >= 1 && cols[0]) {
+                    store.addClient({
+                        name: cols[0],
+                        phone: cols[1] || '',
+                        email: cols[2] || '',
+                        notes: cols[3] || ''
+                    });
+                    count++;
+                }
+            });
+
+            alert(`Importados ${count} clientes.`);
+            render();
+            e.target.value = '';
+        };
+        reader.readAsText(file);
+    };
+
+    // Helper: CSV Export
+    const handleExport = () => {
+        const clients = store.getState().clients;
+        let csv = "ID,Nombre,Telefono,Email,Notas\n";
+        clients.forEach(c => {
+            // Handle quotes in content
+            const safe = (txt) => `"${(txt || '').replace(/"/g, '""')}"`;
+            csv += `${c.id},${safe(c.name)},${safe(c.phone)},${safe(c.email)},${safe(c.notes)}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'clientes_boutique.csv';
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
+
+    // Initial Trigger
+    render();
 };

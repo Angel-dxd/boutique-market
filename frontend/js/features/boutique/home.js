@@ -20,7 +20,7 @@ export const renderBoutiqueHome = (container) => {
 
     // Build HTML
     container.innerHTML = `
-        <div class="space-y-8 animate-fade-in-up">
+        <div class="space-y-8">
             <!-- Header -->
             <div class="flex justify-between items-start">
                 <div>

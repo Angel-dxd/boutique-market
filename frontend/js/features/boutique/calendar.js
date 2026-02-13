@@ -119,9 +119,11 @@ export const renderCalendar = (container) => {
                         <form id="aptForm">
                             <input name="client" class="w-full p-3 border rounded-xl mb-3" placeholder="Cliente" required />
                             <div class="flex gap-2 mb-3">
+                                <input name="date" type="date" id="aptDate" class="flex-1 p-3 border rounded-xl" required />
                                 <input name="time" type="time" class="flex-1 p-3 border rounded-xl" value="10:00" required />
-                                <input name="price" type="number" placeholder="€" class="flex-1 p-3 border rounded-xl" required />
                             </div>
+                            <input name="price" type="number" placeholder="Precio €" class="w-full p-3 border rounded-xl mb-3" required />
+                            
                              <div class="flex gap-2">
                                 <button type="button" id="closeAptModal" class="flex-1 py-3 bg-gray-100 rounded-xl font-bold">Cancelar</button>
                                 <button type="submit" class="flex-1 py-3 bg-[#059669] text-white rounded-xl font-bold">Guardar</button>
@@ -172,6 +174,11 @@ export const renderCalendar = (container) => {
             if (!selectedDate) selectedDate = new Date(); // Default to today if none selected
             appointmentModalOpen = true;
             render();
+            // Post-render update for input
+            setTimeout(() => {
+                const dateInput = document.getElementById('aptDate');
+                if (dateInput) dateInput.value = formatDate(selectedDate);
+            }, 0);
         });
 
         if (appointmentModalOpen) {
@@ -187,7 +194,7 @@ export const renderCalendar = (container) => {
                     client: formData.get('client'),
                     time: formData.get('time'),
                     price: formData.get('price'),
-                    date: formatDate(selectedDate),
+                    date: formData.get('date') || formatDate(selectedDate),
                     type: 'Corte' // Default
                 });
                 appointmentModalOpen = false;

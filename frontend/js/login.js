@@ -101,8 +101,10 @@ export const renderLogin = () => {
 
         // Logic
         if (username === 'arelys' && password === '123') {
+            localStorage.setItem('currentUser', 'arelys');
             navigateTo('/boutique-welcome');
         } else if (username === 'santi' && password === '123') {
+            localStorage.setItem('currentUser', 'santi');
             navigateTo('/market');
         } else {
             errorDiv.textContent = 'Credenciales incorrectas. Intenta con arelys/123 o santi/123';

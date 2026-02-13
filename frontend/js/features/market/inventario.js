@@ -3,6 +3,7 @@ import { store } from '../../store.js';
 export const renderInventario = (container) => {
     let searchTerm = '';
     let isAddOpen = false;
+    let editingId = null;
 
     const render = () => {
         const state = store.getState();
@@ -61,8 +62,11 @@ export const renderInventario = (container) => {
                                             <button class="w-8 h-8 rounded-full bg-gray-100 hover:bg-green-100 text-gray-600 hover:text-green-600 flex items-center justify-center btn-stock" data-id="${p.id}" data-change="1">+</button>
                                         </div>
                                     </td>
-                                    <td class="p-5 font-bold text-gray-600">${p.price}€</td>
-                                    <td class="p-5 text-right">
+                                    <td class="p-5 font-bold text-gray-600">${parseFloat(p.price).toFixed(2)}€</td>
+                                    <td class="p-5 text-right flex justify-end gap-2">
+                                        <button class="text-blue-500 hover:bg-blue-50 p-2 rounded-lg edit-prod" data-id="${p.id}">
+                                            <i data-lucide="edit-2" width="16"></i>
+                                        </button>
                                         <button class="text-red-500 hover:bg-red-50 p-2 rounded-lg delete-prod" data-id="${p.id}">
                                             <i data-lucide="trash" width="16"></i>
                                         </button>
@@ -76,16 +80,20 @@ export const renderInventario = (container) => {
                  <!-- Modal -->
                  <div id="prodModal" class="fixed inset-0 z-50 bg-black/50 ${isAddOpen ? 'flex' : 'hidden'} items-center justify-center p-4">
                     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-8">
-                        <h2 class="text-2xl font-black text-gray-800 mb-8">Nuevo Producto</h2>
+                        <h2 class="text-2xl font-black text-gray-800 mb-8" id="prodModalTitle">${editingId ? 'Editar Producto' : 'Nuevo Producto'}</h2>
                         <form id="prodForm" class="space-y-6">
-                            <input name="title" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold" placeholder="Nombre" required />
+                            <input type="hidden" name="id" id="prodId">
+                            <input name="title" id="prodTitle" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold" placeholder="Nombre" required />
                             <div class="grid grid-cols-2 gap-4">
-                                <input name="price" type="number" step="0.01" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none" placeholder="Precio €" required />
-                                <input name="stock" type="number" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none" placeholder="Stock Inicial" required />
+                                <input name="price" id="prodPrice" type="number" step="0.01" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none" placeholder="Precio €" required />
+                                <input name="stock" id="prodStock" type="number" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none" placeholder="Stock Inicial" required />
                             </div>
+                            <!-- Min Stock field for completeness -->
+                             <input name="min_stock" id="prodMinStock" type="number" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none" placeholder="Stock Mínimo (Alerta)" value="5" />
+                            
                             <div class="flex gap-3 pt-2">
                                 <button type="button" id="closeProdModal" class="flex-1 py-4 bg-gray-100 rounded-2xl font-bold">Cancelar</button>
-                                <button type="submit" class="flex-1 py-4 bg-[#1e293b] text-white rounded-2xl font-black">Crear</button>
+                                <button type="submit" class="flex-1 py-4 bg-[#1e293b] text-white rounded-2xl font-black">Guardar</button>
                             </div>
                         </form>
                     </div>
@@ -93,6 +101,18 @@ export const renderInventario = (container) => {
              </div>
         `;
         lucide.createIcons();
+
+        // Fill form if editing
+        if (editingId) {
+            const p = products.find(prod => prod.id === editingId);
+            if (p) {
+                document.getElementById('prodId').value = p.id;
+                document.getElementById('prodTitle').value = p.title;
+                document.getElementById('prodPrice').value = p.price;
+                document.getElementById('prodStock').value = p.stock;
+                document.getElementById('prodMinStock').value = p.min_stock || 5;
+            }
+        }
 
         document.getElementById('searchProd').addEventListener('input', (e) => {
             searchTerm = e.target.value;
@@ -115,7 +135,8 @@ export const renderInventario = (container) => {
         });
 
         document.querySelectorAll('.delete-prod').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 if (confirm('¿Eliminar producto?')) {
                     store.deleteProduct(parseInt(btn.getAttribute('data-id')));
                     render();
@@ -123,7 +144,18 @@ export const renderInventario = (container) => {
             });
         });
 
+        // Edit Listener
+        document.querySelectorAll('.edit-prod').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                editingId = parseInt(btn.getAttribute('data-id'));
+                isAddOpen = true;
+                render();
+            });
+        });
+
         document.getElementById('addProdBtn').addEventListener('click', () => {
+            editingId = null;
             isAddOpen = true;
             render();
         });
@@ -131,21 +163,32 @@ export const renderInventario = (container) => {
         if (isAddOpen) {
             document.getElementById('closeProdModal').addEventListener('click', () => {
                 isAddOpen = false;
+                editingId = null;
                 render();
             });
             document.getElementById('prodForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
-                store.addProduct({
+                const data = {
                     title: formData.get('title'),
                     price: parseFloat(formData.get('price')),
                     stock: parseInt(formData.get('stock')),
-                    min_stock: 5
-                });
+                    min_stock: parseInt(formData.get('min_stock')) || 5
+                };
+
+                if (editingId) {
+                    store.updateProduct(editingId, data);
+                    editingId = null;
+                } else {
+                    store.addProduct(data);
+                }
+
                 isAddOpen = false;
-                render();
+                safeRender();
             });
         }
     };
+
+    // Initial render
     render();
 };
