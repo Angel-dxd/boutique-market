@@ -5,6 +5,20 @@ export const renderClients = (container) => {
     let searchTerm = '';
     let editingId = null;
 
+    // --- FUNCIÓN ASÍNCRONA PARA SQLITE (NUEVA) ---
+    const refreshData = async () => {
+        try {
+            const response = await fetch('http://localhost:3000/api/clients');
+            if (response.ok) {
+                const clientsFromDB = await response.json();
+                store.setState({ clients: clientsFromDB });
+                render();
+            }
+        } catch (error) {
+            console.error("Error conectando con SQLite:", error);
+        }
+    };
+
     // Helper to get fresh data
     const getClients = () => store.getState().clients || [];
 
@@ -17,10 +31,9 @@ export const renderClients = (container) => {
 
         const currentUser = localStorage.getItem('currentUser') || 'arelys';
 
-        // Main Container
+        // Main Container (TU HTML ORIGINAL INTEGRO)
         container.innerHTML = `
             <div class="space-y-6 h-full flex flex-col min-h-[600px] animate-fade-in-up">
-                <!-- Header Section -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between gap-4 items-center">
                     <div>
                         <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -31,7 +44,6 @@ export const renderClients = (container) => {
                     </div>
 
                     <div class="flex flex-wrap gap-3 w-full md:w-auto">
-                        <!-- Search -->
                         <div class="relative flex-1 md:w-64">
                              <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" width="18"></i>
                             <input
@@ -43,7 +55,6 @@ export const renderClients = (container) => {
                             />
                         </div>
 
-                         <!-- Actions -->
                          <button
                             id="importBtn"
                             class="bg-blue-50 text-blue-600 px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors flex items-center gap-2 border border-blue-100"
@@ -70,7 +81,6 @@ export const renderClients = (container) => {
                     </div>
                 </div>
 
-                <!-- Clients List -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 flex-1 overflow-hidden flex flex-col">
                      ${filtered.length > 0 ? `
                         <div class="overflow-x-auto">
@@ -138,7 +148,6 @@ export const renderClients = (container) => {
                 </div>
             </div>
 
-            <!-- Modal for Create/Edit -->
             <div id="clientModalOverlay" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4">
                 <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
                     <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
@@ -229,10 +238,10 @@ export const renderClients = (container) => {
                 });
             }
 
-            // 4. Submit Form
+            // 4. Submit Form (CONECTADO A SQLITE)
             const clientForm = document.getElementById('clientForm');
             if (clientForm) {
-                clientForm.addEventListener('submit', (e) => {
+                clientForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const formData = new FormData(e.target);
                     const clientData = {
@@ -242,14 +251,20 @@ export const renderClients = (container) => {
                         notes: formData.get('notes')
                     };
 
-                    if (editingId) {
-                        store.updateClient(editingId, clientData);
-                    } else {
-                        store.addClient(clientData);
-                    }
+                    const url = editingId ? `http://localhost:3000/api/clients/${editingId}` : 'http://localhost:3000/api/clients';
+                    const method = editingId ? 'PUT' : 'POST';
 
-                    toggleModal(false);
-                    render();
+                    try {
+                        await fetch(url, {
+                            method: method,
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(clientData)
+                        });
+                        toggleModal(false);
+                        refreshData(); // Recarga desde la DB real
+                    } catch (err) {
+                        console.error("Error al guardar:", err);
+                    }
                 });
             }
 
@@ -266,14 +281,18 @@ export const renderClients = (container) => {
                 });
             });
 
-            // 6. Delete Buttons
+            // 6. Delete Buttons (CONECTADO A SQLITE)
             document.querySelectorAll('.delete-client-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+                btn.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     if (confirm('¿Seguro que deseas eliminar este cliente?')) {
                         const id = parseInt(btn.getAttribute('data-id'));
-                        store.deleteClient(id);
-                        render();
+                        try {
+                            await fetch(`http://localhost:3000/api/clients/${id}`, { method: 'DELETE' });
+                            refreshData();
+                        } catch (err) {
+                            console.error("Error al eliminar:", err);
+                        }
                     }
                 });
             });
@@ -282,7 +301,7 @@ export const renderClients = (container) => {
             const importBtn = document.getElementById('importBtn');
             const importInput = document.getElementById('importInput');
             if (importBtn && importInput) {
-                importBtn.onclick = () => importInput.click(); // Simple onclick to avoid dups
+                importBtn.onclick = () => importInput.click();
                 importInput.onchange = handleImport;
             }
 
@@ -306,28 +325,19 @@ export const renderClients = (container) => {
             modal.classList.add('flex');
             if (title) title.textContent = editingId ? 'Editar Cliente' : 'Nuevo Cliente';
 
-            // If editing, fill data
             if (editingId) {
                 const client = store.getState().clients.find(c => c.id === editingId);
                 if (client) {
-                    const clientIdInput = document.getElementById('clientIdInput');
-                    const clientNameInput = document.getElementById('clientNameInput');
-                    const clientPhoneInput = document.getElementById('clientPhoneInput');
-                    const clientEmailInput = document.getElementById('clientEmailInput');
-                    const clientNotesInput = document.getElementById('clientNotesInput');
-
-                    if (clientIdInput) clientIdInput.value = client.id;
-                    if (clientNameInput) clientNameInput.value = client.name;
-                    if (clientPhoneInput) clientPhoneInput.value = client.phone || '';
-                    if (clientEmailInput) clientEmailInput.value = client.email || '';
-                    if (clientNotesInput) clientNotesInput.value = client.notes || '';
+                    document.getElementById('clientIdInput').value = client.id;
+                    document.getElementById('clientNameInput').value = client.name;
+                    document.getElementById('clientPhoneInput').value = client.phone || '';
+                    document.getElementById('clientEmailInput').value = client.email || '';
+                    document.getElementById('clientNotesInput').value = client.notes || '';
                 }
             } else {
-                // Clean form
                 const form = document.getElementById('clientForm');
                 if (form) form.reset();
-                const clientIdInput = document.getElementById('clientIdInput');
-                if (clientIdInput) clientIdInput.value = '';
+                document.getElementById('clientIdInput').value = '';
             }
         } else {
             modal.classList.add('hidden');
@@ -336,7 +346,7 @@ export const renderClients = (container) => {
         }
     };
 
-    // Helper: CSV Import
+    // Helper: CSV Import (TU CÓDIGO ORIGINAL)
     const handleImport = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -349,14 +359,11 @@ export const renderClients = (container) => {
 
             lines.forEach((line, index) => {
                 if (!line.trim()) return;
-                // Skip header if detected
-                if (index === 0 && line.toLowerCase().includes('nombre') && line.toLowerCase().includes('email')) return;
+                if (index === 0 && line.toLowerCase().includes('nombre')) return;
 
-                // Better Regex for CSV
                 const matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
                 const cols = matches ? matches.map(m => m.replace(/^"|"$/g, '').trim()) : line.split(',');
 
-                // Basic assume: Name, Phone, Email, Notes
                 if (cols.length >= 1 && cols[0]) {
                     store.addClient({
                         name: cols[0],
@@ -375,12 +382,11 @@ export const renderClients = (container) => {
         reader.readAsText(file);
     };
 
-    // Helper: CSV Export
+    // Helper: CSV Export (TU CÓDIGO ORIGINAL)
     const handleExport = () => {
         const clients = store.getState().clients;
         let csv = "ID,Nombre,Telefono,Email,Notas\n";
         clients.forEach(c => {
-            // Handle quotes in content
             const safe = (txt) => `"${(txt || '').replace(/"/g, '""')}"`;
             csv += `${c.id},${safe(c.name)},${safe(c.phone)},${safe(c.email)},${safe(c.notes)}\n`;
         });
@@ -393,6 +399,7 @@ export const renderClients = (container) => {
         window.URL.revokeObjectURL(url);
     };
 
-    // Initial Trigger
+    // --- CARGA INICIAL ---
     render();
+    refreshData();
 };

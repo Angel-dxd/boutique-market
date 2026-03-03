@@ -1,4 +1,3 @@
-
 // Central Store for Data Persistence and Logic
 // Mimics the behavior of the original BoutiqueContext but uses LocalStorage for now.
 
@@ -40,6 +39,13 @@ class BoutiqueStore {
 
         const saved = localStorage.getItem('boutique_state');
         return saved ? { ...defaultState, ...JSON.parse(saved) } : defaultState;
+    }
+
+    // --- NUEVA FUNCIÓN PARA SQLITE (AÑADIDA) ---
+    setState(newState) {
+        this.state = { ...this.state, ...newState };
+        this.notifyListeners();
+        localStorage.setItem('boutique_state', JSON.stringify(this.state));
     }
 
     saveState() {
