@@ -1,16 +1,29 @@
-import { store } from '../../store.js';
+import { api } from '../../api.js';
 
-export const renderFinance = (container) => {
+export const renderFinance = async (container) => {
 
-    // Initial state for editing
     let editingId = null;
+    let transactions = [];
+    let summary = { totalIncome: 0, totalExpenses: 0, netProfit: 0 };
 
-    const render = () => {
-        const state = store.getState();
-        const transactions = state.transactions || [];
-        const summary = store.getFinancialSummary();
+    const loadData = async () => {
+        const res = await api.get('/finance');
+        if (!res.error) {
+            transactions = res;
 
-        // Calculate percentages for visual bar
+            let income = 0;
+            let expenses = 0;
+            transactions.forEach(t => {
+                if (['income', 'entrada'].includes(t.type)) { income += parseFloat(t.amount || 0); }
+                if (['expense', 'salida'].includes(t.type)) { expenses += parseFloat(t.amount || 0); }
+            });
+            summary = { totalIncome: income, totalExpenses: expenses, netProfit: income - expenses };
+        } else {
+            transactions = [];
+        }
+    };
+
+    const safeRender = () => {
         const total = summary.totalIncome + summary.totalExpenses;
         const incomePct = total > 0 ? (summary.totalIncome / total) * 100 : 0;
         const expensePct = total > 0 ? (summary.totalExpenses / total) * 100 : 0;
@@ -23,7 +36,7 @@ export const renderFinance = (container) => {
                         Finanzas <span class="text-sm font-normal text-gray-400">| Panel de Control</span>
                     </h2>
                      <div class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
-                        LOCAL STORE
+                        MYSQL ACTIVO
                     </div>
                 </div>
 
@@ -71,17 +84,17 @@ export const renderFinance = (container) => {
                         ${transactions.length > 0 ? transactions.map(t => `
                              <div class="p-4 flex justify-between items-center hover:bg-gray-50 group">
                                 <div class="flex items-center gap-3">
-                                    <div class="p-2 rounded-lg ${t.type === 'income' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-50 text-red-500'}">
-                                        <i data-lucide="${t.type === 'income' ? 'dollar-sign' : 'shopping-bag'}" width="20"></i>
+                                    <div class="p-2 rounded-lg ${['income', 'entrada'].includes(t.type) ? 'bg-emerald-100 text-emerald-600' : 'bg-red-50 text-red-500'}">
+                                        <i data-lucide="${['income', 'entrada'].includes(t.type) ? 'dollar-sign' : 'shopping-bag'}" width="20"></i>
                                     </div>
                                     <div>
                                         <p class="font-bold text-gray-800 text-sm">${t.category || t.categoria || 'Sin Categoría'}</p>
-                                        <p class="text-xs text-gray-400">${t.description || t.date}</p>
+                                        <p class="text-xs text-gray-400">${t.description || new Date(t.date).toISOString().split('T')[0]}</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-4">
-                                    <span class="font-bold ${t.type === 'income' ? 'text-emerald-600' : 'text-red-600'}">
-                                        ${t.type === 'income' ? '+' : '-'}${parseFloat(t.amount).toFixed(2)}€
+                                    <span class="font-bold ${['income', 'entrada'].includes(t.type) ? 'text-emerald-600' : 'text-red-600'}">
+                                        ${['income', 'entrada'].includes(t.type) ? '+' : '-'}${parseFloat(t.amount).toFixed(2)}€
                                     </span>
                                     <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                          <button class="text-blue-500 hover:bg-blue-50 p-1 rounded edit-tx" data-id="${t.id}">
@@ -93,7 +106,7 @@ export const renderFinance = (container) => {
                                     </div>
                                 </div>
                             </div>
-                        `).join('') : '<p class="p-8 text-center text-gray-400">No hay movimientos.</p>'}
+                        `).join('') : '<p class="p-8 text-center text-gray-400">No hay movimientos en MySQL.</p>'}
                     </div>
                 </div>
             </div>
@@ -116,7 +129,7 @@ export const renderFinance = (container) => {
                          
                          <div class="flex gap-3">
                             <button type="button" id="closeTxModal" class="flex-1 py-3 bg-gray-100 rounded-xl font-bold">Cancelar</button>
-                            <button type="submit" class="flex-1 py-3 bg-gray-900 text-white rounded-xl font-bold">Guardar</button>
+                            <button type="submit" class="flex-1 py-3 bg-gray-900 text-white rounded-xl font-bold">Guardar en MySQL</button>
                          </div>
                      </form>
                 </div>
@@ -133,7 +146,7 @@ export const renderFinance = (container) => {
             editingId = null;
             document.getElementById('modalTitle').textContent = 'Registrar';
             form.reset();
-            setType('expense'); // Default
+            setType('expense');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         });
@@ -151,7 +164,7 @@ export const renderFinance = (container) => {
 
         const setType = (type) => {
             txType.value = type;
-            if (type === 'expense') {
+            if (['expense', 'salida'].includes(type)) {
                 btnExpense.className = "flex-1 py-2 rounded-lg font-bold bg-white text-red-500 shadow-sm transition-all";
                 btnIncome.className = "flex-1 py-2 rounded-lg font-bold text-gray-400 hover:text-gray-600 transition-all";
             } else {
@@ -163,7 +176,7 @@ export const renderFinance = (container) => {
         btnExpense.addEventListener('click', () => setType('expense'));
         btnIncome.addEventListener('click', () => setType('income'));
 
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
             const data = {
@@ -174,33 +187,31 @@ export const renderFinance = (container) => {
                 date: new Date().toISOString().split('T')[0]
             };
 
-            const state = store.getState();
-
+            let response;
             if (editingId) {
-                const idx = state.transactions.findIndex(t => t.id === editingId);
-                if (idx !== -1) {
-                    state.transactions[idx] = { ...state.transactions[idx], ...data };
-                    store.saveState();
-                }
-                editingId = null;
+                response = await api.put(`/finance/${editingId}`, data);
             } else {
-                store.addTransaction(data);
+                response = await api.post('/finance', data);
             }
 
-            render();
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            if (!response.error) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                await loadData();
+                safeRender();
+            }
         });
 
         document.querySelectorAll('.delete-tx').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                const id = parseInt(btn.getAttribute('data-id'));
-                if (confirm('¿Eliminar movimiento?')) {
-                    const state = store.getState();
-                    state.transactions = state.transactions.filter(t => t.id !== id);
-                    store.saveState();
-                    render();
+                if (confirm('¿PURGAR transacción permanentemente de MySQL?')) {
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    const response = await api.delete(`/finance/${id}`);
+                    if (!response.error) {
+                        await loadData();
+                        safeRender();
+                    }
                 }
             });
         });
@@ -226,5 +237,6 @@ export const renderFinance = (container) => {
         });
     };
 
-    render();
+    await loadData();
+    safeRender();
 };

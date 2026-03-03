@@ -1,28 +1,33 @@
-import { store } from '../../store.js';
+import { api } from '../../api.js';
 
-export const renderCalendar = (container) => {
+export const renderCalendar = async (container) => {
     let currentDate = new Date();
     let selectedDate = null;
     let appointmentModalOpen = false;
+    let appointments = [];
+    let dailyNotes = {};
 
-    // Helper: Format Date YYYY-MM-DD
+    const loadData = async () => {
+        const res = await api.get('/calendar');
+        if (!res.error) {
+            appointments = res.appointments || [];
+            dailyNotes = res.dailyNotes || {};
+        } else {
+            appointments = [];
+            dailyNotes = {};
+        }
+    };
+
     const formatDate = (date) => date.toISOString().split('T')[0];
-
-    // Helper: Days in Month
     const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 
-    const render = () => {
-        const state = store.getState();
-        const appointments = state.appointments;
-        const dailyNotes = state.dailyNotes;
-
+    const safeRender = () => {
         const monthName = currentDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
         const daysInMonth = getDaysInMonth(currentDate);
         const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
         const selectedDateStr = selectedDate ? formatDate(selectedDate) : null;
 
-        // Calculate Metrics for each day
         const getMetrics = (dateStr) => {
             const dailyApts = appointments.filter(a => a.date === dateStr);
             const revenue = dailyApts.reduce((sum, a) => sum + (parseFloat(a.price) || 0), 0);
@@ -42,9 +47,12 @@ export const renderCalendar = (container) => {
                             <button id="prevMonth" class="p-1 hover:bg-white rounded shadow-sm"><i data-lucide="chevron-left" width="20"></i></button>
                             <button id="nextMonth" class="p-1 hover:bg-white rounded shadow-sm"><i data-lucide="chevron-right" width="20"></i></button>
                         </div>
+                         <div class="px-3 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-700 uppercase tracking-widest ml-4 hidden md:block">
+                            MySQL Centralizado
+                        </div>
                     </div>
                     <button id="newAptBtn" class="px-4 py-2 bg-[#059669] text-white rounded-lg hover:opacity-90 flex items-center gap-2 text-sm font-bold">
-                        <i data-lucide="calendar" width="16"></i> Nueva
+                        <i data-lucide="calendar" width="16"></i> Nueva 
                     </button>
                 </div>
 
@@ -77,7 +85,7 @@ export const renderCalendar = (container) => {
                     </div>
                 </div>
 
-                <!-- Sidebar Details (Overlay for small screens, side panel for large) -->
+                <!-- Sidebar Details -->
                 ${selectedDate ? `
                     <div class="absolute top-0 right-0 h-full w-full md:w-80 bg-white shadow-xl z-20 flex flex-col p-6 border-l border-gray-100 animate-in slide-in-from-right">
                          <div class="flex justify-between items-center mb-6">
@@ -98,7 +106,7 @@ export const renderCalendar = (container) => {
                         </div>
 
                          <!-- Notes -->
-                        <textarea id="dailyNote" class="w-full p-4 bg-yellow-50 border border-yellow-100 rounded-xl mb-4 h-32 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-sm" placeholder="Notas del día...">${savedNote}</textarea>
+                        <textarea id="dailyNote" class="w-full p-4 bg-yellow-50 border border-yellow-100 rounded-xl mb-4 h-32 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-sm" placeholder="Notas del día guardadas en MySQL...">${savedNote}</textarea>
                         
                         <!-- List -->
                         <div class="space-y-2 flex-1 overflow-y-auto">
@@ -117,16 +125,16 @@ export const renderCalendar = (container) => {
                     <div class="bg-white p-6 rounded-2xl w-full max-w-sm">
                         <h3 class="font-bold text-lg mb-4">Nueva Cita</h3>
                         <form id="aptForm">
-                            <input name="client" class="w-full p-3 border rounded-xl mb-3" placeholder="Cliente" required />
+                            <input name="client" class="w-full p-3 border rounded-xl mb-3 outline-none font-medium" placeholder="Cliente" required />
                             <div class="flex gap-2 mb-3">
-                                <input name="date" type="date" id="aptDate" class="flex-1 p-3 border rounded-xl" required />
-                                <input name="time" type="time" class="flex-1 p-3 border rounded-xl" value="10:00" required />
+                                <input name="date" type="date" id="aptDate" class="flex-1 p-3 border rounded-xl outline-none" required />
+                                <input name="time" type="time" class="flex-1 p-3 border rounded-xl outline-none" value="10:00" required />
                             </div>
-                            <input name="price" type="number" placeholder="Precio €" class="w-full p-3 border rounded-xl mb-3" required />
+                            <input name="price" type="number" step="0.01" placeholder="Precio €" class="w-full p-3 border rounded-xl mb-3 outline-none" required />
                             
                              <div class="flex gap-2">
                                 <button type="button" id="closeAptModal" class="flex-1 py-3 bg-gray-100 rounded-xl font-bold">Cancelar</button>
-                                <button type="submit" class="flex-1 py-3 bg-[#059669] text-white rounded-xl font-bold">Guardar</button>
+                                <button type="submit" class="flex-1 py-3 bg-[#059669] text-white rounded-xl font-bold">Guardar en MySQL</button>
                             </div>
                         </form>
                     </div>
@@ -139,42 +147,49 @@ export const renderCalendar = (container) => {
         // Handlers
         document.getElementById('prevMonth').addEventListener('click', () => {
             currentDate.setMonth(currentDate.getMonth() - 1);
-            currentDate = new Date(currentDate); // trigger reactivity check if needed, mostly for sanity
-            render();
+            currentDate = new Date(currentDate);
+            safeRender();
         });
 
         document.getElementById('nextMonth').addEventListener('click', () => {
             currentDate.setMonth(currentDate.getMonth() + 1);
             currentDate = new Date(currentDate);
-            render();
+            safeRender();
         });
 
         document.querySelectorAll('.day-cell').forEach(cell => {
             cell.addEventListener('click', () => {
                 const dateStr = cell.getAttribute('data-date');
                 selectedDate = new Date(dateStr);
-                render();
+                safeRender();
             });
         });
 
         if (selectedDate) {
             document.getElementById('closeDetails').addEventListener('click', () => {
                 selectedDate = null;
-                render();
+                safeRender();
             });
 
-            document.getElementById('dailyNote').addEventListener('blur', (e) => {
+            document.getElementById('dailyNote').addEventListener('blur', async (e) => {
                 const content = e.target.value;
                 const metrics = getMetrics(formatDate(selectedDate));
-                store.saveDailyNote(formatDate(selectedDate), content, metrics.revenue);
+
+                await api.post('/calendar/notes', {
+                    date: formatDate(selectedDate),
+                    content,
+                    revenue: metrics.revenue
+                });
+
+                await loadData();
             });
         }
 
         document.getElementById('newAptBtn').addEventListener('click', () => {
-            if (!selectedDate) selectedDate = new Date(); // Default to today if none selected
+            if (!selectedDate) selectedDate = new Date();
             appointmentModalOpen = true;
-            render();
-            // Post-render update for input
+            safeRender();
+
             setTimeout(() => {
                 const dateInput = document.getElementById('aptDate');
                 if (dateInput) dateInput.value = formatDate(selectedDate);
@@ -184,24 +199,30 @@ export const renderCalendar = (container) => {
         if (appointmentModalOpen) {
             document.getElementById('closeAptModal').addEventListener('click', () => {
                 appointmentModalOpen = false;
-                render();
+                safeRender();
             });
 
-            document.getElementById('aptForm').addEventListener('submit', (e) => {
+            document.getElementById('aptForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
-                store.addAppointment({
+
+                const response = await api.post('/calendar/appointments', {
                     client: formData.get('client'),
                     time: formData.get('time'),
-                    price: formData.get('price'),
+                    price: parseFloat(formData.get('price')),
                     date: formData.get('date') || formatDate(selectedDate),
-                    type: 'Corte' // Default
+                    type: 'Corte'
                 });
-                appointmentModalOpen = false;
-                render();
+
+                if (!response.error) {
+                    appointmentModalOpen = false;
+                    await loadData();
+                    safeRender();
+                }
             });
         }
     };
 
-    render();
+    await loadData();
+    safeRender();
 };

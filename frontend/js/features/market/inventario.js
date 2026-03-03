@@ -1,23 +1,40 @@
-import { store } from '../../store.js';
+import { api } from '../../api.js';
 
-export const renderInventario = (container) => {
+export const renderInventario = async (container) => {
     let searchTerm = '';
     let isAddOpen = false;
     let editingId = null;
+    let products = [];
+    let suppliers = [];
 
-    const render = () => {
-        const state = store.getState();
-        const products = state.products;
+    const loadData = async () => {
+        // Fetch products and suppliers (to show supplier name if needed, though originally it didn't show supplier. Let's fetch products mainly).
+        const res = await api.get('/products');
+        if (!res.error) {
+            products = res;
+        } else {
+            products = [];
+        }
 
+        // Fetch suppliers for the dropdown when creating a product
+        const supRes = await api.get('/providers');
+        if (!supRes.error) {
+            suppliers = supRes;
+        } else {
+            suppliers = [];
+        }
+    };
+
+    const safeRender = () => {
         const filtered = products.filter(p => p.title.toLowerCase().includes(searchTerm.toLowerCase()));
 
         container.innerHTML = `
              <div class="p-8 w-full max-w-7xl mx-auto">
-                 <header className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+                 <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
                      <div class="flex justify-between items-center mb-6">
                         <div>
                             <h1 class="text-3xl font-black text-gray-800 tracking-tight">Inventario</h1>
-                            <p class="text-gray-500 font-medium">Control de existencias</p>
+                            <p class="text-gray-500 font-medium">Control de existencias (MySQL Centralizado)</p>
                         </div>
                      </div>
                      
@@ -53,12 +70,12 @@ export const renderInventario = (container) => {
                                 <tr class="hover:bg-gray-50/50 transition-colors">
                                     <td class="p-5">
                                         <div class="font-bold text-gray-800">${p.title}</div>
-                                        <div class="text-xs text-gray-400">${p.min_stock} min</div>
+                                        <div class="text-xs text-gray-400">${p.min_stock} min | ${p.categoria || 'General'}</div>
                                     </td>
                                     <td class="p-5">
                                         <div class="flex items-center gap-3">
                                             <button class="w-8 h-8 rounded-full bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600 flex items-center justify-center btn-stock" data-id="${p.id}" data-change="-1">-</button>
-                                            <span class="font-black">${p.stock}</span>
+                                            <span class="font-black ${p.stock <= p.min_stock ? 'text-red-500' : 'text-green-600'}">${p.stock}</span>
                                             <button class="w-8 h-8 rounded-full bg-gray-100 hover:bg-green-100 text-gray-600 hover:text-green-600 flex items-center justify-center btn-stock" data-id="${p.id}" data-change="1">+</button>
                                         </div>
                                     </td>
@@ -75,6 +92,7 @@ export const renderInventario = (container) => {
                             `).join('')}
                          </tbody>
                     </table>
+                    ${filtered.length === 0 ? `<div class="p-10 text-center text-gray-400 font-bold">No hay productos en tu base de datos MySQL central.</div>` : ''}
                 </div>
                 
                  <!-- Modal -->
@@ -82,18 +100,32 @@ export const renderInventario = (container) => {
                     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-8">
                         <h2 class="text-2xl font-black text-gray-800 mb-8" id="prodModalTitle">${editingId ? 'Editar Producto' : 'Nuevo Producto'}</h2>
                         <form id="prodForm" class="space-y-6">
-                            <input type="hidden" name="id" id="prodId">
-                            <input name="title" id="prodTitle" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold" placeholder="Nombre" required />
+                            <input name="title" id="prodTitle" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold" placeholder="Nombre del Producto" required />
                             <div class="grid grid-cols-2 gap-4">
-                                <input name="price" id="prodPrice" type="number" step="0.01" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none" placeholder="Precio €" required />
-                                <input name="stock" id="prodStock" type="number" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none" placeholder="Stock Inicial" required />
+                                <input name="price" id="prodPrice" type="number" step="0.01" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none" placeholder="Precio Venta €" required />
+                                <input name="cost" id="prodCost" type="number" step="0.01" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none" placeholder="Costo Compra €" />
                             </div>
-                            <!-- Min Stock field for completeness -->
-                             <input name="min_stock" id="prodMinStock" type="number" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none" placeholder="Stock Mínimo (Alerta)" value="5" />
+                            <div class="grid grid-cols-2 gap-4">
+                                <input name="stock" id="prodStock" type="number" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none" placeholder="Stock Inicial" required />
+                                <input name="min_stock" id="prodMinStock" type="number" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none" placeholder="Stock Mínimo (Alerta)" value="5" />
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <select name="categoria" id="prodCategory" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none">
+                                    <option value="General">General</option>
+                                    <option value="Carnes">Carnes</option>
+                                    <option value="Lácteos">Lácteos</option>
+                                    <option value="Bebidas">Bebidas</option>
+                                    <option value="Limpieza">Limpieza</option>
+                                </select>
+                                <select name="proveedor_id" id="prodProvider" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none">
+                                    <option value="">Sin Proveedor</option>
+                                    ${suppliers.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('')}
+                                </select>
+                            </div>
                             
                             <div class="flex gap-3 pt-2">
                                 <button type="button" id="closeProdModal" class="flex-1 py-4 bg-gray-100 rounded-2xl font-bold">Cancelar</button>
-                                <button type="submit" class="flex-1 py-4 bg-[#1e293b] text-white rounded-2xl font-black">Guardar</button>
+                                <button type="submit" class="flex-1 py-4 bg-[#1e293b] text-white rounded-2xl font-black">Guardar a MySQL</button>
                             </div>
                         </form>
                     </div>
@@ -106,40 +138,50 @@ export const renderInventario = (container) => {
         if (editingId) {
             const p = products.find(prod => prod.id === editingId);
             if (p) {
-                document.getElementById('prodId').value = p.id;
                 document.getElementById('prodTitle').value = p.title;
                 document.getElementById('prodPrice').value = p.price;
+                document.getElementById('prodCost').value = p.cost || 0;
                 document.getElementById('prodStock').value = p.stock;
                 document.getElementById('prodMinStock').value = p.min_stock || 5;
+                document.getElementById('prodCategory').value = p.categoria || 'General';
+                document.getElementById('prodProvider').value = p.proveedor_id || '';
             }
         }
 
         document.getElementById('searchProd').addEventListener('input', (e) => {
             searchTerm = e.target.value;
-            render();
+            safeRender();
             const input = document.getElementById('searchProd');
             input.focus();
             input.setSelectionRange(input.value.length, input.value.length);
         });
 
         document.querySelectorAll('.btn-stock').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
                 const id = parseInt(btn.getAttribute('data-id'));
                 const change = parseInt(btn.getAttribute('data-change'));
                 const prod = products.find(p => p.id === id);
                 if (prod) {
-                    store.updateProduct(id, { stock: Math.max(0, parseInt(prod.stock) + change) });
-                    render();
+                    const newStock = Math.max(0, parseInt(prod.stock) + change);
+                    const response = await api.put(`/products/${id}/stock`, { stock: newStock });
+                    if (!response.error) {
+                        await loadData();
+                        safeRender();
+                    }
                 }
             });
         });
 
         document.querySelectorAll('.delete-prod').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('¿Eliminar producto?')) {
-                    store.deleteProduct(parseInt(btn.getAttribute('data-id')));
-                    render();
+                if (confirm('¿PURGAR producto permanentemente de la base de datos MySQL?')) {
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    const response = await api.delete(`/products/${id}`);
+                    if (!response.error) {
+                        await loadData();
+                        safeRender();
+                    }
                 }
             });
         });
@@ -150,45 +192,61 @@ export const renderInventario = (container) => {
                 e.stopPropagation();
                 editingId = parseInt(btn.getAttribute('data-id'));
                 isAddOpen = true;
-                render();
+                safeRender();
             });
         });
 
         document.getElementById('addProdBtn').addEventListener('click', () => {
             editingId = null;
             isAddOpen = true;
-            render();
+            safeRender();
         });
 
         if (isAddOpen) {
             document.getElementById('closeProdModal').addEventListener('click', () => {
                 isAddOpen = false;
                 editingId = null;
-                render();
+                safeRender();
             });
-            document.getElementById('prodForm').addEventListener('submit', (e) => {
+
+            document.getElementById('prodForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
-                const data = {
+                const payloadData = {
                     title: formData.get('title'),
                     price: parseFloat(formData.get('price')),
+                    cost: parseFloat(formData.get('cost')),
                     stock: parseInt(formData.get('stock')),
-                    min_stock: parseInt(formData.get('min_stock')) || 5
+                    min_stock: parseInt(formData.get('min_stock')) || 5,
+                    categoria: formData.get('categoria'),
+                    proveedor_id: formData.get('proveedor_id') ? parseInt(formData.get('proveedor_id')) : null
                 };
 
+                let response;
                 if (editingId) {
-                    store.updateProduct(editingId, data);
-                    editingId = null;
+                    // Update current logic uses createProduct strictly? The api has no updateProduct route entirely right now, except for stock updates.
+                    // Let me check what routes I have!
+                    // Wait! I need to implement UPDATE PRODUCT in the backend if there is none!
+                    // The backend `inventoryController.js` only has `updateProductStock` not full `updateProduct`.
+                    // So I will make a separate POST to recreate it or just implement `updateProduct`.
+                    // To avoid crash if backend misses it, I'll alert the user or fallback.
+                    // Actually, let's pretend we have it, I'll add it to the backend next.
+                    response = await api.put(`/products/${editingId}`, payloadData);
                 } else {
-                    store.addProduct(data);
+                    response = await api.post('/products', payloadData);
                 }
 
-                isAddOpen = false;
-                safeRender();
+                if (!response.error) {
+                    isAddOpen = false;
+                    await loadData();
+                    safeRender();
+                } else if (response.error.includes("404")) {
+                    alert("El backend no tiene implementada la ruta de edición completa, inténtalo más tarde.");
+                }
             });
         }
     };
 
-    // Initial render
-    render();
+    await loadData();
+    safeRender();
 };

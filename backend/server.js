@@ -22,13 +22,17 @@ const inventoryRoutes = require('./src/routes/inventoryRoutes');
 const providerRoutes = require('./src/routes/providerRoutes');
 const statisticsRoutes = require('./src/routes/statisticsRoutes');
 const clientRoutes = require('./src/routes/clientRoutes');
-
+const invoiceRoutes = require('./src/routes/invoiceRoutes');
+const financeRoutes = require('./src/routes/financeRoutes');
+const calendarRoutes = require('./src/routes/calendarRoutes');
 // Definición de Rutas API
 app.use('/api/products', inventoryRoutes);
 app.use('/api/providers', providerRoutes);
 app.use('/api/dashboard', statisticsRoutes);
 app.use('/api/clients', clientRoutes);
-
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/finance', financeRoutes);
+app.use('/api/calendar', calendarRoutes);
 // Ruta Raíz (Verifica funcionamiento global)
 app.get('/', (req, res) => {
     res.json({

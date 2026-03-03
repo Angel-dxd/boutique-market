@@ -56,4 +56,24 @@ const deleteProduct = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
-module.exports = { getProducts, createProduct, updateProductStock, deleteProduct };
+const updateProduct = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { title, price, cost, stock, min_stock, categoria, proveedor_id } = req.body;
+
+        if (!title || price === undefined) {
+            const err = new Error('Rechazado: Título y Precio obligatorios');
+            err.status = 400; throw err;
+        }
+
+        const [result] = await db.query(
+            `UPDATE productos SET title=?, price=?, cost=?, stock=?, min_stock=?, categoria=?, proveedor_id=? WHERE id=?`,
+            [title.trim(), parseFloat(price), parseFloat(cost || 0), parseInt(stock || 0), parseInt(min_stock || 5), categoria || 'General', proveedor_id || null, id]
+        );
+        if (result.affectedRows === 0) { const e = new Error('Rechazado: El producto no existe'); e.status = 404; throw e; }
+
+        res.status(200).json({ message: 'Producto actualizado por completo' });
+    } catch (err) { next(err); }
+};
+
+module.exports = { getProducts, createProduct, updateProductStock, updateProduct, deleteProduct };
