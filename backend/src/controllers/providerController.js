@@ -1,47 +1,56 @@
-const supabase = require('../config/supabase');
+const db = require('../config/db');
 
-const getProviders = async (req, res) => {
-    const { data, error } = await supabase.from('proveedores').select('*');
-    if (error) return res.status(500).json({ error: error.message });
-    res.json(data);
+const getProviders = async (req, res, next) => {
+    try {
+        const [rows] = await db.query('SELECT * FROM providers ORDER BY nombre ASC');
+        res.status(200).json(rows);
+    } catch (err) { next(err); }
 };
 
-const createProvider = async (req, res) => {
-    const { nombre, telefono, empresa, categoria } = req.body;
+const createProvider = async (req, res, next) => {
+    try {
+        let { nombre, telefono, empresa, categoria } = req.body;
+        nombre = nombre ? nombre.trim() : null;
 
-    if (!nombre) {
-        return res.status(400).json({ error: 'Nombre es obligatorio' });
-    }
+        if (!nombre) { const err = new Error("Nombre es un campo obligatorio"); err.status = 400; throw err; }
 
-    const { data, error } = await supabase.from('proveedores').insert([{
-        nombre, telefono, empresa, categoria: categoria || 'Suministros'
-    }]).select();
-
-    if (error) return res.status(500).json({ error: error.message });
-    res.status(201).json(data[0]);
+        const [result] = await db.query(
+            `INSERT INTO providers (nombre, telefono, empresa, categoria) VALUES (?, ?, ?, ?)`,
+            [nombre, telefono ? telefono.toString().replace(/\s+/g, '') : null, empresa ? empresa.trim() : null, categoria || 'Suministros']
+        );
+        res.status(201).json({ id: result.insertId, nombre, telefono, empresa });
+    } catch (err) { next(err); }
 };
 
-const bulkCreateProviders = async (req, res) => {
-    const { providers } = req.body; // Expects array
+const bulkCreateProviders = async (req, res, next) => {
+    try {
+        const { providers } = req.body;
+        if (!Array.isArray(providers) || providers.length === 0) {
+            const err = new Error("El arreglo de proveedores CSV es inválido, vacío o corrupto"); err.status = 400; throw err;
+        }
 
-    if (!Array.isArray(providers) || providers.length === 0) {
-        return res.status(400).json({ error: 'Lista de proveedores inválida' });
-    }
+        const validProviders = providers.map(p => ({
+            nombre: p.nombre ? String(p.nombre).trim() : null,
+            telefono: p.telefono ? String(p.telefono).replace(/[^0-9+\s-]/g, '').trim() : null,
+            empresa: p.empresa ? String(p.empresa).trim() : null,
+            categoria: p.categoria ? String(p.categoria).trim() : 'General'
+        })).filter(p => p.nombre !== null && p.nombre !== '');
 
-    // Basic Validation per item could go here
-    const validProviders = providers.filter(p => p.nombre);
+        if (validProviders.length === 0) { const e = new Error("El CSV no contiene elementos válidos con la estructura apropiada (falta nombre)"); e.status = 400; throw e; }
 
-    const { data, error } = await supabase.from('proveedores').insert(validProviders).select();
+        const values = validProviders.map(p => [p.nombre, p.telefono, p.empresa, p.categoria]);
+        const [result] = await db.query(`INSERT INTO providers (nombre, telefono, empresa, categoria) VALUES ?`, [values]);
 
-    if (error) return res.status(500).json({ error: error.message });
-    res.json({ message: 'Importación exitosa', count: data.length });
+        res.status(201).json({ message: 'Lote importado con éxito a MySQL Central', count: result.affectedRows });
+    } catch (err) { next(err); }
 };
 
-const deleteProvider = async (req, res) => {
-    const { id } = req.params;
-    const { error } = await supabase.from('proveedores').delete().eq('id', id);
-    if (error) return res.status(500).json({ error: error.message });
-    res.json({ message: 'Proveedor eliminado' });
+const deleteProvider = async (req, res, next) => {
+    try {
+        const [result] = await db.query(`DELETE FROM providers WHERE id = ?`, [req.params.id]);
+        if (result.affectedRows === 0) { const e = new Error('Rechazado: El proveedor de origen no existe'); e.status = 404; throw e; }
+        res.status(200).json({ message: 'Proveedor purgado del sistema' });
+    } catch (err) { next(err); }
 };
 
 module.exports = { getProviders, createProvider, bulkCreateProviders, deleteProvider };

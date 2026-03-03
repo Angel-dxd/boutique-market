@@ -1,52 +1,44 @@
-const supabase = require('../config/supabase');
+const db = require('../config/db');
 
-const getDashboardStats = async (req, res) => {
-    // Parallel fetching for performance
-    const [finanzas, productos, facturas] = await Promise.all([
-        supabase.from('finanzas').select('*'),
-        supabase.from('productos').select('*'),
-        supabase.from('facturas').select('*')
-    ]);
+const getDashboardStats = async (req, res, next) => {
+    try {
+        const [finanzasRows] = await db.query('SELECT * FROM finanzas');
+        const [productosRows] = await db.query('SELECT * FROM productos');
+        const [facturasRows] = await db.query('SELECT * FROM facturas');
 
-    if (finanzas.error) return res.status(500).json({ error: finanzas.error.message });
-    if (productos.error) return res.status(500).json({ error: productos.error.message });
-    // Facturas might be optional or empty initially
+        const expenses = (facturasRows || []).reduce((sum, f) => sum + parseFloat(f.monto || 0), 0);
+        let totalIncome = 0;
+        let totalExpenses = expenses;
 
-    const transactions = finanzas.data || [];
-    const products = productos.data || [];
-    const expenses = (facturas.data || []).reduce((sum, f) => sum + parseFloat(f.monto || 0), 0);
+        (finanzasRows || []).forEach(t => {
+            const amount = parseFloat(t.monto || 0);
+            const type = (t.tipo || '').toLowerCase();
+            const category = (t.categoria || '').toLowerCase();
 
-    // Semaphor Logic
-    let totalIncome = 0;
-    let totalExpenses = expenses; // Base from invoices
+            if (['income', 'entrada'].includes(type)) {
+                totalIncome += amount;
+            } else if (['expense', 'salida'].includes(type) && !category.includes('factura')) {
+                totalExpenses += amount;
+            }
+        });
 
-    transactions.forEach(t => {
-        const amount = parseFloat(t.amount || t.monto || 0);
-        const type = (t.type || t.tipo || '').toLowerCase();
+        const inventoryValue = (productosRows || []).reduce((sum, p) => sum + (p.stock * p.price), 0);
+        const lowStockCount = (productosRows || []).filter(p => p.stock <= p.min_stock).length;
 
-        if (['income', 'entrada'].includes(type)) {
-            totalIncome += amount;
-        } else if (['expense', 'salida'].includes(type) && !t.categoria.includes('Factura')) { // Avoid double counting if synced
-            totalExpenses += amount;
-        }
-    });
+        const storedRatio = totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 100;
 
-    const inventoryValue = products.reduce((sum, p) => sum + (p.stock * p.price), 0);
-    const lowStockCount = products.filter(p => p.stock <= p.min_stock).length;
-
-    // Health Logic (< 40% expenses/income is Healthy)
-    const storedRatio = totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 100;
-    const isHealthy = storedRatio < 40;
-
-    res.json({
-        totalIncome,
-        totalExpenses,
-        netProfit: totalIncome - totalExpenses,
-        inventoryValue,
-        lowStockCount,
-        financialHealth: isHealthy ? 'healthy' : 'warning',
-        ratio: storedRatio.toFixed(1)
-    });
+        res.json({
+            totalIncome,
+            totalExpenses,
+            netProfit: totalIncome - totalExpenses,
+            inventoryValue,
+            lowStockCount,
+            financialHealth: storedRatio < 40 ? 'healthy' : 'warning',
+            ratio: storedRatio.toFixed(1)
+        });
+    } catch (err) {
+        next(err);
+    }
 };
 
 module.exports = { getDashboardStats };

@@ -1,34 +1,25 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const mysql = require('mysql2/promise');
+const dotenv = require('dotenv');
 
-// Creamos el archivo de la base de datos en la carpeta 'data'
-const dbPath = path.resolve(__dirname, '../data/boutique_market.db');
+dotenv.config();
 
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('Error al abrir la base de datos SQLite:', err.message);
-    } else {
-        console.log('Conectado a la base de datos SQLite: Boutique & Market');
-        createTables();
-    }
+const pool = mysql.createPool({
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'boutique_market',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
-function createTables() {
-    // Tabla para los pollos y proveedores de Santi (Market)
-    db.run(`CREATE TABLE IF NOT EXISTS providers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        product TEXT,
-        phone TEXT
-    )`);
+pool.getConnection()
+    .then(connection => {
+        console.log('✅ Conectado a la base de datos MySQL centralizada.');
+        connection.release();
+    })
+    .catch(err => {
+        console.error('❌ Error al conectar con MySQL:', err.message);
+    });
 
-    // Tabla para las clientas de uñas de Arelis (Boutique)
-    db.run(`CREATE TABLE IF NOT EXISTS clients (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        phone TEXT,
-        last_visit DATE
-    )`);
-}
-
-module.exports = db;
+module.exports = pool;

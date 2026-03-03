@@ -1,52 +1,59 @@
-const supabase = require('../config/supabase');
+const db = require('../config/db');
 
-const getProducts = async (req, res) => {
-    const { data, error } = await supabase.from('productos').select('*');
-    if (error) return res.status(500).json({ error: error.message });
-    res.json(data);
+const getProducts = async (req, res, next) => {
+    try {
+        const [rows] = await db.query('SELECT * FROM productos ORDER BY id DESC');
+        res.status(200).json(rows);
+    } catch (err) { next(err); }
 };
 
-const createProduct = async (req, res) => {
-    const { title, price, cost, stock, min_stock, categoria, proveedor_id } = req.body;
+const createProduct = async (req, res, next) => {
+    try {
+        let { title, price, cost, stock, min_stock, categoria, proveedor_id } = req.body;
 
-    // Basic Validation
-    if (!title || !price) {
-        return res.status(400).json({ error: 'Nombre y Precio son obligatorios' });
-    }
+        title = title ? title.trim() : null;
+        if (!title || price === undefined || price === null) {
+            const err = new Error('Rechazado: Título y Precio obligatorios');
+            err.status = 400; throw err;
+        }
 
-    const { data, error } = await supabase.from('productos').insert([{
-        title,
-        price: parseFloat(price),
-        cost: parseFloat(cost || 0),
-        stock: parseInt(stock || 0),
-        min_stock: parseInt(min_stock || 5),
-        categoria: categoria || 'General',
-        proveedor_id: proveedor_id || null
-    }]).select();
+        const numPrice = parseFloat(price);
+        if (isNaN(numPrice) || numPrice < 0) {
+            const err = new Error('Rechazado: Formato de precio inválido');
+            err.status = 400; throw err;
+        }
 
-    if (error) return res.status(500).json({ error: error.message });
-    res.status(201).json(data[0]);
+        const [result] = await db.query(
+            `INSERT INTO productos (title, price, cost, stock, min_stock, categoria, proveedor_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [title, numPrice, parseFloat(cost || 0), parseInt(stock || 0), parseInt(min_stock || 5), categoria || 'General', proveedor_id || null]
+        );
+
+        res.status(201).json({ id: result.insertId, title, price: numPrice, stock: parseInt(stock || 0) });
+    } catch (err) { next(err); }
 };
 
-const updateProductStock = async (req, res) => {
-    const { id } = req.params;
-    const { stock } = req.body;
+const updateProductStock = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const validStock = parseInt(req.body.stock);
 
-    const { data, error } = await supabase
-        .from('productos')
-        .update({ stock: parseInt(stock) })
-        .eq('id', id)
-        .select();
+        if (isNaN(validStock)) {
+            const err = new Error('Stock no es numérico o es inválido'); err.status = 400; throw err;
+        }
 
-    if (error) return res.status(500).json({ error: error.message });
-    res.json(data[0]);
+        const [result] = await db.query(`UPDATE productos SET stock = ? WHERE id = ?`, [validStock, id]);
+        if (result.affectedRows === 0) { const e = new Error('Rechazado: Producto no existe'); e.status = 404; throw e; }
+
+        res.status(200).json({ message: 'Stock actualizado con éxito' });
+    } catch (err) { next(err); }
 };
 
-const deleteProduct = async (req, res) => {
-    const { id } = req.params;
-    const { error } = await supabase.from('productos').delete().eq('id', id);
-    if (error) return res.status(500).json({ error: error.message });
-    res.json({ message: 'Producto eliminado' });
+const deleteProduct = async (req, res, next) => {
+    try {
+        const [result] = await db.query(`DELETE FROM productos WHERE id = ?`, [req.params.id]);
+        if (result.affectedRows === 0) { const e = new Error('Rechazado: El producto no existe'); e.status = 404; throw e; }
+        res.status(200).json({ message: 'Producto eliminado por completo' });
+    } catch (err) { next(err); }
 };
 
 module.exports = { getProducts, createProduct, updateProductStock, deleteProduct };
