@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { getCalendarData, createAppointment, saveDailyNote } = require('../controllers/calendarController');
+const { getAppointments, createAppointment } = require('../controllers/calendarController');
 
-router.get('/', getCalendarData);
+// Rutas de Agenda (Appointments) usando el Middleware x-tenant-id heredado del server
+router.get('/appointments', getAppointments);
 router.post('/appointments', createAppointment);
-router.post('/notes', saveDailyNote);
 
 module.exports = router;

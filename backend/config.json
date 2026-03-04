@@ -1,0 +1,14 @@
+{
+    "market": {
+        "host": "localhost",
+        "user": "root",
+        "password": "",
+        "database": "boutique_market"
+    },
+    "santi": {
+        "host": "localhost",
+        "user": "root",
+        "password": "",
+        "database": "boutique_santi"
+    }
+}

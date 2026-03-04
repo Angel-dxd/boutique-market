@@ -7,10 +7,8 @@ const showLoading = () => {
 
     const overlay = document.createElement('div');
     overlay.id = 'global-spinner';
-    // Estilos usando Tailwind como base pero aplicados via JS para limpieza
     overlay.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm cursor-wait';
 
-    // Spinner minimalista y moderno
     const spinner = document.createElement('div');
     spinner.className = 'w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin';
 
@@ -26,7 +24,6 @@ const hideLoading = () => {
 const showToast = (message, isError = false) => {
     const toast = document.createElement('div');
 
-    // Tailwind classes preaplicadas
     const bgColor = isError ? 'bg-red-500' : 'bg-green-500';
     toast.className = `fixed bottom-5 right-5 text-white px-6 py-3 rounded-lg shadow-2xl z-[9999] transform translate-y-10 opacity-0 transition-all duration-300 font-medium ${bgColor}`;
 
@@ -39,19 +36,16 @@ const showToast = (message, isError = false) => {
 
     document.body.appendChild(toast);
 
-    // Animación de entrada
     requestAnimationFrame(() => {
         toast.classList.remove('translate-y-10', 'opacity-0');
     });
 
-    // Desmontar el toast después de 3.5s
     setTimeout(() => {
         toast.classList.add('translate-y-10', 'opacity-0');
         setTimeout(() => toast.remove(), 300);
     }, 3500);
 };
 
-// Procesador Inteligente de Respuestas
 const processResponse = async (res) => {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -60,13 +54,28 @@ const processResponse = async (res) => {
     return data;
 };
 
+// Generador Dinámico de Cabeceras (Multitenant)
+const getHeaders = (extraHeaders = {}) => {
+    const currentUser = localStorage.getItem('currentUser') || 'market';
+    const tenantId = currentUser === 'santi' ? 'santi' : 'market';
+    return {
+        'x-tenant-id': tenantId,
+        ...extraHeaders
+    };
+};
+
 // --- INTERFAZ DE EXPORTACIÓN (Wrapper) ---
 
 export const api = {
+    showLoading,
+    hideLoading,
+    showToast,
     get: async (endpoint) => {
         showLoading();
         try {
-            const res = await fetch(`${API_URL}${endpoint}`);
+            const res = await fetch(`${API_URL}${endpoint}`, {
+                headers: getHeaders()
+            });
             const data = await processResponse(res);
             hideLoading();
             return data;
@@ -82,7 +91,7 @@ export const api = {
         try {
             const res = await fetch(`${API_URL}${endpoint}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getHeaders({ 'Content-Type': 'application/json' }),
                 body: JSON.stringify(payloadData)
             });
             const data = await processResponse(res);
@@ -102,7 +111,7 @@ export const api = {
         try {
             const res = await fetch(`${API_URL}${endpoint}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getHeaders({ 'Content-Type': 'application/json' }),
                 body: JSON.stringify(payloadData)
             });
             const data = await processResponse(res);
@@ -120,7 +129,10 @@ export const api = {
     delete: async (endpoint) => {
         showLoading();
         try {
-            const res = await fetch(`${API_URL}${endpoint}`, { method: 'DELETE' });
+            const res = await fetch(`${API_URL}${endpoint}`, {
+                method: 'DELETE',
+                headers: getHeaders()
+            });
             const data = await processResponse(res);
             hideLoading();
 

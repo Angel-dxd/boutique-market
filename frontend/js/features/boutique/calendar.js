@@ -8,10 +8,16 @@ export const renderCalendar = async (container) => {
     let dailyNotes = {};
 
     const loadData = async () => {
-        const res = await api.get('/calendar');
+        const res = await api.get('/calendar/appointments');
         if (!res.error) {
-            appointments = res.appointments || [];
-            dailyNotes = res.dailyNotes || {};
+            appointments = (res.citas || []).map(cita => ({
+                id: cita.id,
+                client: cita.cliente,
+                date: cita.fecha,
+                time: cita.descripcion || '10:00',
+                price: cita.ganancia
+            }));
+            dailyNotes = {};
         } else {
             appointments = [];
             dailyNotes = {};
@@ -175,13 +181,14 @@ export const renderCalendar = async (container) => {
                 const content = e.target.value;
                 const metrics = getMetrics(formatDate(selectedDate));
 
-                await api.post('/calendar/notes', {
-                    date: formatDate(selectedDate),
-                    content,
-                    revenue: metrics.revenue
-                });
+                console.warn('Daily notes are disabled as they are not currently supported by the backend.');
+                // await api.post('/calendar/notes', {
+                //     date: formatDate(selectedDate),
+                //     content,
+                //     revenue: metrics.revenue
+                // });
 
-                await loadData();
+                // await loadData();
             });
         }
 
@@ -207,11 +214,10 @@ export const renderCalendar = async (container) => {
                 const formData = new FormData(e.target);
 
                 const response = await api.post('/calendar/appointments', {
-                    client: formData.get('client'),
-                    time: formData.get('time'),
-                    price: parseFloat(formData.get('price')),
-                    date: formData.get('date') || formatDate(selectedDate),
-                    type: 'Corte'
+                    cliente: formData.get('client'),
+                    descripcion: formData.get('time'),
+                    ganancia: parseFloat(formData.get('price')),
+                    fecha: formData.get('date') || formatDate(selectedDate)
                 });
 
                 if (!response.error) {

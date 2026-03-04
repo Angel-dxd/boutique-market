@@ -1,25 +1,47 @@
 const mysql = require('mysql2/promise');
-const dotenv = require('dotenv');
+const fs = require('fs');
+const path = require('path');
+const { AsyncLocalStorage } = require('async_hooks');
 
-dotenv.config();
+// Entorno Asíncrono para Contexto de Inquilinos (Multitenant)
+const tenantContext = new AsyncLocalStorage();
 
-const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'boutique_market',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
+// Carga Dinámica desde config.json
+const configPath = path.join(__dirname, '../../config.json');
+const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
-pool.getConnection()
-    .then(connection => {
-        console.log('✅ Conectado a la base de datos MySQL centralizada.');
-        connection.release();
-    })
-    .catch(err => {
-        console.error('❌ Error al conectar con MySQL:', err.message);
+// Mapa de Pools de Conexión
+const pools = {};
+for (const [tenant, config] of Object.entries(configData)) {
+    pools[tenant] = mysql.createPool({
+        host: config.host,
+        user: config.user,
+        password: config.password,
+        database: config.database,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0
     });
 
-module.exports = pool;
+    // Verificación asíncrona al levantar
+    pools[tenant].getConnection()
+        .then(conn => {
+            console.log(`✅ Pool conectado orgánicamente para Tenant: '${tenant}' [BD: ${config.database}]`);
+            conn.release();
+        })
+        .catch(err => console.error(`❌ Error en pool de tenant '${tenant}':`, err.message));
+}
+
+// Interceptor de Base de Datos Dinámico
+const db = {
+    query: async (sql, params) => {
+        // Identificar quién pide la consulta, sino, por defecto market
+        const tenant = tenantContext.getStore() || 'market';
+        const pool = pools[tenant] || pools['market'];
+        return pool.query(sql, params);
+    },
+    // Exponer el contexto para el Middleware en server.js
+    tenantContext
+};
+
+module.exports = db;

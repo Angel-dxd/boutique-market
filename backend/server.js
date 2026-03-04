@@ -5,9 +5,8 @@ const dotenv = require('dotenv');
 // Cargar variables de entorno
 dotenv.config();
 
-// Inicializa MySQL centralizado de inmediato
-require('./src/config/db');
-
+// Extraer contexto de base de datos multitenant
+const { tenantContext } = require('./src/config/db');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -16,6 +15,17 @@ app.use(cors({
     origin: 'http://localhost:4200'
 }));
 app.use(express.json());
+
+// 📌 Middleware Multitenant (Selección Dinámica de DB)
+app.use((req, res, next) => {
+    // Si viene santi, al config santi. Si no, default a market.
+    let tenantId = req.headers['x-tenant-id'] === 'santi' ? 'santi' : 'market';
+
+    // Inyecta el ID en el flujo asincrónico para interceptarlo en db.js
+    tenantContext.run(tenantId, () => {
+        next();
+    });
+});
 
 // Importar rutas
 const inventoryRoutes = require('./src/routes/inventoryRoutes');
