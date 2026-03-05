@@ -34,7 +34,6 @@ export const renderClients = async (container) => {
                     <div>
                         <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
                              Cartera de Clientes
-                            <span class="text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">MySQL Activo</span>
                         </h2>
                         <p class="text-gray-500 mt-1">${filtered.length} clientes registrados</p>
                     </div>
@@ -186,7 +185,7 @@ export const renderClients = async (container) => {
                                 Cancelar
                             </button>
                             <button type="submit" class="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold shadow-lg shadow-slate-900/20 transition-all">
-                                Guardar a MySQL
+                                Guardar
                             </button>
                         </div>
                     </form>
@@ -262,7 +261,7 @@ export const renderClients = async (container) => {
         document.querySelectorAll('.delete-client-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('¿PURGAR cliente permanentemente de MySQL?')) {
+                if (confirm('¿PURGAR cliente permanentemente?')) {
                     const id = parseInt(btn.getAttribute('data-id'));
                     const response = await api.delete(`/clients/${id}`);
                     if (!response.error) {

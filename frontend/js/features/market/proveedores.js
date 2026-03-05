@@ -21,7 +21,7 @@ export const renderProveedores = async (container) => {
                 <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
                     <div>
                         <h1 class="text-4xl font-black text-gray-800 tracking-tight">Proveedores</h1>
-                        <p class="text-gray-500 font-medium">Aliados comerciales (MySQL Centralizado)</p>
+                        <p class="text-gray-500 font-medium">Aliados comerciales</p>
                     </div>
                      <button id="addSupplierBtn" class="bg-[#1e293b] text-white px-8 py-4 rounded-3xl font-black flex items-center gap-3 shadow-xl">
                         <i data-lucide="user-plus" width="22"></i> NUEVO CONTACTO
@@ -63,7 +63,7 @@ export const renderProveedores = async (container) => {
                         </div>
                     `).join('')}
                     
-                    ${suppliers.length === 0 ? `<div class="col-span-1 md:col-span-2 lg:col-span-3 text-center py-10 text-gray-400 font-bold">Aún no tienes proveedores en tu base de datos MySQL.</div>` : ''}
+                    ${suppliers.length === 0 ? `<div class="col-span-1 md:col-span-2 lg:col-span-3 text-center py-10 text-gray-400 font-bold">Aún no tienes proveedores registrados.</div>` : ''}
                 </div>
 
                 <!-- Modal -->
@@ -84,7 +84,7 @@ export const renderProveedores = async (container) => {
                              </div>
                              <div class="flex gap-3 pt-4">
                                 <button type="button" id="closeSupplierModal" class="flex-1 py-4 bg-gray-100 rounded-2xl font-bold">Cancelar</button>
-                                <button type="submit" class="flex-1 py-4 bg-[#1e293b] text-white rounded-2xl font-black">Guardar en MySQL</button>
+                                <button type="submit" class="flex-1 py-4 bg-[#1e293b] text-white rounded-2xl font-black">Guardar</button>
                             </div>
                         </form>
                     </div>
@@ -150,7 +150,7 @@ export const renderProveedores = async (container) => {
         document.querySelectorAll('.delete-supplier').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('¿PURGAR proveedor permanentemente de la base de datos MySQL?')) {
+                if (confirm('¿PURGAR proveedor permanentemente?')) {
                     const id = parseInt(btn.getAttribute('data-id'));
                     const response = await api.delete(`/providers/${id}`);
                     if (!response.error) {
@@ -171,7 +171,7 @@ export const renderProveedores = async (container) => {
         });
     };
 
-    // Al iniciar la vista, primero cargamos la red desde MySQL
+    // Al iniciar la vista, primero cargamos la red
     await loadData();
     safeRender();
 };

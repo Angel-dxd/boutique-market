@@ -35,9 +35,6 @@ export const renderFinance = async (container) => {
                     <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
                         Finanzas <span class="text-sm font-normal text-gray-400">| Panel de Control</span>
                     </h2>
-                     <div class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
-                        MYSQL ACTIVO
-                    </div>
                 </div>
 
                 <!-- Stats -->
@@ -106,7 +103,7 @@ export const renderFinance = async (container) => {
                                     </div>
                                 </div>
                             </div>
-                        `).join('') : '<p class="p-8 text-center text-gray-400">No hay movimientos en MySQL.</p>'}
+                        `).join('') : '<p class="p-8 text-center text-gray-400">No hay movimientos registrados.</p>'}
                     </div>
                 </div>
             </div>
@@ -129,7 +126,7 @@ export const renderFinance = async (container) => {
                          
                          <div class="flex gap-3">
                             <button type="button" id="closeTxModal" class="flex-1 py-3 bg-gray-100 rounded-xl font-bold">Cancelar</button>
-                            <button type="submit" class="flex-1 py-3 bg-gray-900 text-white rounded-xl font-bold">Guardar en MySQL</button>
+                            <button type="submit" class="flex-1 py-3 bg-gray-900 text-white rounded-xl font-bold">Guardar</button>
                          </div>
                      </form>
                 </div>
@@ -205,7 +202,7 @@ export const renderFinance = async (container) => {
         document.querySelectorAll('.delete-tx').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('¿PURGAR transacción permanentemente de MySQL?')) {
+                if (confirm('¿PURGAR transacción permanentemente?')) {
                     const id = parseInt(btn.getAttribute('data-id'));
                     const response = await api.delete(`/finance/${id}`);
                     if (!response.error) {
