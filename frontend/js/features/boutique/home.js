@@ -13,9 +13,11 @@ export const renderBoutiqueHome = async (container) => {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     const formatDate = (date) => date.toISOString().split('T')[0];
+    const todayStr = formatDate(today);
+    const tomorrowStr = formatDate(tomorrow);
 
     // Consultar el nuevo endpoint sincronizado
-    const dashRes = await api.get(`/calendar/dashboard?today=${formatDate(today)}&tomorrow=${formatDate(tomorrow)}`);
+    const dashRes = await api.get(`/calendar/dashboard?today=${todayStr}&tomorrow=${tomorrowStr}`);
 
     // Si error o falla la BD, defaults seguros
     const todayList = dashRes.error ? [] : (dashRes.today || []);
@@ -36,7 +38,6 @@ export const renderBoutiqueHome = async (container) => {
                     <h2 class="text-3xl font-bold text-gray-800">Hola, ${userName}</h2>
                     <p class="text-gray-500 mt-1">Resumen de tu actividad en Oh-Nails</p>
                 </div>
-                <!-- Botón Limpio Moviendo la Acción Rápida Arriba -->
                 <button onclick="window.location.hash = '#/boutique/calendar'" data-link href="/boutique-welcome/calendario" class="hidden md:flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-medium transition-all shadow-md hover:shadow-lg hover:opacity-90">
                     <i data-lucide="calendar-plus" width="20"></i>
                     Programar Cita
@@ -58,7 +59,7 @@ export const renderBoutiqueHome = async (container) => {
                 `).join('')}
             </div>
 
-            <!-- Listas Dinámicas (Reales) -->
+            <!-- Listas Dinámicas e Interactivas (WhatsApp API Hooked) -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
                 <!-- Citas de Hoy -->
@@ -75,7 +76,12 @@ export const renderBoutiqueHome = async (container) => {
                                         <p class="font-bold text-gray-800 text-sm group-hover:text-emerald-700">${apt.client}</p>
                                         <p class="text-xs text-gray-500 font-medium">${apt.time}</p>
                                     </div>
-                                    <span class="text-sm font-bold text-emerald-600">${apt.price}€</span>
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-sm font-bold text-emerald-600">${apt.price}€</span>
+                                        <button class="bg-[#25D366] text-white p-2 rounded-lg hover:bg-green-600 transition-colors shadow flex items-center justify-center wapp-btn" title="Recordar por WhatsApp" data-client="${apt.client}" data-date="${todayStr}">
+                                            <i data-lucide="message-circle" width="16"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             `).join('')
         }
@@ -96,7 +102,12 @@ export const renderBoutiqueHome = async (container) => {
                                         <p class="font-bold text-gray-800 text-sm group-hover:text-blue-700">${apt.client}</p>
                                         <p class="text-xs text-gray-500 font-medium">${apt.time}</p>
                                     </div>
-                                    <span class="text-sm font-bold text-emerald-600">${apt.price}€</span>
+                                     <div class="flex items-center gap-3">
+                                        <span class="text-sm font-bold text-emerald-600">${apt.price}€</span>
+                                        <button class="bg-[#25D366] text-white p-2 rounded-lg hover:bg-green-600 transition-colors shadow flex items-center justify-center wapp-btn" title="Recordar por WhatsApp" data-client="${apt.client}" data-date="${tomorrowStr}">
+                                            <i data-lucide="message-circle" width="16"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             `).join('')
         }
@@ -129,7 +140,7 @@ export const renderBoutiqueHome = async (container) => {
                 </div>
             </div>
             
-            <!-- Mobile Action Button (Shows only on small screens) -->
+            <!-- Mobile Action Button -->
             <button data-link href="/boutique-welcome/calendario" class="md:hidden w-full flex justify-center items-center gap-2 px-6 py-4 rounded-xl bg-emerald-600 text-white font-bold transition-all shadow-lg active:scale-95">
                 <i data-lucide="calendar-plus" width="20"></i>
                 Programar Nueva Cita
@@ -138,4 +149,45 @@ export const renderBoutiqueHome = async (container) => {
     `;
 
     lucide.createIcons();
+
+    // Logic for Interactive WhatsApp Reminders
+    document.querySelectorAll('.wapp-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const clientName = btn.getAttribute('data-client');
+            const dateStr = btn.getAttribute('data-date');
+
+            btn.innerHTML = '<i data-lucide="loader" width="16" class="animate-spin"></i>';
+            lucide.createIcons();
+
+            const response = await api.post('/messages/remind-client', { client: clientName, date: dateStr });
+
+            if (!response.error) {
+                // Success State
+                btn.classList.replace('bg-[#25D366]', 'bg-blue-500');
+                btn.innerHTML = '<i data-lucide="check" width="16"></i>';
+                lucide.createIcons();
+
+                // Revert after 3 seconds
+                setTimeout(() => {
+                    btn.classList.replace('bg-blue-500', 'bg-[#25D366]');
+                    btn.innerHTML = '<i data-lucide="message-circle" width="16"></i>';
+                    lucide.createIcons();
+                }, 3000);
+            } else {
+                // Error State
+                btn.classList.replace('bg-[#25D366]', 'bg-red-500');
+                btn.innerHTML = '<i data-lucide="x" width="16"></i>';
+                lucide.createIcons();
+
+                setTimeout(() => {
+                    btn.classList.replace('bg-red-500', 'bg-[#25D366]');
+                    btn.innerHTML = '<i data-lucide="message-circle" width="16"></i>';
+                    lucide.createIcons();
+                }, 3000);
+            }
+        });
+    });
 };

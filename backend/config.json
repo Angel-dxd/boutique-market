@@ -3,12 +3,20 @@
         "host": "localhost",
         "user": "root",
         "password": "",
-        "database": "boutique_market"
+        "database": "boutique_market",
+        "whatsapp": {
+            "token": "EAA_DUMMY_TOKEN_ARELYS_MARKET_123",
+            "phoneId": "101010101010_ARELYS"
+        }
     },
     "santi": {
         "host": "localhost",
         "user": "root",
         "password": "",
-        "database": "boutique_santi"
+        "database": "boutique_santi",
+        "whatsapp": {
+            "token": "EAA_DUMMY_TOKEN_SANTI_123",
+            "phoneId": "202020202020_SANTI"
+        }
     }
 }

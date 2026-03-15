@@ -32,6 +32,9 @@ export const renderProveedores = async (container) => {
                     ${suppliers.map(s => `
                         <div class="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 hover:shadow-xl transition-all group relative">
                              <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div class="text-green-500 hover:text-green-600 cursor-pointer wapp-provider-btn" title="Contactar por WhatsApp" data-provider="${s.nombre}">
+                                    <i data-lucide="message-circle" width="16"></i>
+                                </div>
                                 <div class="text-gray-300 hover:text-blue-500 cursor-pointer edit-supplier" data-id="${s.id}">
                                     <i data-lucide="edit-2" width="16"></i>
                                 </div>
@@ -167,6 +170,34 @@ export const renderProveedores = async (container) => {
                 editingId = parseInt(btn.getAttribute('data-id'));
                 isModalOpen = true;
                 safeRender();
+            });
+        });
+
+        // WhatsApp Interactive Hook
+        document.querySelectorAll('.wapp-provider-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const providerName = btn.getAttribute('data-provider');
+
+                btn.innerHTML = '<i data-lucide="loader" width="16" class="animate-spin"></i>';
+                lucide.createIcons();
+
+                const response = await api.post('/messages/contact-provider', { providerName, productName: 'suministros generales' });
+
+                if (!response.error) {
+                    btn.classList.replace('text-green-500', 'text-blue-500');
+                    btn.innerHTML = '<i data-lucide="check" width="16"></i>';
+                    lucide.createIcons();
+                    setTimeout(() => {
+                        btn.classList.replace('text-blue-500', 'text-green-500');
+                        btn.innerHTML = '<i data-lucide="message-circle" width="16"></i>';
+                        lucide.createIcons();
+                    }, 3000);
+                } else {
+                    btn.classList.replace('text-green-500', 'text-red-500');
+                    btn.innerHTML = '<i data-lucide="x" width="16"></i>';
+                    lucide.createIcons();
+                }
             });
         });
     };
