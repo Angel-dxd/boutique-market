@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:3000/api';
+// Usa variable inyectada si existe, o asume que el backend corre en el mismo host que el frontend pero en el puerto 3000.
+const API_URL = window.REACT_APP_API_URL || `http://${window.location.hostname}:3000/api`;
 
 // --- SISTEMA GLOBAL DE CARGA Y NOTIFICACIONES (Vanilla JS) ---
 
