@@ -1,283 +1,338 @@
 import { api } from '../core/api.js';
 
-export const renderGallery = async (container) => {
+export const renderInstagramGallery = (container) => {
     let works = [];
-    let isUploadOpen = false;
+    let isLoading = true;
+    let editingId = null;
+    let deletingId = null;
 
-    // Fetch data directly from MySQL
+    // 1. OBTENER DISEÑOS
     const fetchAndRender = async () => {
-        const response = await api.get('/gallery');
-        works = response.error ? [] : response;
+        isLoading = true;
+        render();
+
+        const data = await api.get('/gallery');
+        
+        if (!data.error && Array.isArray(data) && data.length > 0) {
+            works = data;
+        } else {
+            // MOCK STATE
+            works = [
+                { id: 'ej1', image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80', title: 'Acrílicas Cereza', source: 'mock' },
+                { id: 'ej2', image: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80', title: 'Francesa Premium', source: 'mock' },
+                { id: 'ej3', image: 'https://images.unsplash.com/photo-1519014816548-bf5fe059e98b?auto=format&fit=crop&q=80', title: 'Pasteles Brillo', source: 'mock' }
+            ];
+        }
+        
+        isLoading = false;
         render();
     };
 
+    const toBase64 = file => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+
+    // 2. CREAR O ACTUALIZAR
+    const handleSave = async (e) => {
+        e.preventDefault();
+        const title = document.getElementById('nailTitle').value;
+        const fileInput = document.getElementById('nailFile');
+        const btn = document.getElementById('saveNailBtn');
+        const originalText = btn.innerHTML;
+
+        let base64Image = null;
+
+        // Si es nuevo y no hay foto, error. (Si es edicion, la foto existe en bd).
+        if (!editingId && fileInput.files.length === 0) {
+            return api.showToast('Debes seleccionar una imagen local', true);
+        }
+
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            if (file.size > 10 * 1024 * 1024) return api.showToast('La foto excede 10MB', true);
+            
+            btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-5 h-5"></i> Guardando...';
+            btn.disabled = true;
+            lucide.createIcons();
+            base64Image = await toBase64(file);
+        }
+
+        btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-5 h-5"></i> Guardando...';
+        btn.disabled = true;
+        
+        let response;
+        if (editingId) {
+            const currentWork = works.find(w => String(w.id) === String(editingId));
+            response = await api.put(`/gallery/${editingId}`, { 
+                title, 
+                category: 'Unas', 
+                image: base64Image || currentWork.image 
+            });
+        } else {
+            response = await api.post('/gallery', { title, category: 'Unas', image: base64Image });
+        }
+        
+        if (!response.error) {
+            api.showToast(editingId ? 'Obra actualizada correctamente' : 'Obra añadida exitosamente', false);
+            closeModal();
+            await fetchAndRender();
+        } else {
+            api.showToast(response.error, true);
+        }
+
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        lucide.createIcons();
+    };
+
+    // 3. CONFIRMAR BORRADO (MODAL PROFESIONAL)
+    const confirmDelete = async () => {
+        if (!deletingId) return;
+        
+        const btn = document.getElementById('confirmDeleteBtn');
+        const original = btn.innerHTML;
+        btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i>';
+        
+        const res = await api.delete(`/gallery/${deletingId}`);
+        if (!res.error) {
+            api.showToast('Trabajo eliminado del catálogo', false);
+            closeDeleteModal();
+            await fetchAndRender();
+        } else {
+            api.showToast(res.error, true);
+        }
+        
+        btn.innerHTML = original;
+    };
+
+    // CONTROLES DE MODALES
+    const openModal = (id = null, title = '', imageUrl = '') => {
+        editingId = id;
+        document.getElementById('nailTitle').value = title;
+        document.getElementById('nailFile').value = '';
+        
+        const fotoLabel = document.getElementById('fotoLabel');
+        const formTitle = document.getElementById('formTitle');
+        
+        if (id && imageUrl) {
+            // MODO EDICION: Mostrar foto actual
+            document.getElementById('previewImage').src = imageUrl;
+            document.getElementById('uploadPlaceholder').classList.add('hidden');
+            document.getElementById('previewContainer').classList.remove('hidden');
+            formTitle.innerHTML = '<i data-lucide="pencil" class="text-emerald-500 w-8 h-8"></i> <span class="text-2xl font-black">Editar Trabajo</span>';
+            fotoLabel.innerText = 'Fotografía Actual (Toca para Reemplazar)';
+        } else {
+            // MODO CREACION
+            document.getElementById('previewImage').src = '';
+            document.getElementById('uploadPlaceholder').classList.remove('hidden');
+            document.getElementById('previewContainer').classList.add('hidden');
+            formTitle.innerHTML = '<i data-lucide="image-plus" class="text-emerald-500 w-8 h-8"></i> <span class="text-2xl font-black">Añadir Foto</span>';
+            fotoLabel.innerText = 'Seleccionar Fotografía';
+        }
+        
+        document.getElementById('nailModalOverlay').classList.remove('hidden');
+        document.getElementById('nailModalOverlay').classList.add('flex');
+        lucide.createIcons();
+    };
+
+    const closeModal = () => {
+        document.getElementById('nailModalOverlay').classList.add('hidden');
+        document.getElementById('nailModalOverlay').classList.remove('flex');
+        editingId = null;
+    };
+
+    const openDeleteModal = (id) => {
+        deletingId = id;
+        document.getElementById('deleteModalOverlay').classList.remove('hidden');
+        document.getElementById('deleteModalOverlay').classList.add('flex');
+    };
+
+    const closeDeleteModal = () => {
+        deletingId = null;
+        document.getElementById('deleteModalOverlay').classList.add('hidden');
+        document.getElementById('deleteModalOverlay').classList.remove('flex');
+    };
+
+    const handleFilePreview = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const previewUrl = URL.createObjectURL(file);
+            document.getElementById('previewImage').src = previewUrl;
+            document.getElementById('uploadPlaceholder').classList.add('hidden');
+            document.getElementById('previewContainer').classList.remove('hidden');
+        }
+    };
+
+    const getSkeletons = () => Array(4).fill(0).map(() => `
+        <div class="bg-gray-50 rounded-[2rem] shadow-sm aspect-square animate-pulse w-full"></div>
+    `).join('');
+
     const render = () => {
         container.innerHTML = `
-            <div class="space-y-6">
-                 <div class="flex justify-between items-center">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-800">Mis Uñas</h2>
-                        <p class="text-gray-500">Portafolio de diseños y trabajos realizados</p>
+            <div class="space-y-8 animate-in fade-in zoom-in-95 duration-500 relative">
+                
+                <!-- Encabezado Clásico -->
+                <div class="flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] gap-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 shadow-inner shrink-0">
+                            <i data-lucide="briefcase" width="28"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-3xl font-black text-gray-800 tracking-tight">Mis Uñas</h2>
+                            <p class="text-gray-500 font-medium tracking-wide">Catálogo de Trabajos</p>
+                        </div>
                     </div>
-                    <button id="uploadBtn" class="bg-[#059669] hover:opacity-90 text-white px-6 py-3 rounded-xl flex items-center gap-2 shadow-lg">
-                        <i data-lucide="plus" width="20"></i> Subir Nuevo Trabajo
+                    
+                    <button id="addLocalBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-emerald-500/30 transition-transform hover:-translate-y-1 active:scale-95 w-full md:w-auto font-bold text-lg">
+                        <i data-lucide="plus" class="w-6 h-6"></i> Añadir Foto
                     </button>
-                    <input type="file" id="fileInput" accept="image/*" class="hidden" />
                 </div>
-
+                
+                <!-- GRID: Tarjetas Claras con Funciones Visibles -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    ${works.length === 0 ? `<div class="col-span-full text-center text-gray-500 py-10 border-2 border-dashed rounded-xl">No hay trabajos en el portafolio. ¡Sube el primero!</div>` : ''}
-                    ${works.map(work => `
-                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-md transition-all relative">
-                             <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                <button class="bg-white/90 p-2 rounded-full text-blue-600 hover:text-blue-700 shadow-sm edit-work" data-id="${work.id}">
-                                    <i data-lucide="edit-2" width="16"></i>
-                                </button>
-                                <button class="bg-white/90 p-2 rounded-full text-red-600 hover:text-red-700 shadow-sm delete-work" data-id="${work.id}">
-                                    <i data-lucide="trash" width="16"></i>
-                                </button>
+                    ${isLoading ? getSkeletons() : works.map(w => `
+                        <!-- Tarjeta de Contenido -->
+                        <div class="bg-white rounded-[2rem] shadow-md border border-gray-100 overflow-hidden group transition-all duration-300 flex flex-col hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-100">
+                            
+                            <!-- Foto Cuadrada Estricta -->
+                            <div class="relative w-full aspect-square bg-gray-50 shrink-0 border-b border-gray-50">
+                                <img src="${w.image}" alt="${w.title}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" loading="lazy" />
                             </div>
-                             <div class="relative aspect-square bg-gray-100 overflow-hidden cursor-pointer">
-                                <img src="${work.image}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                            </div>
-                            <div class="p-4">
-                                <h3 class="font-bold text-gray-800 truncate">${work.title}</h3>
-                                <div class="flex justify-between items-center mt-1">
-                                    <span class="text-xs font-semibold text-[#059669] bg-emerald-50 px-2 py-1 rounded-md inline-block">
-                                        ${work.category || 'General'}
-                                    </span>
-                                </div>
+                            
+                            <!-- Pie Fijo con Botones Visibles -->
+                            <div class="p-5 flex items-center justify-between gap-3 bg-white grow">
+                                <h4 class="font-bold text-gray-800 text-sm md:text-base line-clamp-2 leading-tight flex-1">
+                                    ${w.title}
+                                </h4>
+                                
+                                ${w.source !== 'mock' ? `
+                                <div class="flex gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity shrink-0">
+                                    <button class="edit-btn p-3 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors cursor-pointer" title="Modificar" data-id="${w.id}" data-title="${w.title}" data-image="${w.image}">
+                                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                                    </button>
+                                    <button class="delete-btn p-3 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors cursor-pointer" title="Borrar" data-id="${w.id}">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>` : `
+                                <span class="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Demo</span>
+                                `}
                             </div>
                         </div>
                     `).join('')}
                 </div>
+            </div>
 
-                <!-- Editor Modal -->
-                <div id="editorModal" class="fixed inset-0 bg-slate-900/80 z-50 hidden items-center justify-center p-4 backdrop-blur-sm">
-                    <div class="bg-white rounded-3xl max-w-4xl w-full p-6 shadow-2xl flex flex-col h-[90vh]">
-                         <div class="flex justify-between items-center mb-4 shrink-0">
-                            <h3 class="text-xl font-bold text-gray-800" id="modalTitle">Subir Trabajo</h3>
-                            <button id="closeEditor" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" width="24"></i></button>
-                        </div>
+            <!-- MODAL DE SUBIDA/EDICIÓN (Estilo Idéntico a Clientes) -->
+            <div id="nailModalOverlay" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <h3 class="text-xl font-bold text-gray-800" id="formTitle"></h3>
+                        <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <i data-lucide="x" width="24"></i>
+                        </button>
+                    </div>
+                    
+                    <form id="newNailForm" class="p-6 space-y-5">
                         
-                        <div class="flex-1 bg-gray-100 rounded-xl overflow-hidden relative flex items-center justify-center mb-4">
-                            <canvas id="editorCanvas" class="max-w-full max-h-full shadow-lg"></canvas>
+                        <!-- Título -->
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Título del Trabajo</label>
+                            <input type="text" id="nailTitle" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium text-gray-800" placeholder="P Ej. Efecto Espejo Rosa..." />
                         </div>
 
-                        <div class="flex flex-col gap-4 shrink-0">
-                            <div class="flex justify-center gap-4">
-                                <button id="rotateBtn" type="button" class="p-3 bg-gray-100 rounded-xl hover:bg-gray-200" title="Rotar 90°">
-                                    <i data-lucide="rotate-cw" width="20"></i>
-                                </button>
-                                <button id="cropBtn" type="button" class="p-3 bg-gray-100 rounded-xl hover:bg-gray-200" title="Recortar (Centro)">
-                                    <i data-lucide="crop" width="20"></i>
-                                </button>
-                                <button id="resizeBtn" type="button" class="p-3 bg-gray-100 rounded-xl hover:bg-gray-200" title="Redimensionar (50%)">
-                                    <i data-lucide="minimize-2" width="20"></i>
-                                </button>
-                            </div>
+                        <!-- Foto -->
+                        <div class="space-y-1">
+                            <label id="fotoLabel" class="text-xs font-bold text-gray-500 uppercase tracking-widest"></label>
+                            <div class="relative w-full aspect-square border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 hover:bg-emerald-50/30 hover:border-emerald-300 transition-all text-center cursor-pointer overflow-hidden group">
+                                <input type="file" id="nailFile" accept="image/jpeg, image/png, image/webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50" />
+                                
+                                <div id="uploadPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4 pointer-events-none">
+                                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 group-hover:scale-110 group-hover:text-emerald-500 transition-all mb-2">
+                                        <i data-lucide="image-plus" class="w-6 h-6"></i>
+                                    </div>
+                                    <span class="text-sm font-bold text-gray-700 block mb-1">Buscar foto en PC o Móvil</span>
+                                </div>
 
-                            <div class="border-t border-gray-100 pt-4">
-                                <form id="saveForm" class="flex flex-wrap gap-4 items-end">
-                                    <input type="hidden" name="id" id="workId">
-                                    <div class="flex-1 min-w-[200px]">
-                                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Título</label>
-                                        <input name="title" id="workTitle" required class="w-full px-4 py-2 border border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all font-medium" placeholder="Ej: Uñas Acrílicas" />
+                                <div id="previewContainer" class="absolute inset-0 hidden pointer-events-none bg-black">
+                                    <img id="previewImage" src="" class="absolute inset-0 w-full h-full object-cover opacity-90 transition-opacity group-hover:opacity-75" />
+                                    <!-- Tint en modo edición activo -->
+                                    <div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                                        <span class="text-white font-bold bg-emerald-600/80 px-4 py-2 rounded-full text-xs flex items-center gap-2">
+                                            <i data-lucide="refresh-cw" class="w-3 h-3"></i> Tocar para cambiar
+                                        </span>
                                     </div>
-                                    <div class="flex-1 min-w-[200px]">
-                                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Categoría</label>
-                                        <select name="category" id="workCategory" class="w-full px-4 py-2 border border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all font-medium">
-                                            <option>Acrílicas</option>
-                                            <option>Semipermanente</option>
-                                            <option>Manicura Rusa</option>
-                                            <option>Nail Art</option>
-                                        </select>
-                                    </div>
-                                    <button type="submit" id="saveSubmitBtn" class="bg-[#059669] hover:bg-emerald-700 text-white px-8 py-2 rounded-xl font-bold h-[42px] transition-colors shadow-lg shadow-emerald-600/20">
-                                        Guardar en Nube
-                                    </button>
-                                </form>
+                                </div>
                             </div>
                         </div>
+
+                        <div class="pt-4 flex gap-3">
+                            <button type="button" id="cancelModalBtn" class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-colors">
+                                Cancelar
+                            </button>
+                            <button type="submit" id="saveNailBtn" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/20 transition-all flex justify-center items-center gap-2">
+                                Guardar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- MODAL DE BORRADO PROFESIONAL -->
+            <div id="deleteModalOverlay" class="fixed inset-0 z-[1000] bg-slate-900/60 backdrop-blur-md hidden items-center justify-center p-4">
+                <div class="bg-white rounded-[2.5rem] w-full max-w-sm p-8 text-center shadow-2xl animate-in zoom-in duration-200 border border-red-50">
+                    <div class="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                        <i data-lucide="trash-2" class="w-12 h-12"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-gray-800 mb-3 tracking-tight">¿Eliminar Trabajo?</h3>
+                    <p class="text-gray-500 mb-8 font-medium">Si eliminas esta fotografía desaparecerá permanentemente de la galería principal.</p>
+                    <div class="flex gap-3">
+                        <button id="cancelDeleteBtn" class="flex-1 px-4 py-4 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-2xl font-bold transition-colors">Abortar</button>
+                        <button id="confirmDeleteBtn" class="flex-1 px-4 py-4 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold transition-colors shadow-lg shadow-red-500/30">Sí, eliminar</button>
                     </div>
                 </div>
             </div>
         `;
         lucide.createIcons();
 
-        // Elements
-        const fileInput = document.getElementById('fileInput');
-        const editorModal = document.getElementById('editorModal');
-        const editorCanvas = document.getElementById('editorCanvas');
-        const ctx = editorCanvas.getContext('2d');
-        let currentImage = null;
-        let editingId = null;
-
-        // Upload Button -> Trigger Input
-        document.getElementById('uploadBtn').addEventListener('click', () => {
-            editingId = null; 
-            document.getElementById('modalTitle').textContent = 'Subir Nuevo Trabajo';
-            document.getElementById('saveForm').reset();
-            document.getElementById('workId').value = '';
-            fileInput.click();
+        // Limpiezas y Enlaces de Eventos
+        document.getElementById('addLocalBtn')?.addEventListener('click', () => openModal(null, '', ''));
+        
+        document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
+        document.getElementById('cancelModalBtn')?.addEventListener('click', closeModal);
+        const overlay = document.getElementById('nailModalOverlay');
+        if (overlay) overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeModal();
         });
+        
+        document.getElementById('newNailForm')?.addEventListener('submit', handleSave);
+        document.getElementById('nailFile')?.addEventListener('change', handleFilePreview);
 
-        // File Input Change
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        currentImage = img;
-                        // Reset Canvas
-                        editorCanvas.width = img.width;
-                        editorCanvas.height = img.height;
-                        ctx.drawImage(img, 0, 0);
-                        // Open Editor
-                        editorModal.classList.remove('hidden');
-                        editorModal.classList.add('flex');
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-            // Reset input
-            fileInput.value = '';
-        });
-
-        // Close Editor
-        document.getElementById('closeEditor').addEventListener('click', () => {
-            editorModal.classList.add('hidden');
-            editorModal.classList.remove('flex');
-        });
-
-        // --- Editor Tools ---
-
-        // Rotate 90 deg
-        document.getElementById('rotateBtn').addEventListener('click', () => {
-            if (!currentImage && !editorCanvas) return;
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCanvas.width = editorCanvas.height;
-            tempCanvas.height = editorCanvas.width;
-            tempCtx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
-            tempCtx.rotate(90 * Math.PI / 180);
-            tempCtx.drawImage(editorCanvas, -editorCanvas.width / 2, -editorCanvas.height / 2);
-            editorCanvas.width = tempCanvas.width;
-            editorCanvas.height = tempCanvas.height;
-            ctx.drawImage(tempCanvas, 0, 0);
-        });
-
-        // Simple Center Crop
-        document.getElementById('cropBtn').addEventListener('click', () => {
-            const size = Math.min(editorCanvas.width, editorCanvas.height);
-            const startX = (editorCanvas.width - size) / 2;
-            const startY = (editorCanvas.height - size) / 2;
-            const imageData = ctx.getImageData(startX, startY, size, size);
-            editorCanvas.width = size;
-            editorCanvas.height = size;
-            ctx.putImageData(imageData, 0, 0);
-        });
-
-        // Resize (50%)
-        document.getElementById('resizeBtn').addEventListener('click', () => {
-            const newWidth = editorCanvas.width * 0.5;
-            const newHeight = editorCanvas.height * 0.5;
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = newWidth;
-            tempCanvas.height = newHeight;
-            tempCanvas.getContext('2d').drawImage(editorCanvas, 0, 0, newWidth, newHeight);
-            editorCanvas.width = newWidth;
-            editorCanvas.height = newHeight;
-            ctx.drawImage(tempCanvas, 0, 0);
-        });
-
-        // Save Logic (PERSISTENT TO MYSQL)
-        document.getElementById('saveForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const submitBtn = document.getElementById('saveSubmitBtn');
-            const originalBtnText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin" width="16"></i> Guardando...';
-            submitBtn.disabled = true;
-            lucide.createIcons();
-
-            const formData = new FormData(e.target);
-            // Get Data URL from Canvas (Compressing slightly to relieve DB load)
-            const finalImage = editorCanvas.toDataURL('image/jpeg', 0.8);
-            const title = formData.get('title');
-            const category = formData.get('category');
-
-            try {
-                let response;
-                if (editingId) {
-                    response = await api.put(\`/gallery/\${editingId}\`, { title, category, image: finalImage });
-                } else {
-                    response = await api.post('/gallery', { title, category, image: finalImage });
-                }
-
-                if (!response.error) {
-                    editorModal.classList.add('hidden');
-                    editorModal.classList.remove('flex');
-                    await fetchAndRender(); // Fetch directly from MySQL to re-paint
-                    api.showToast(editingId ? 'Diseño actualizado' : 'Diseño subido con éxito', false);
-                } else {
-                    api.showToast(response.error, true);
-                }
-            } catch (err) {
-                api.showToast("Error de conexión al servidor", true);
-            } finally {
-                submitBtn.innerHTML = originalBtnText;
-                submitBtn.disabled = false;
-            }
-        });
-
-        // Delete Logic (PERSISTENT TO MYSQL)
-        document.querySelectorAll('.delete-work').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                if (confirm('¿Eliminar diseño del servidor permanentemente?')) {
-                    const id = parseInt(btn.getAttribute('data-id'));
-                    const response = await api.delete(\`/gallery/\${id}\`);
-                    if (!response.error) {
-                        api.showToast('Diseño eliminado', false);
-                        await fetchAndRender();
-                    } else {
-                        api.showToast(response.error, true);
-                    }
-                }
-            });
-        });
-
-        // Edit Modal Trigger
-        document.querySelectorAll('.edit-work').forEach(btn => {
+        document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const id = parseInt(btn.getAttribute('data-id'));
-                const work = works.find(w => w.id === id);
-                if (work) {
-                    editingId = id;
-                    document.getElementById('modalTitle').textContent = 'Editar Trabajo';
-                    document.getElementById('workId').value = id;
-                    document.getElementById('workTitle').value = work.title;
-                    document.getElementById('workCategory').value = work.category || 'Acrílicas';
-
-                    const img = new Image();
-                    img.onload = () => {
-                        currentImage = img;
-                        editorCanvas.width = img.width;
-                        editorCanvas.height = img.height;
-                        ctx.drawImage(img, 0, 0);
-                        editorModal.classList.remove('hidden');
-                        editorModal.classList.add('flex');
-                    };
-                    img.src = work.image;
-                }
+                openModal(btn.getAttribute('data-id'), btn.getAttribute('data-title'), btn.getAttribute('data-image'));
             });
+        });
+
+        // Eventos Borrado Pofesional
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openDeleteModal(btn.getAttribute('data-id'));
+            });
+        });
+
+        document.getElementById('cancelDeleteBtn')?.addEventListener('click', closeDeleteModal);
+        document.getElementById('confirmDeleteBtn')?.addEventListener('click', confirmDelete);
+        
+        const deleteOverlay = document.getElementById('deleteModalOverlay');
+        if (deleteOverlay) deleteOverlay.addEventListener('click', (e) => {
+            if (e.target === deleteOverlay) closeDeleteModal();
         });
     };
 
-    // Initial Trigger (Calls API, then renders)
-    await fetchAndRender();
+    fetchAndRender();
 };

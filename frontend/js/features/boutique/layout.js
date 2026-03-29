@@ -87,7 +87,7 @@ export const renderBoutiqueLayout = () => {
         // Request said: "Galería de Uñas (Gestión de Fotos): Implementa el apartado de 'Mis Uñas'" -> This usually corresponds to "mis-unas"
         contentContainer.innerHTML = '<h2>Gift Cards (WIP)</h2>';
     } else if (path === '/boutique-welcome/mis-unas') {
-        import('./gallery.js').then(m => m.renderGallery(contentContainer));
+        import('./gallery.js').then(m => m.renderInstagramGallery(contentContainer));
     } else {
         contentContainer.innerHTML = `<h2 class="text-2xl font-bold">WIP: ${path}</h2>`;
     }

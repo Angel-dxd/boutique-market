@@ -38,7 +38,6 @@ const financeRoutes = require('./src/routes/financeRoutes');
 const calendarRoutes = require('./src/routes/calendarRoutes');
 const messageRoutes = require('./src/routes/messageRoutes');
 const galleryRoutes = require('./src/routes/galleryRoutes');
-
 // 📌 Definición de Rutas API
 app.use('/api/auth', authRoutes); // NUEVO: Punto crítico para subir la nota de seguridad 
 app.use('/api/products', inventoryRoutes);
@@ -50,7 +49,7 @@ app.use('/api/finance', financeRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/gallery', galleryRoutes);
-
+app.use('/api/nails', require('./src/routes/nailsRoutes'));
 // Ruta Raíz
 app.get('/', (req, res) => {
     res.json({
