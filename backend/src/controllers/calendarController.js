@@ -4,30 +4,30 @@ const db = require('../config/db');
 const getAppointments = async (req, res, next) => {
     try {
         // Aprovecha la conexión dinámica configurada con x-tenant-id para aislar los datos
-        const [rows] = await db.query('SELECT * FROM appointments ORDER BY fecha ASC');
+        const [rows] = await db.query('SELECT * FROM calendar ORDER BY date ASC');
 
         let totalEarnings = 0;
         const formatted = rows.map(r => {
-            const amount = parseFloat(r.ganancia || 0);
+            const amount = parseFloat(r.profit || 0);
             totalEarnings += amount;
             return {
                 id: r.id,
-                cliente: r.cliente,
+                client: r.client,
                 // Formateamos fecha a YYYY-MM-DD aislando la hora
-                fecha: r.fecha instanceof Date ? r.fecha.toISOString().split('T')[0] : r.fecha,
-                descripcion: r.descripcion,
-                ganancia: amount
+                date: r.date instanceof Date ? r.date.toISOString().split('T')[0] : r.date,
+                description: r.description,
+                profit: amount
             };
         });
 
         res.status(200).json({
-            citas: formatted,
-            gananciasTotalesDelDia: totalEarnings
+            calendarEvents: formatted,
+            totalEarningsPerDay: totalEarnings
         });
     } catch (err) {
-        // Prevención de Errores: si el tenant (como santi) no tiene la tabla 'appointments'
+        // Prevención de Errores: si el tenant (como santi) no tiene la tabla 'calendar'
         if (err.code === 'ER_NO_SUCH_TABLE') {
-            return res.status(200).json({ citas: [], gananciasTotalesDelDia: 0 });
+            return res.status(200).json({ calendarEvents: [], totalEarningsPerDay: 0 });
         }
         next(err);
     }
@@ -36,19 +36,19 @@ const getAppointments = async (req, res, next) => {
 // Guardar nueva Cita
 const createAppointment = async (req, res, next) => {
     try {
-        const { cliente, fecha, descripcion, ganancia } = req.body;
+        const { client, date, description, profit } = req.body;
 
         const [result] = await db.query(
-            `INSERT INTO appointments (cliente, fecha, descripcion, ganancia) VALUES (?, ?, ?, ?)`,
-            [cliente, fecha, descripcion || '', parseFloat(ganancia || 0)]
+            `INSERT INTO calendar (client, date, description, profit) VALUES (?, ?, ?, ?)`,
+            [client, date, description || '', parseFloat(profit || 0)]
         );
 
         res.status(201).json({
             id: result.insertId,
-            cliente,
-            fecha,
-            descripcion,
-            ganancia: parseFloat(ganancia || 0)
+            client,
+            date,
+            description,
+            profit: parseFloat(profit || 0)
         });
     } catch (err) {
         if (err.code === 'ER_NO_SUCH_TABLE') {
@@ -64,18 +64,18 @@ const getEarningsReport = async (req, res, next) => {
         const dateStr = req.query.date || new Date().toISOString().split('T')[0];
 
         // Consultas agrupadas nativamente en MySQL segmentando por el tenant actual
-        const [dayResult] = await db.query(`SELECT SUM(ganancia) as total FROM appointments WHERE DATE(fecha) = ?`, [dateStr]);
-        const [monthResult] = await db.query(`SELECT SUM(ganancia) as total FROM appointments WHERE MONTH(fecha) = MONTH(?) AND YEAR(fecha) = YEAR(?)`, [dateStr, dateStr]);
-        const [yearResult] = await db.query(`SELECT SUM(ganancia) as total FROM appointments WHERE YEAR(fecha) = YEAR(?)`, [dateStr]);
+        const [dayResult] = await db.query(`SELECT SUM(profit) as total FROM calendar WHERE DATE(date) = ?`, [dateStr]);
+        const [monthResult] = await db.query(`SELECT SUM(profit) as total FROM calendar WHERE MONTH(date) = MONTH(?) AND YEAR(date) = YEAR(?)`, [dateStr, dateStr]);
+        const [yearResult] = await db.query(`SELECT SUM(profit) as total FROM calendar WHERE YEAR(date) = YEAR(?)`, [dateStr]);
 
         res.status(200).json({
-            hoy: parseFloat(dayResult[0].total || 0),
-            mes: parseFloat(monthResult[0].total || 0),
-            ano: parseFloat(yearResult[0].total || 0)
+            today: parseFloat(dayResult[0].total || 0),
+            month: parseFloat(monthResult[0].total || 0),
+            year: parseFloat(yearResult[0].total || 0)
         });
     } catch (err) {
         if (err.code === 'ER_NO_SUCH_TABLE') {
-            return res.status(200).json({ hoy: 0, mes: 0, ano: 0 });
+            return res.status(200).json({ today: 0, month: 0, year: 0 });
         }
         next(err);
     }
@@ -91,26 +91,26 @@ const getDashboardData = async (req, res, next) => {
         }
 
         const [todayRows] = await db.query(
-            'SELECT * FROM appointments WHERE fecha = ? ORDER BY descripcion ASC',
+            'SELECT * FROM calendar WHERE date = ? ORDER BY description ASC',
             [today]
         );
 
         const [tomorrowRows] = await db.query(
-            'SELECT * FROM appointments WHERE fecha = ? ORDER BY descripcion ASC',
+            'SELECT * FROM calendar WHERE date = ? ORDER BY description ASC',
             [tomorrow]
         );
 
         // Top 5 Clientes (Mis Fieles) basado puramente en historial de citas
         const [topClientsRows] = await db.query(
-            'SELECT cliente AS name, COUNT(*) AS visits FROM appointments GROUP BY cliente ORDER BY visits DESC LIMIT 5'
+            'SELECT client AS name, COUNT(*) AS visits FROM calendar GROUP BY client ORDER BY visits DESC LIMIT 5'
         );
 
         res.status(200).json({
             today: todayRows.map(r => ({
-                id: r.id, client: r.cliente, time: r.descripcion || '10:00', price: parseFloat(r.ganancia)
+                id: r.id, client: r.client, time: r.description || '10:00', price: parseFloat(r.profit)
             })),
             tomorrow: tomorrowRows.map(r => ({
-                id: r.id, client: r.cliente, time: r.descripcion || '10:00', price: parseFloat(r.ganancia)
+                id: r.id, client: r.client, time: r.description || '10:00', price: parseFloat(r.profit)
             })),
             topClients: topClientsRows
         });
@@ -126,26 +126,28 @@ const getDashboardData = async (req, res, next) => {
 // Importar múltiples citas de golpe (CSV a MySQL)
 const importAppointments = async (req, res, next) => {
     try {
-        const { appointments } = req.body;
-        if (!Array.isArray(appointments) || appointments.length === 0) {
+        const { calendarEvents } = req.body;
+        // Fallback for previous property
+        const events = calendarEvents || req.body.appointments;
+        if (!Array.isArray(events) || events.length === 0) {
             return res.status(400).json({ error: 'Array de citas vacío o inválido.' });
         }
 
         let insertedCount = 0;
 
         // Iteramos las citas y las insertamos (Aprovechando que db.query usará la misma conexión del tenant en curso)
-        for (const apt of appointments) {
-            const { cliente, fecha, descripcion, ganancia } = apt;
-            if (cliente && fecha) {
+        for (const apt of events) {
+            const { client, date, description, profit } = apt;
+            if (client && date) {
                 await db.query(
-                    `INSERT INTO appointments (cliente, fecha, descripcion, ganancia) VALUES (?, ?, ?, ?)`,
-                    [cliente, fecha, descripcion || '', parseFloat(ganancia || 0)]
+                    `INSERT INTO calendar (client, date, description, profit) VALUES (?, ?, ?, ?)`,
+                    [client, date, description || '', parseFloat(profit || 0)]
                 );
                 insertedCount++;
             }
         }
 
-        res.status(201).json({ message: `Se importaron ${insertedCount} citas exitosamente.` });
+        res.status(201).json({ message: `Se importaron ${insertedCount} eventos exitosamente.` });
     } catch (err) {
         if (err.code === 'ER_NO_SUCH_TABLE') {
             return res.status(200).json({ error: 'Operación ignorada: Este tenant no soporta agenda todavía.' });

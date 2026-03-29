@@ -2,14 +2,14 @@ const db = require('../config/db');
 
 const getTransactions = async (req, res, next) => {
     try {
-        const [rows] = await db.query('SELECT * FROM finanzas ORDER BY fecha DESC');
+        const [rows] = await db.query('SELECT * FROM finance ORDER BY date DESC');
         // Map to standard frontend shape
         const transactions = rows.map(r => ({
             id: r.id,
-            amount: r.monto,
-            type: r.tipo,
-            category: r.categoria,
-            date: r.fecha
+            amount: r.amount,
+            type: r.type,
+            category: r.category,
+            date: r.date
         }));
         res.status(200).json(transactions);
     } catch (err) { next(err); }
@@ -19,11 +19,11 @@ const createTransaction = async (req, res, next) => {
     try {
         const { amount, type, category, date, description } = req.body;
         if (!amount || !type) {
-            const err = new Error('Rechazado: Monto y Tipo son obligatorios'); err.status = 400; throw err;
+            const err = new Error('Rechazado: Amount y Type son obligatorios'); err.status = 400; throw err;
         }
 
         const [result] = await db.query(
-            `INSERT INTO finanzas (monto, tipo, categoria, fecha) VALUES (?, ?, ?, ?)`,
+            `INSERT INTO finance (amount, type, category, date) VALUES (?, ?, ?, ?)`,
             [parseFloat(amount), type, category || description, date ? new Date(date) : new Date()]
         );
 
@@ -37,7 +37,7 @@ const updateTransaction = async (req, res, next) => {
         const { amount, type, category, date, description } = req.body;
 
         const [result] = await db.query(
-            `UPDATE finanzas SET monto=?, tipo=?, categoria=?, fecha=? WHERE id=?`,
+            `UPDATE finance SET amount=?, type=?, category=?, date=? WHERE id=?`,
             [parseFloat(amount), type, category || description, date ? new Date(date) : new Date(), id]
         );
         if (result.affectedRows === 0) { const e = new Error('Rechazado: La transacción no existe'); e.status = 404; throw e; }
@@ -48,7 +48,7 @@ const updateTransaction = async (req, res, next) => {
 
 const deleteTransaction = async (req, res, next) => {
     try {
-        const [result] = await db.query(`DELETE FROM finanzas WHERE id = ?`, [req.params.id]);
+        const [result] = await db.query(`DELETE FROM finance WHERE id = ?`, [req.params.id]);
         if (result.affectedRows === 0) { const e = new Error('Rechazado: La transacción no existe'); e.status = 404; throw e; }
         res.status(200).json({ message: 'Transacción eliminada' });
     } catch (err) { next(err); }

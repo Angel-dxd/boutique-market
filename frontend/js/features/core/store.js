@@ -32,7 +32,7 @@ class BoutiqueStore {
                 { id: 2, title: 'Chuletas Cerdo', stock: 3, price: 6.90, min_stock: 5, bg: 'bg-pink-100', icon: 'beef' },
             ],
             suppliers: [
-                { id: 1, nombre: 'Avícola del Sur', telefono: '954000111', empresa: 'Avícola Sur S.L.', categoria: 'Producto' },
+                { id: 1, name: 'Avícola del Sur', phone: '954000111', company: 'Avícola Sur S.L.', category: 'Producto' },
             ],
             invoices: []
         };
@@ -171,8 +171,8 @@ class BoutiqueStore {
         this.addTransaction({
             type: 'expense',
             category: 'Factura Proveedor',
-            amount: invoice.monto,
-            description: `Pago Factura: ${invoice.referencia || 'Sin Ref'}`,
+            amount: invoice.amount,
+            description: `Pago Factura: ${invoice.reference || 'Sin Ref'}`,
             date: new Date().toISOString().split('T')[0]
         });
 

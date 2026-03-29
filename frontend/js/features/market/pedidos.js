@@ -1,4 +1,4 @@
-import { api } from '../../api.js';
+import { api } from '../core/api.js';
 
 export const renderPedidos = async (container) => {
     let isModalOpen = false;
@@ -24,7 +24,7 @@ export const renderPedidos = async (container) => {
 
     const safeRender = () => {
         // Calcs
-        const totalDebt = invoices.reduce((acc, inv) => acc + parseFloat(inv.monto || 0), 0);
+        const totalDebt = invoices.reduce((acc, inv) => acc + parseFloat(inv.amount || 0), 0);
 
         container.innerHTML = `
             <div class="p-8 w-full max-w-7xl mx-auto">
@@ -77,10 +77,10 @@ export const renderPedidos = async (container) => {
                                 ${invoices.length > 0 ? invoices.map(inv => `
                                     <tr class="hover:bg-blue-50/30 transition-colors group">
                                         <td class="p-4 font-bold text-gray-700">
-                                            ${suppliers.find(s => s.id == inv.proveedor_id)?.nombre || 'S/N'}
+                                            ${suppliers.find(s => s.id == inv.provider_id)?.name || 'S/N'}
                                         </td>
-                                        <td class="p-4 font-black text-gray-900">${parseFloat(inv.monto).toFixed(2)}€</td>
-                                        <td class="p-4 text-gray-400 font-mono text-xs">${inv.referencia}</td>
+                                        <td class="p-4 font-black text-gray-900">${parseFloat(inv.amount).toFixed(2)}€</td>
+                                        <td class="p-4 text-gray-400 font-mono text-xs">${inv.reference}</td>
                                         <td class="p-4 text-right flex justify-end gap-2 transition-opacity">
                                              <button class="text-blue-500 hover:bg-blue-50 p-2 rounded-lg edit-inv" data-id="${inv.id}">
                                                 <i data-lucide="edit-2" width="16"></i>
@@ -103,12 +103,12 @@ export const renderPedidos = async (container) => {
                     <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
                         <h3 class="text-xl font-bold text-gray-800 mb-6" id="modalTitle">${editingId ? 'Editar Factura' : 'Nueva Factura'}</h3>
                         <form id="invoiceForm" class="space-y-4">
-                            <input name="referencia" id="invRef" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold text-gray-800" placeholder="Ref Factura (Alfanumérico)" required />
-                            <select name="proveedor_id" id="invProv" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold text-gray-800" required>
+                            <input name="reference" id="invRef" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold text-gray-800" placeholder="Ref Factura (Alfanumérico)" required />
+                            <select name="provider_id" id="invProv" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold text-gray-800" required>
                                 <option value="">Selecciona Proveedor (Obligatorio)</option>
-                                ${suppliers.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('')}
+                                ${suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
                             </select>
-                            <input name="monto" id="invMonto" type="number" step="0.01" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold text-gray-800" placeholder="Monto Deuda €" required />
+                            <input name="amount" id="invMonto" type="number" step="0.01" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold text-gray-800" placeholder="Monto Deuda €" required />
                             
                              <div class="flex gap-3 pt-4">
                                 <button type="button" id="closeInvoiceModal" class="flex-1 py-4 bg-gray-100 rounded-2xl font-bold">Cancelar</button>
@@ -138,9 +138,9 @@ export const renderPedidos = async (container) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const payloadData = {
-                    referencia: formData.get('referencia'),
-                    proveedor_id: parseInt(formData.get('proveedor_id')),
-                    monto: parseFloat(formData.get('monto'))
+                    reference: formData.get('reference'),
+                    provider_id: parseInt(formData.get('provider_id')),
+                    amount: parseFloat(formData.get('amount'))
                 };
 
                 let response;
@@ -161,9 +161,9 @@ export const renderPedidos = async (container) => {
             if (editingId) {
                 const inv = invoices.find(i => i.id === editingId);
                 if (inv) {
-                    document.getElementById('invRef').value = inv.referencia;
-                    document.getElementById('invProv').value = inv.proveedor_id;
-                    document.getElementById('invMonto').value = inv.monto;
+                    document.getElementById('invRef').value = inv.reference;
+                    document.getElementById('invProv').value = inv.provider_id;
+                    document.getElementById('invMonto').value = inv.amount;
                 }
             }
         }

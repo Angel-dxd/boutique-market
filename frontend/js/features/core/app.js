@@ -1,8 +1,8 @@
 
-import { renderLogin } from './login.js';
-import { renderMarketLayout } from './layouts/marketLayout.js';
-import { renderBoutiqueLayout } from './layouts/boutiqueLayout.js';
-import { renderLogoutModal } from './features/shared/logoutModal.js';
+import { renderLogin } from '../auth/login.js';
+import { renderMarketLayout } from '../market/layout.js';
+import { renderBoutiqueLayout } from '../boutique/layout.js';
+import { renderLogoutModal } from '../shared/logoutModal.js';
 
 // Route Definitions
 const routes = {

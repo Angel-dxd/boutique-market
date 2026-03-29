@@ -1,4 +1,4 @@
-import { api } from '../../api.js';
+import { api } from '../core/api.js';
 
 export const renderInventario = async (container) => {
     let searchTerm = '';
@@ -70,7 +70,7 @@ export const renderInventario = async (container) => {
                                 <tr class="hover:bg-gray-50/50 transition-colors">
                                     <td class="p-5">
                                         <div class="font-bold text-gray-800">${p.title}</div>
-                                        <div class="text-xs text-gray-400">${p.min_stock} min | ${p.categoria || 'General'}</div>
+                                        <div class="text-xs text-gray-400">${p.min_stock} min | ${p.category || 'General'}</div>
                                     </td>
                                     <td class="p-5">
                                         <div class="flex items-center gap-3">
@@ -110,16 +110,16 @@ export const renderInventario = async (container) => {
                                 <input name="min_stock" id="prodMinStock" type="number" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none" placeholder="Stock Mínimo (Alerta)" value="5" />
                             </div>
                             <div class="grid grid-cols-2 gap-4">
-                                <select name="categoria" id="prodCategory" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none">
+                                <select name="category" id="prodCategory" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none">
                                     <option value="General">General</option>
                                     <option value="Carnes">Carnes</option>
                                     <option value="Lácteos">Lácteos</option>
                                     <option value="Bebidas">Bebidas</option>
                                     <option value="Limpieza">Limpieza</option>
                                 </select>
-                                <select name="proveedor_id" id="prodProvider" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none">
+                                <select name="provider_id" id="prodProvider" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none">
                                     <option value="">Sin Proveedor</option>
-                                    ${suppliers.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('')}
+                                    ${suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
                                 </select>
                             </div>
                             
@@ -143,8 +143,8 @@ export const renderInventario = async (container) => {
                 document.getElementById('prodCost').value = p.cost || 0;
                 document.getElementById('prodStock').value = p.stock;
                 document.getElementById('prodMinStock').value = p.min_stock || 5;
-                document.getElementById('prodCategory').value = p.categoria || 'General';
-                document.getElementById('prodProvider').value = p.proveedor_id || '';
+                document.getElementById('prodCategory').value = p.category || 'General';
+                document.getElementById('prodProvider').value = p.provider_id || '';
             }
         }
 
@@ -218,8 +218,8 @@ export const renderInventario = async (container) => {
                     cost: parseFloat(formData.get('cost')),
                     stock: parseInt(formData.get('stock')),
                     min_stock: parseInt(formData.get('min_stock')) || 5,
-                    categoria: formData.get('categoria'),
-                    proveedor_id: formData.get('proveedor_id') ? parseInt(formData.get('proveedor_id')) : null
+                    category: formData.get('category'),
+                    provider_id: formData.get('provider_id') ? parseInt(formData.get('provider_id')) : null
                 };
 
                 let response;

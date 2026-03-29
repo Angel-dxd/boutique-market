@@ -1,5 +1,5 @@
-import { store } from '../../store.js';
-import { navigateTo } from '../../app.js';
+import { store } from '../core/store.js';
+import { navigateTo } from '../core/app.js';
 
 export const renderMarketHome = (container) => {
     const render = () => {
@@ -11,7 +11,7 @@ export const renderMarketHome = (container) => {
         // KPIs
         const criticalStock = products.filter(p => parseInt(p.stock) <= parseInt(p.min_stock)).length;
         const pendingInvoices = invoices.length;
-        const totalDebt = invoices.reduce((acc, inv) => acc + parseFloat(inv.monto || 0), 0);
+        const totalDebt = invoices.reduce((acc, inv) => acc + parseFloat(inv.amount || 0), 0);
         const activeSuppliers = suppliers.length;
 
         container.innerHTML = `

@@ -1,5 +1,5 @@
-import { navigateTo } from '../app.js';
-import { renderBoutiqueHome } from '../features/boutique/home.js';
+import { navigateTo } from '../core/app.js';
+import { renderBoutiqueHome } from './home.js';
 
 export const renderBoutiqueLayout = () => {
     const app = document.getElementById('app');

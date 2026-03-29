@@ -1,4 +1,4 @@
-import { api } from '../../api.js';
+import { api } from '../core/api.js';
 
 export const renderFinance = async (container) => {
 
@@ -85,7 +85,7 @@ export const renderFinance = async (container) => {
                                         <i data-lucide="${['income', 'entrada'].includes(t.type) ? 'dollar-sign' : 'shopping-bag'}" width="20"></i>
                                     </div>
                                     <div>
-                                        <p class="font-bold text-gray-800 text-sm">${t.category || t.categoria || 'Sin Categoría'}</p>
+                                        <p class="font-bold text-gray-800 text-sm">${t.category || t.category || 'Sin Categoría'}</p>
                                         <p class="text-xs text-gray-400">${t.description || new Date(t.date).toISOString().split('T')[0]}</p>
                                     </div>
                                 </div>
@@ -223,7 +223,7 @@ export const renderFinance = async (container) => {
                     document.getElementById('modalTitle').textContent = 'Editar Movimiento';
                     document.getElementById('txId').value = t.id;
                     document.getElementById('txAmount').value = t.amount;
-                    document.getElementById('txCategory').value = t.category || t.categoria;
+                    document.getElementById('txCategory').value = t.category || t.category;
                     document.getElementById('txDescription').value = t.description || '';
                     setType(t.type);
 

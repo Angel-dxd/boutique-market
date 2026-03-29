@@ -40,6 +40,11 @@ const db = {
         const pool = pools[tenant] || pools['market'];
         return pool.query(sql, params);
     },
+    execute: async (sql, params) => {
+        const tenant = tenantContext.getStore() || 'market';
+        const pool = pools[tenant] || pools['market'];
+        return pool.execute(sql, params);
+    },
     // Exponer el contexto para el Middleware en server.js
     tenantContext
 };

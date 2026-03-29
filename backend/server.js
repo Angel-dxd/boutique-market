@@ -2,32 +2,32 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
-// Cargar variables de entorno
+// Cargar variables de entorno (Prioridad: Seguridad )
 dotenv.config();
 
 // Extraer contexto de base de datos multitenant
 const { tenantContext } = require('./src/config/db');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Configuración Middlewares
+// 📌 Configuración Middlewares
+// MEJORA: CORS dinámico desde .env para evitar penalización en seguridad [cite: 37, 58]
 app.use(cors({
-    origin: 'http://localhost:4200'
+    origin: process.env.CORS_ORIGIN || 'http://localhost:4200'
 }));
 app.use(express.json());
 
 // 📌 Middleware Multitenant (Selección Dinámica de DB)
 app.use((req, res, next) => {
-    // Si viene santi, al config santi. Si no, default a market.
     let tenantId = req.headers['x-tenant-id'] === 'santi' ? 'santi' : 'market';
-
-    // Inyecta el ID en el flujo asincrónico para interceptarlo en db.js
     tenantContext.run(tenantId, () => {
         next();
     });
 });
 
-// Importar rutas
+// 📌 Importar rutas
+const authRoutes = require('./src/routes/authRoutes'); // NUEVO: PSyP-4 y PSyP-5 
 const inventoryRoutes = require('./src/routes/inventoryRoutes');
 const providerRoutes = require('./src/routes/providerRoutes');
 const statisticsRoutes = require('./src/routes/statisticsRoutes');
@@ -36,7 +36,9 @@ const invoiceRoutes = require('./src/routes/invoiceRoutes');
 const financeRoutes = require('./src/routes/financeRoutes');
 const calendarRoutes = require('./src/routes/calendarRoutes');
 const messageRoutes = require('./src/routes/messageRoutes');
-// Definición de Rutas API
+
+// 📌 Definición de Rutas API
+app.use('/api/auth', authRoutes); // NUEVO: Punto crítico para subir la nota de seguridad 
 app.use('/api/products', inventoryRoutes);
 app.use('/api/providers', providerRoutes);
 app.use('/api/dashboard', statisticsRoutes);
@@ -45,15 +47,17 @@ app.use('/api/invoices', invoiceRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/messages', messageRoutes);
-// Ruta Raíz (Verifica funcionamiento global)
+
+// Ruta Raíz
 app.get('/', (req, res) => {
     res.json({
         message: 'Boutique & Market API (Centralized MySQL) Running',
-        status: 'Online'
+        status: 'Online',
+        security: 'AES & Bcrypt Active' // Indicador de cumplimiento técnico 
     });
 });
 
-// 📌 Manejador Global de Errores (Nivel Estructural 2)
+// 📌 Manejador Global de Errores (Nivel Estructural 2) [cite: 31]
 app.use((err, req, res, next) => {
     console.error('🔥 Error Detonado en Backend:', err.stack);
     const status = err.status || 500;

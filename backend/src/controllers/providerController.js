@@ -2,23 +2,23 @@ const db = require('../config/db');
 
 const getProviders = async (req, res, next) => {
     try {
-        const [rows] = await db.query('SELECT * FROM providers ORDER BY nombre ASC');
+        const [rows] = await db.query('SELECT * FROM providers ORDER BY name ASC');
         res.status(200).json(rows);
     } catch (err) { next(err); }
 };
 
 const createProvider = async (req, res, next) => {
     try {
-        let { nombre, telefono, empresa, categoria } = req.body;
-        nombre = nombre ? nombre.trim() : null;
+        let { name, phone, company, category } = req.body;
+        name = name ? name.trim() : null;
 
-        if (!nombre) { const err = new Error("Nombre es un campo obligatorio"); err.status = 400; throw err; }
+        if (!name) { const err = new Error("Name es un campo obligatorio"); err.status = 400; throw err; }
 
         const [result] = await db.query(
-            `INSERT INTO providers (nombre, telefono, empresa, categoria) VALUES (?, ?, ?, ?)`,
-            [nombre, telefono ? telefono.toString().replace(/\s+/g, '') : null, empresa ? empresa.trim() : null, categoria || 'Suministros']
+            `INSERT INTO providers (name, phone, company, category) VALUES (?, ?, ?, ?)`,
+            [name, phone ? phone.toString().replace(/\\s+/g, '') : null, company ? company.trim() : null, category || 'Suministros']
         );
-        res.status(201).json({ id: result.insertId, nombre, telefono, empresa });
+        res.status(201).json({ id: result.insertId, name, phone, company });
     } catch (err) { next(err); }
 };
 
@@ -30,16 +30,16 @@ const bulkCreateProviders = async (req, res, next) => {
         }
 
         const validProviders = providers.map(p => ({
-            nombre: p.nombre ? String(p.nombre).trim() : null,
-            telefono: p.telefono ? String(p.telefono).replace(/[^0-9+\s-]/g, '').trim() : null,
-            empresa: p.empresa ? String(p.empresa).trim() : null,
-            categoria: p.categoria ? String(p.categoria).trim() : 'General'
-        })).filter(p => p.nombre !== null && p.nombre !== '');
+            name: p.name ? String(p.name).trim() : null,
+            phone: p.phone ? String(p.phone).replace(/[^0-9+\\s-]/g, '').trim() : null,
+            company: p.company ? String(p.company).trim() : null,
+            category: p.category ? String(p.category).trim() : 'General'
+        })).filter(p => p.name !== null && p.name !== '');
 
-        if (validProviders.length === 0) { const e = new Error("El CSV no contiene elementos válidos con la estructura apropiada (falta nombre)"); e.status = 400; throw e; }
+        if (validProviders.length === 0) { const e = new Error("El CSV no contiene elementos válidos con la estructura apropiada (falta name)"); e.status = 400; throw e; }
 
-        const values = validProviders.map(p => [p.nombre, p.telefono, p.empresa, p.categoria]);
-        const [result] = await db.query(`INSERT INTO providers (nombre, telefono, empresa, categoria) VALUES ?`, [values]);
+        const values = validProviders.map(p => [p.name, p.phone, p.company, p.category]);
+        const [result] = await db.query(`INSERT INTO providers (name, phone, company, category) VALUES ?`, [values]);
 
         res.status(201).json({ message: 'Lote importado con éxito a MySQL Central', count: result.affectedRows });
     } catch (err) { next(err); }

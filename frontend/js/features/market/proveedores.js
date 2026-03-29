@@ -1,4 +1,4 @@
-import { api } from '../../api.js';
+import { api } from '../core/api.js';
 
 export const renderProveedores = async (container) => {
     let isModalOpen = false;
@@ -32,7 +32,7 @@ export const renderProveedores = async (container) => {
                     ${suppliers.map(s => `
                         <div class="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 hover:shadow-xl transition-all group relative">
                              <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <div class="text-green-500 hover:text-green-600 cursor-pointer wapp-provider-btn" title="Contactar por WhatsApp" data-provider="${s.nombre}">
+                                <div class="text-green-500 hover:text-green-600 cursor-pointer wapp-provider-btn" title="Contactar por WhatsApp" data-provider="${s.name}">
                                     <i data-lucide="message-circle" width="16"></i>
                                 </div>
                                 <div class="text-gray-300 hover:text-blue-500 cursor-pointer edit-supplier" data-id="${s.id}">
@@ -47,20 +47,20 @@ export const renderProveedores = async (container) => {
                                     <i data-lucide="building-2" width="28"></i>
                                 </div>
                                 <div>
-                                    <h3 class="font-black text-gray-800 text-xl leading-tight">${s.nombre}</h3>
+                                    <h3 class="font-black text-gray-800 text-xl leading-tight">${s.name}</h3>
                                     <span class="text-[10px] bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-black uppercase tracking-widest mt-1 inline-block">
-                                        ${s.categoria || s.category || 'General'}
+                                        ${s.category || s.category || 'General'}
                                     </span>
                                 </div>
                             </div>
                              <div class="space-y-4 pt-6 border-t border-gray-50">
                                 <div class="flex items-center gap-4 text-gray-600 font-bold">
                                     <div class="p-2 bg-gray-50 rounded-xl"><i data-lucide="phone" width="18"></i></div>
-                                    ${s.telefono || 'Sin registrar'}
+                                    ${s.phone || 'Sin registrar'}
                                 </div>
                                  <div class="flex items-center gap-4 text-gray-600 font-bold">
                                     <div class="p-2 bg-gray-50 rounded-xl"><i data-lucide="tag" width="18"></i></div>
-                                    ${s.empresa || 'Independiente'}
+                                    ${s.company || 'Independiente'}
                                 </div>
                             </div>
                         </div>
@@ -74,11 +74,11 @@ export const renderProveedores = async (container) => {
                     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-8">
                         <h2 class="text-2xl font-black text-gray-800 mb-6" id="modalTitle">${editingId ? 'Editar Proveedor' : 'Nuevo Proveedor'}</h2>
                         <form id="supplierForm" class="space-y-4">
-                             <input name="nombre" id="supplierName" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold text-gray-800" placeholder="Nombre (Obligatorio)" required />
-                             <input name="empresa" id="supplierCompany" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold text-gray-800" placeholder="Empresa" />
+                             <input name="name" id="supplierName" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold text-gray-800" placeholder="Nombre (Obligatorio)" required />
+                             <input name="company" id="supplierCompany" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold text-gray-800" placeholder="Empresa" />
                              <div class="grid grid-cols-2 gap-4">
-                                <input name="telefono" id="supplierPhone" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold text-gray-800" placeholder="Teléfono" />
-                                <select name="categoria" id="supplierCategory" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold text-gray-800">
+                                <input name="phone" id="supplierPhone" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold text-gray-800" placeholder="Teléfono" />
+                                <select name="category" id="supplierCategory" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl outline-none font-bold text-gray-800">
                                     <option>Suministros</option>
                                     <option>Producto</option>
                                     <option>Servicios</option>
@@ -101,13 +101,13 @@ export const renderProveedores = async (container) => {
         if (editingId) {
             const s = suppliers.find(su => su.id === editingId);
             if (s) {
-                document.getElementById('supplierName').value = s.nombre;
-                document.getElementById('supplierCompany').value = s.empresa || '';
-                document.getElementById('supplierPhone').value = s.telefono || '';
+                document.getElementById('supplierName').value = s.name;
+                document.getElementById('supplierCompany').value = s.company || '';
+                document.getElementById('supplierPhone').value = s.phone || '';
                 // Set correct select value if matches
                 const options = Array.from(document.getElementById('supplierCategory').options);
-                const hasMatch = options.find(o => o.value === (s.categoria || s.category));
-                if (hasMatch) document.getElementById('supplierCategory').value = s.categoria || s.category;
+                const hasMatch = options.find(o => o.value === (s.category || s.category));
+                if (hasMatch) document.getElementById('supplierCategory').value = s.category || s.category;
             }
         }
 
@@ -128,10 +128,10 @@ export const renderProveedores = async (container) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const payloadData = {
-                    nombre: formData.get('nombre'),
-                    empresa: formData.get('empresa'),
-                    telefono: formData.get('telefono'),
-                    categoria: formData.get('categoria')
+                    name: formData.get('name'),
+                    company: formData.get('company'),
+                    phone: formData.get('phone'),
+                    category: formData.get('category')
                 };
 
                 let response;

@@ -2,42 +2,42 @@ const db = require('../config/db');
 
 const getInvoices = async (req, res, next) => {
     try {
-        const [rows] = await db.query('SELECT * FROM facturas ORDER BY id DESC');
+        const [rows] = await db.query('SELECT * FROM invoices ORDER BY id DESC');
         res.status(200).json(rows);
     } catch (err) { next(err); }
 };
 
 const createInvoice = async (req, res, next) => {
     try {
-        const { proveedor_id, monto, referencia } = req.body;
+        const { provider_id, amount, reference } = req.body;
 
-        if (!proveedor_id || !monto || !referencia) {
+        if (!provider_id || !amount || !reference) {
             const err = new Error('Rechazado: Proveedor, monto y referencia son obligatorios');
             err.status = 400; throw err;
         }
 
         const [result] = await db.query(
-            `INSERT INTO facturas (proveedor_id, monto, referencia) VALUES (?, ?, ?)`,
-            [parseInt(proveedor_id), parseFloat(monto), referencia.trim()]
+            `INSERT INTO invoices (provider_id, amount, reference) VALUES (?, ?, ?)`,
+            [parseInt(provider_id), parseFloat(amount), reference.trim()]
         );
 
-        res.status(201).json({ id: result.insertId, proveedor_id, monto, referencia });
+        res.status(201).json({ id: result.insertId, provider_id, amount, reference });
     } catch (err) { next(err); }
 };
 
 const updateInvoice = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { proveedor_id, monto, referencia } = req.body;
+        const { provider_id, amount, reference } = req.body;
 
-        if (!proveedor_id || !monto || !referencia) {
+        if (!provider_id || !amount || !reference) {
             const err = new Error('Rechazado: Proveedor, monto y referencia son obligatorios');
             err.status = 400; throw err;
         }
 
         const [result] = await db.query(
-            `UPDATE facturas SET proveedor_id=?, monto=?, referencia=? WHERE id=?`,
-            [parseInt(proveedor_id), parseFloat(monto), referencia.trim(), id]
+            `UPDATE invoices SET provider_id=?, amount=?, reference=? WHERE id=?`,
+            [parseInt(provider_id), parseFloat(amount), reference.trim(), id]
         );
         if (result.affectedRows === 0) { const e = new Error('Rechazado: La factura no existe'); e.status = 404; throw e; }
 
@@ -47,7 +47,7 @@ const updateInvoice = async (req, res, next) => {
 
 const deleteInvoice = async (req, res, next) => {
     try {
-        const [result] = await db.query(`DELETE FROM facturas WHERE id = ?`, [req.params.id]);
+        const [result] = await db.query(`DELETE FROM invoices WHERE id = ?`, [req.params.id]);
         if (result.affectedRows === 0) { const e = new Error('Rechazado: La factura no existe'); e.status = 404; throw e; }
         res.status(200).json({ message: 'Factura eliminada por completo' });
     } catch (err) { next(err); }

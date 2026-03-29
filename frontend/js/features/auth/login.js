@@ -1,4 +1,4 @@
-import { navigateTo } from './app.js';
+import { navigateTo } from '../core/app.js';
 
 export const renderLogin = () => {
     const app = document.getElementById('app');

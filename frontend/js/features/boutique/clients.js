@@ -1,4 +1,4 @@
-import { api } from '../../api.js';
+import { api } from '../core/api.js';
 
 export const renderClients = async (container) => {
     // State
@@ -47,7 +47,7 @@ export const renderClients = async (container) => {
                             <input
                                 type="text"
                                 id="searchInput"
-                                placeholder="Buscar cliente..."
+                                placeholder="Buscar client..."
                                 class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${loadError ? 'opacity-50 cursor-not-allowed' : ''}"
                                 value="${searchTerm}"
                                 ${loadError ? 'disabled' : ''}
@@ -168,7 +168,7 @@ export const renderClients = async (container) => {
                             <i data-lucide="users" width="32" class="text-gray-300"></i>
                         </div>
                         <h3 class="text-lg font-bold text-gray-800 mb-2">No se encontraron clientes</h3>
-                        <p class="text-gray-500 max-w-xs mx-auto">Prueba a buscar con otro término o añade un nuevo cliente a tu cartera.</p>
+                        <p class="text-gray-500 max-w-xs mx-auto">Prueba a buscar con otro término o añade un nuevo client a tu cartera.</p>
                     </div>
                 `;
             }
@@ -212,7 +212,7 @@ export const renderClients = async (container) => {
 
                         <div class="space-y-1">
                             <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Notas / Preferencias</label>
-                            <textarea name="notes" id="clientNotesInput" rows="3" placeholder="Ej: Alérgica al látex, prefiere citas por la mañana..." 
+                            <textarea name="notes" id="clientNotesInput" rows="3" placeholder="Ej: Alérgica al látex, prefiere calendarEvents por la mañana..." 
                                 class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"></textarea>
                         </div>
                         
@@ -326,7 +326,7 @@ export const renderClients = async (container) => {
                     api.showToast(response.error, true);
                 }
             } catch (err) {
-                console.error("Error al guardar cliente:", err);
+                console.error("Error al guardar client:", err);
                 api.showToast("Ocurrió un error inesperado al guardar.", true);
             }
         });
@@ -344,7 +344,7 @@ export const renderClients = async (container) => {
         document.querySelectorAll('.delete-client-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
+                if (confirm('¿Estás seguro de que deseas eliminar este client?')) {
                     try {
                         const id = parseInt(btn.getAttribute('data-id'));
                         const response = await api.delete(`/clients/${id}`);
@@ -354,7 +354,7 @@ export const renderClients = async (container) => {
                             api.showToast(response.error, true);
                         }
                     } catch (err) {
-                        console.error("Error al eliminar cliente:", err);
+                        console.error("Error al eliminar client:", err);
                         api.showToast("Error inesperado al intentar eliminar.", true);
                     }
                 }

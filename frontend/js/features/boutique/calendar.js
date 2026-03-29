@@ -1,4 +1,4 @@
-import { api } from '../../api.js';
+import { api } from '../core/api.js';
 
 export const renderCalendar = async (container) => {
     let currentDate = new Date();
@@ -9,15 +9,15 @@ export const renderCalendar = async (container) => {
     let earningsReport = { hoy: 0, mes: 0, ano: 0 };
 
     const loadData = async () => {
-        // Cargar citas
+        // Cargar calendarEvents
         const resAppointments = await api.get('/calendar/appointments');
         if (!resAppointments.error) {
-            appointments = (resAppointments.citas || []).map(cita => ({
+            appointments = (resAppointments.calendarEvents || []).map(cita => ({
                 id: cita.id,
-                client: cita.cliente,
-                date: cita.fecha,
-                time: cita.descripcion || '10:00',
-                price: cita.ganancia
+                client: cita.client,
+                date: cita.date,
+                time: cita.description || '10:00',
+                price: cita.profit
             }));
         } else {
             appointments = [];
@@ -156,7 +156,7 @@ export const renderCalendar = async (container) => {
                                     <span class="font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg text-sm">${apt.price}€</span>
                                 </div>
                             `).join('')}
-                            ${detailMetrics.apts.length === 0 ? '<p class="text-sm text-gray-400 text-center mt-6">No hay citas registradas para este día.</p>' : ''}
+                            ${detailMetrics.apts.length === 0 ? '<p class="text-sm text-gray-400 text-center mt-6">No hay calendarEvents registradas para este día.</p>' : ''}
                         </div>
                     </div>
                 ` : ''}
@@ -174,7 +174,7 @@ export const renderCalendar = async (container) => {
 
                             <div class="space-y-4">
                                 <div>
-                                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Busca o escribe cliente</label>
+                                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Busca o escribe client</label>
                                     <input name="client" id="aptClientInput" list="clientsList" autocomplete="off" class="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all font-medium text-gray-800" placeholder="Ej. Mariana López" required />
                                 </div>
                                 
@@ -312,10 +312,10 @@ export const renderCalendar = async (container) => {
 
                     // Save the Appointment
                     const response = await api.post('/calendar/appointments', {
-                        cliente: clientName,
-                        descripcion: formData.get('time'),
-                        ganancia: parseFloat(formData.get('price')),
-                        fecha: formData.get('date') || formatDate(selectedDate)
+                        client: clientName,
+                        description: formData.get('time'),
+                        profit: parseFloat(formData.get('price')),
+                        date: formData.get('date') || formatDate(selectedDate)
                     });
 
                     if (!response.error) {
@@ -354,10 +354,10 @@ export const renderCalendar = async (container) => {
 
                         if (cols.length >= 2) {
                             appointmentsToImport.push({
-                                cliente: cols[0],
-                                fecha: cols[1], // Expecting YYYY-MM-DD
-                                descripcion: cols[2] || '10:00', // Time or details
-                                ganancia: cols[3] ? parseFloat(cols[3]) : 0
+                                client: cols[0],
+                                date: cols[1], // Expecting YYYY-MM-DD
+                                description: cols[2] || '10:00', // Time or details
+                                profit: cols[3] ? parseFloat(cols[3]) : 0
                             });
                         }
                     }
@@ -368,7 +368,7 @@ export const renderCalendar = async (container) => {
                         api.hideLoading();
 
                         if (!response.error) {
-                            api.showToast(`Se importaron ${appointmentsToImport.length} citas`, 'success');
+                            api.showToast(`Se importaron ${appointmentsToImport.length} calendarEvents`, 'success');
                             await loadData();
                             safeRender();
                         }

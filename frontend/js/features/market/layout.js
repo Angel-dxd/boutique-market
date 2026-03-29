@@ -1,4 +1,4 @@
-import { navigateTo } from '../app.js';
+import { navigateTo } from '../core/app.js';
 // We would import market features here
 
 export const renderMarketLayout = () => {

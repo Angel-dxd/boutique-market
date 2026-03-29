@@ -1,4 +1,4 @@
-import { api } from '../../api.js';
+import { api } from '../core/api.js';
 
 export const renderBoutiqueHome = async (container) => {
     const userName = 'Arelys';
@@ -69,7 +69,7 @@ export const renderBoutiqueHome = async (container) => {
                     </h3>
                     <div class="space-y-3">
                         ${todayList.length === 0
-            ? `<p class="text-sm text-gray-400 text-center py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">No hay citas programadas</p>`
+            ? `<p class="text-sm text-gray-400 text-center py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">No hay calendarEvents programadas</p>`
             : todayList.map(apt => `
                                 <div class="flex justify-between items-center p-3 rounded-xl bg-gray-50 border border-gray-100 hover:bg-emerald-50 transition-colors group">
                                     <div>
@@ -95,7 +95,7 @@ export const renderBoutiqueHome = async (container) => {
                     </h3>
                     <div class="space-y-3">
                         ${tomorrowList.length === 0
-            ? `<p class="text-sm text-gray-400 text-center py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">No hay citas programadas</p>`
+            ? `<p class="text-sm text-gray-400 text-center py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">No hay calendarEvents programadas</p>`
             : tomorrowList.map(apt => `
                                 <div class="flex justify-between items-center p-3 rounded-xl bg-gray-50 border border-gray-100 hover:bg-blue-50 transition-colors group">
                                     <div>

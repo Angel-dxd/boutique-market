@@ -1,4 +1,4 @@
-import { store } from '../../store.js';
+import { store } from '../core/store.js';
 
 export const renderEstadisticas = (container) => {
     const render = () => {
@@ -7,7 +7,7 @@ export const renderEstadisticas = (container) => {
         const products = state.products || [];
 
         // Calculated Metrics
-        const totalDebt = invoices.reduce((sum, inv) => sum + parseFloat(inv.monto || 0), 0);
+        const totalDebt = invoices.reduce((sum, inv) => sum + parseFloat(inv.amount || 0), 0);
         const totalStockValue = products.reduce((sum, p) => sum + (parseFloat(p.price) * parseInt(p.stock)), 0);
         const lowStockCount = products.filter(p => parseInt(p.stock) <= parseInt(p.min_stock)).length;
 
