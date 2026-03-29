@@ -1,3 +1,11 @@
-.env
-node_modules
+# Dependencias
+node_modules/
 
+# Variables de entorno (¡CRÍTICO!)
+.env
+.env.local
+
+# Archivos de sistema y basura
+.DS_Store
+Thumbs.db
+lightgoldenrodyellow.py
