@@ -1,12 +1,16 @@
-import { store } from '../core/store.js';
+import { api } from '../core/api.js';
 import { navigateTo } from '../core/app.js';
 
-export const renderMarketHome = (container) => {
-    const render = () => {
-        const state = store.getState();
-        const products = state.products || [];
-        const invoices = state.invoices || [];
-        const suppliers = state.suppliers || [];
+export const renderMarketHome = async (container) => {
+    const render = async () => {
+        // Fetch real data from MySQL API directly instead of local store to persist on F5
+        const productsResponse = await api.get('/products');
+        const invoicesResponse = await api.get('/invoices');
+        const suppliersResponse = await api.get('/providers');
+
+        const products = productsResponse.error ? [] : productsResponse;
+        const invoices = invoicesResponse.error ? [] : invoicesResponse;
+        const suppliers = suppliersResponse.error ? [] : suppliersResponse;
 
         // KPIs
         const criticalStock = products.filter(p => parseInt(p.stock) <= parseInt(p.min_stock)).length;
@@ -167,5 +171,5 @@ export const renderMarketHome = (container) => {
         // Hack for global navigation from onclick
         window.navigateTo = navigateTo;
     };
-    render();
+    await render();
 };

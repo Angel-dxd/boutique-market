@@ -2,18 +2,18 @@ const db = require('../config/db');
 
 const getDashboardStats = async (req, res, next) => {
     try {
-        const [finanzasRows] = await db.query('SELECT * FROM finanzas');
-        const [productosRows] = await db.query('SELECT * FROM productos');
-        const [facturasRows] = await db.query('SELECT * FROM facturas');
+        const [financeRows] = await db.query('SELECT * FROM finance');
+        const [inventoryRows] = await db.query('SELECT * FROM inventory');
+        const [invoicesRows] = await db.query('SELECT * FROM invoices');
 
-        const expenses = (facturasRows || []).reduce((sum, f) => sum + parseFloat(f.monto || 0), 0);
+        const expenses = (invoicesRows || []).reduce((sum, f) => sum + parseFloat(f.amount || 0), 0);
         let totalIncome = 0;
         let totalExpenses = expenses;
 
-        (finanzasRows || []).forEach(t => {
-            const amount = parseFloat(t.monto || 0);
-            const type = (t.tipo || '').toLowerCase();
-            const category = (t.categoria || '').toLowerCase();
+        (financeRows || []).forEach(t => {
+            const amount = parseFloat(t.amount || 0);
+            const type = (t.type || '').toLowerCase();
+            const category = (t.category || '').toLowerCase();
 
             if (['income', 'entrada'].includes(type)) {
                 totalIncome += amount;
@@ -22,8 +22,8 @@ const getDashboardStats = async (req, res, next) => {
             }
         });
 
-        const inventoryValue = (productosRows || []).reduce((sum, p) => sum + (p.stock * p.price), 0);
-        const lowStockCount = (productosRows || []).filter(p => p.stock <= p.min_stock).length;
+        const inventoryValue = (inventoryRows || []).reduce((sum, p) => sum + (p.stock * p.price), 0);
+        const lowStockCount = (inventoryRows || []).filter(p => p.stock <= p.min_stock).length;
 
         const storedRatio = totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 100;
 

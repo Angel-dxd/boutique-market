@@ -1,29 +1,26 @@
 CREATE DATABASE IF NOT EXISTS boutique_market;
 USE boutique_market;
 
--- 1. Tabla Proveedores (relacionada en Productos)
 CREATE TABLE IF NOT EXISTS providers (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(255) NOT NULL,
-    telefono VARCHAR(50),
-    empresa VARCHAR(255),
-    categoria VARCHAR(255) DEFAULT 'Suministros'
+    name VARCHAR(255) NOT NULL,
+    phone VARCHAR(50),
+    company VARCHAR(255),
+    category VARCHAR(255) DEFAULT 'Suministros'
 );
 
--- 2. Tabla Productos (con llave foránea a proveedores)
-CREATE TABLE IF NOT EXISTS productos (
+CREATE TABLE IF NOT EXISTS inventory (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
-    price DECIMAL(10, 2) NOT NULL,
-    cost DECIMAL(10, 2) DEFAULT 0.00,
+    price DECIMAL(10,2) NOT NULL,
+    cost DECIMAL(10,2) DEFAULT 0.00,
     stock INT DEFAULT 0,
     min_stock INT DEFAULT 5,
-    categoria VARCHAR(255) DEFAULT 'General',
-    proveedor_id INT,
-    FOREIGN KEY (proveedor_id) REFERENCES providers(id) ON DELETE SET NULL
+    category VARCHAR(255) DEFAULT 'General',
+    provider_id INT,
+    FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE SET NULL
 );
 
--- 3. Tabla Clientes
 CREATE TABLE IF NOT EXISTS clients (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -33,27 +30,42 @@ CREATE TABLE IF NOT EXISTS clients (
     last_visit TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 4. Tablas para Dashboard Estadístico (Finanzas y Facturas)
-CREATE TABLE IF NOT EXISTS facturas (
+CREATE TABLE IF NOT EXISTS invoices (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    monto DECIMAL(10, 2) NOT NULL,
-    descripcion TEXT,
-    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    provider_id INT,
+    amount DECIMAL(10,2) NOT NULL,
+    reference VARCHAR(255),
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS finanzas (
+CREATE TABLE IF NOT EXISTS finance (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    monto DECIMAL(10, 2) NOT NULL,
-    tipo VARCHAR(50) NOT NULL, -- 'entrada' / 'salida'
-    categoria VARCHAR(255),
-    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    amount DECIMAL(10,2) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    category VARCHAR(255),
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 5. Tabla de Usuarios (Autenticación)
 CREATE TABLE IF NOT EXISTS users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  username VARCHAR(100) NOT NULL UNIQUE,
-  password VARCHAR(255) NOT NULL,
-  email TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    email TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS calendar (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    client VARCHAR(255) NOT NULL,
+    date DATE NOT NULL,
+    description VARCHAR(255),
+    profit DECIMAL(10,2) DEFAULT 0.00
+);
+
+CREATE TABLE IF NOT EXISTS gallery (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    category VARCHAR(255),
+    image LONGTEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

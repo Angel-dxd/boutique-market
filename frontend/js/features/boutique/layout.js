@@ -70,24 +70,24 @@ export const renderBoutiqueLayout = () => {
     });
 
     // Determine sub-route content
-    const path = window.location.pathname.replace(/\/+$/, '') || '/';
+    const path = window.location.hash.slice(1).replace(/\/+$/, '') || '/';
     const contentContainer = document.getElementById('layout-content');
 
     if (path === '/boutique-welcome') {
         renderBoutiqueHome(contentContainer);
     } else if (path === '/boutique-welcome/clientes') {
-        import('../features/boutique/clients.js').then(m => m.renderClients(contentContainer));
+        import('./clients.js').then(m => m.renderClients(contentContainer));
     } else if (path === '/boutique-welcome/calendario') {
-        import('../features/boutique/calendar.js').then(m => m.renderCalendar(contentContainer));
+        import('./calendar.js').then(m => m.renderCalendar(contentContainer));
     } else if (path === '/boutique-welcome/gastos') {
-        import('../features/boutique/finance.js').then(m => m.renderFinance(contentContainer));
+        import('./finance.js').then(m => m.renderFinance(contentContainer));
     } else if (path === '/boutique-welcome/gift-cards') {
         // Alias for Gallery in this simplified version or implement separate
         // For now let's map it to Gallery/Works or just a placeholder if not requested explicitly? 
         // Request said: "Galería de Uñas (Gestión de Fotos): Implementa el apartado de 'Mis Uñas'" -> This usually corresponds to "mis-unas"
         contentContainer.innerHTML = '<h2>Gift Cards (WIP)</h2>';
     } else if (path === '/boutique-welcome/mis-unas') {
-        import('../features/boutique/gallery.js').then(m => m.renderGallery(contentContainer));
+        import('./gallery.js').then(m => m.renderGallery(contentContainer));
     } else {
         contentContainer.innerHTML = `<h2 class="text-2xl font-bold">WIP: ${path}</h2>`;
     }

@@ -1,10 +1,13 @@
-import { store } from '../core/store.js';
+import { api } from '../core/api.js';
 
-export const renderEstadisticas = (container) => {
-    const render = () => {
-        const state = store.getState();
-        const invoices = state.invoices || [];
-        const products = state.products || [];
+export const renderEstadisticas = async (container) => {
+    const render = async () => {
+        // Obtenemos los datos directamente de la BD en cada carga para sobrevivir al F5
+        const invoicesResponse = await api.get('/invoices');
+        const productsResponse = await api.get('/products');
+        
+        const invoices = invoicesResponse.error ? [] : invoicesResponse;
+        const products = productsResponse.error ? [] : productsResponse;
 
         // Calculated Metrics
         const totalDebt = invoices.reduce((sum, inv) => sum + parseFloat(inv.amount || 0), 0);
@@ -84,5 +87,5 @@ export const renderEstadisticas = (container) => {
             </div>
         `;
     };
-    render();
+    await render();
 };

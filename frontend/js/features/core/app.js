@@ -30,13 +30,20 @@ const routes = {
 
 // Navigate to a URL
 export const navigateTo = (url, state = {}) => {
-    history.pushState(state, null, url);
-    router();
+    // Use Hash Routing to prevent 404s on static servers without rewrite rules
+    if (url.startsWith('#')) {
+        window.location.hash = url;
+    } else {
+        window.location.hash = url;
+    }
 };
 
 // Router
 const router = async () => {
-    const path = window.location.pathname;
+    // Extract path from hash (e.g. #/market -> /market)
+    const rawPath = window.location.hash.slice(1) || '/';
+    // Remove query params if any, and trailing slashes
+    const path = rawPath.split('?')[0].replace(/\/+$/, '') || '/';
 
     // Simple matching (start with basic paths)
     // For now we just check exact match or partial start for layouts
@@ -59,8 +66,8 @@ const router = async () => {
     route.render();
 };
 
-// Handle Browser History
-window.addEventListener('popstate', router);
+// Handle Browser History (hashchange instead of popstate)
+window.addEventListener('hashchange', router);
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {

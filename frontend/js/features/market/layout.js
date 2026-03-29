@@ -70,19 +70,19 @@ export const renderMarketLayout = () => {
     });
 
     // Determine sub-route content
-    const path = window.location.pathname;
+    const path = window.location.hash.slice(1).replace(/\/+$/, '') || '/';
     const contentContainer = document.getElementById('layout-content');
 
     if (path === '/market') {
-        import('../features/market/home.js').then(m => m.renderMarketHome(contentContainer));
+        import('./home.js').then(m => m.renderMarketHome(contentContainer));
     } else if (path === '/market/pedidos') {
-        import('../features/market/pedidos.js').then(m => m.renderPedidos(contentContainer));
+        import('./pedidos.js').then(m => m.renderPedidos(contentContainer));
     } else if (path === '/market/proveedores') {
-        import('../features/market/proveedores.js').then(m => m.renderProveedores(contentContainer));
+        import('./proveedores.js').then(m => m.renderProveedores(contentContainer));
     } else if (path === '/market/inventario') {
-        import('../features/market/inventario.js').then(m => m.renderInventario(contentContainer));
+        import('./inventario.js').then(m => m.renderInventario(contentContainer));
     } else if (path === '/market/estadisticas') {
-        import('../features/market/estadisticas.js').then(m => m.renderEstadisticas(contentContainer));
+        import('./estadisticas.js').then(m => m.renderEstadisticas(contentContainer));
     } else {
         contentContainer.innerHTML = `<h2 class="text-2xl font-bold">WIP: ${path}</h2>`;
     }
