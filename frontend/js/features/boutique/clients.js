@@ -11,12 +11,15 @@ export const renderClients = async (container) => {
     const refreshData = async () => {
         try {
             container.innerHTML = `<div class="p-8 text-center text-gray-500 animate-pulse"><div class="w-10 h-10 border-4 border-gray-200 border-t-emerald-500 rounded-full animate-spin mx-auto mb-4"></div>Cargando clientes...</div>`;
+
             const response = await api.get('/clients');
-            if (response && !response.error) {
-                clients = response;
+
+            // ✅ FIX: el backend ahora devuelve { success: true, data: [...] }
+            if (response && response.success) {
+                clients = response.data;
                 loadError = null;
             } else {
-                loadError = response?.error || "Error desconocido al obtener clientes.";
+                loadError = response?.errors?.[0] || response?.error || "Error desconocido al obtener clientes.";
             }
             safeRender();
         } catch (error) {
@@ -27,10 +30,8 @@ export const renderClients = async (container) => {
     };
 
     const safeRender = () => {
-        // Renderizado del Contenedor Principal (Error, Vacío, o Tabla)
         const currentUser = localStorage.getItem('currentUser') || 'arelys';
 
-        // Cabecera superior siempre visible
         let htmlContent = `
             <div class="space-y-6 h-full flex flex-col min-h-[600px] animate-fade-in-up">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between gap-4 items-center">
@@ -47,7 +48,7 @@ export const renderClients = async (container) => {
                             <input
                                 type="text"
                                 id="searchInput"
-                                placeholder="Buscar client..."
+                                placeholder="Buscar cliente..."
                                 class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all ${loadError ? 'opacity-50 cursor-not-allowed' : ''}"
                                 value="${searchTerm}"
                                 ${loadError ? 'disabled' : ''}
@@ -168,7 +169,7 @@ export const renderClients = async (container) => {
                             <i data-lucide="users" width="32" class="text-gray-300"></i>
                         </div>
                         <h3 class="text-lg font-bold text-gray-800 mb-2">No se encontraron clientes</h3>
-                        <p class="text-gray-500 max-w-xs mx-auto">Prueba a buscar con otro término o añade un nuevo client a tu cartera.</p>
+                        <p class="text-gray-500 max-w-xs mx-auto">Prueba a buscar con otro término o añade un nuevo cliente a tu cartera.</p>
                     </div>
                 `;
             }
@@ -212,7 +213,7 @@ export const renderClients = async (container) => {
 
                         <div class="space-y-1">
                             <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Notas / Preferencias</label>
-                            <textarea name="notes" id="clientNotesInput" rows="3" placeholder="Ej: Alérgica al látex, prefiere calendarEvents por la mañana..." 
+                            <textarea name="notes" id="clientNotesInput" rows="3" placeholder="Ej: Alérgica al látex, prefiere citas por la mañana..." 
                                 class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"></textarea>
                         </div>
                         
@@ -274,33 +275,28 @@ export const renderClients = async (container) => {
             searchInput.addEventListener('input', (e) => {
                 searchTerm = e.target.value;
                 safeRender();
-                const newHeader = document.getElementById('searchInput');
-                if (newHeader) {
-                    newHeader.focus();
-                    newHeader.setSelectionRange(newHeader.value.length, newHeader.value.length);
+                const newInput = document.getElementById('searchInput');
+                if (newInput) {
+                    newInput.focus();
+                    newInput.setSelectionRange(newInput.value.length, newInput.value.length);
                 }
             });
         }
 
         // 2. Open Modal (New)
-        const newBtn = document.getElementById('newClientBtn');
-        if (newBtn) {
-            newBtn.addEventListener('click', () => {
-                editingId = null;
-                toggleModal(true);
-            });
-        }
+        document.getElementById('newClientBtn')?.addEventListener('click', () => {
+            editingId = null;
+            toggleModal(true);
+        });
 
         // 3. Close Modal
         document.getElementById('closeModalBtn')?.addEventListener('click', () => toggleModal(false));
         document.getElementById('cancelModalBtn')?.addEventListener('click', () => toggleModal(false));
-
-        const overlay = document.getElementById('clientModalOverlay');
-        overlay?.addEventListener('click', (e) => {
+        document.getElementById('clientModalOverlay')?.addEventListener('click', (e) => {
             if (e.target === e.currentTarget) toggleModal(false);
         });
 
-        // 4. Submit Form (CONECTADO A MYSQL VIA API.JS con Try/Catch)
+        // 4. Submit Form
         document.getElementById('clientForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
@@ -319,14 +315,15 @@ export const renderClients = async (container) => {
                     response = await api.post('/clients', clientData);
                 }
 
-                if (!response.error) {
+                // ✅ FIX: comprobar response.success en lugar de !response.error
+                if (response && response.success) {
                     toggleModal(false);
                     await refreshData();
                 } else {
-                    api.showToast(response.error, true);
+                    api.showToast(response?.errors?.[0] || response?.error || 'Error al guardar', true);
                 }
             } catch (err) {
-                console.error("Error al guardar client:", err);
+                console.error("Error al guardar cliente:", err);
                 api.showToast("Ocurrió un error inesperado al guardar.", true);
             }
         });
@@ -340,21 +337,23 @@ export const renderClients = async (container) => {
             });
         });
 
-        // 6. Delete Buttons (CONECTADO A MYSQL)
+        // 6. Delete Buttons
         document.querySelectorAll('.delete-client-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('¿Estás seguro de que deseas eliminar este client?')) {
+                if (confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
                     try {
                         const id = parseInt(btn.getAttribute('data-id'));
                         const response = await api.delete(`/clients/${id}`);
-                        if (!response.error) {
+
+                        // ✅ FIX: comprobar response.success en lugar de !response.error
+                        if (response && response.success) {
                             await refreshData();
                         } else {
-                            api.showToast(response.error, true);
+                            api.showToast(response?.errors?.[0] || response?.error || 'Error al eliminar', true);
                         }
                     } catch (err) {
-                        console.error("Error al eliminar client:", err);
+                        console.error("Error al eliminar cliente:", err);
                         api.showToast("Error inesperado al intentar eliminar.", true);
                     }
                 }
@@ -385,13 +384,13 @@ export const renderClients = async (container) => {
 
                         if (cols.length >= 1 && cols[0]) {
                             try {
-                                await api.post('/clients', {
+                                const res = await api.post('/clients', {
                                     name: cols[0],
                                     phone: cols[1] || '',
                                     email: cols[2] || '',
                                     notes: cols[3] || ''
                                 });
-                                count++;
+                                if (res && res.success) count++;
                             } catch (err) {
                                 console.error("Error importando fila", i, err);
                             }
@@ -406,24 +405,21 @@ export const renderClients = async (container) => {
             };
         }
 
-        // Export (Santi)
-        const exportBtn = document.getElementById('exportBtn');
-        if (exportBtn) {
-            exportBtn.onclick = () => {
-                let csv = "ID,Nombre,Telefono,Email,Notas\n";
-                clients.forEach(c => {
-                    const safe = (txt) => `"${(txt || '').toString().replace(/"/g, '""')}"`;
-                    csv += `${c.id},${safe(c.name)},${safe(c.phone)},${safe(c.email)},${safe(c.notes)}\n`;
-                });
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'clientes_mysql.csv';
-                a.click();
-                window.URL.revokeObjectURL(url);
-            };
-        }
+        // 8. Export CSV
+        document.getElementById('exportBtn')?.addEventListener('click', () => {
+            let csv = "ID,Nombre,Telefono,Email,Notas\n";
+            clients.forEach(c => {
+                const safe = (txt) => `"${(txt || '').toString().replace(/"/g, '""')}"`;
+                csv += `${c.id},${safe(c.name)},${safe(c.phone)},${safe(c.email)},${safe(c.notes)}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'clientes_mysql.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        });
     };
 
     // --- CARGA INICIAL ---
