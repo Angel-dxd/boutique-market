@@ -6,7 +6,7 @@ exports.getAllClients = async (req, res, next) => {
         const [rows] = await db.query("SELECT * FROM clients ORDER BY name ASC");
         res.status(200).json({ success: true, data: rows });
     } catch (err) {
-        next(err); // delega al error handler global
+        next(err);
     }
 };
 
@@ -46,6 +46,64 @@ exports.deleteClient = async (req, res, next) => {
             return res.status(404).json({ success: false, errors: ["Cliente no encontrado."] });
         }
         res.status(200).json({ success: true, data: { message: "Cliente eliminado correctamente." } });
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * GET /api/clients/at-risk
+ * Devuelve clientas que llevan más de N días sin visita.
+ * Query param: ?days=30 (por defecto 30)
+ *
+ * Útil para el módulo de fidelización de la boutique:
+ * permite identificar clientas inactivas y actuar antes de perderlas.
+ */
+exports.getAtRiskClients = async (req, res, next) => {
+    try {
+        const days = parseInt(req.query.days) || 30;
+
+        const [rows] = await db.query(
+            `SELECT
+                id,
+                name,
+                phone,
+                email,
+                last_visit,
+                DATEDIFF(CURDATE(), last_visit) AS days_since_visit
+             FROM clients
+             WHERE last_visit IS NOT NULL
+               AND DATEDIFF(CURDATE(), last_visit) >= ?
+             ORDER BY days_since_visit DESC`,
+            [days]
+        );
+
+        res.status(200).json({ success: true, data: rows, threshold_days: days });
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * PATCH /api/clients/:id/last-visit
+ * Actualiza la fecha de última visita de una clienta.
+ * Se llama automáticamente al crear una cita en el calendario.
+ */
+exports.updateLastVisit = async (req, res, next) => {
+    try {
+        const { date } = req.body;
+        const visitDate = date ? new Date(date) : new Date();
+
+        const [result] = await db.query(
+            `UPDATE clients SET last_visit = ? WHERE id = ?`,
+            [visitDate, req.params.id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, errors: ["Cliente no encontrada."] });
+        }
+
+        res.status(200).json({ success: true, data: { message: "Última visita actualizada." } });
     } catch (err) {
         next(err);
     }
