@@ -1,236 +1,379 @@
 import { api } from '../core/api.js';
 
 export const renderFinance = async (container) => {
-
     let editingId = null;
     let transactions = [];
-    let summary = { totalIncome: 0, totalExpenses: 0, netProfit: 0 };
+    let isModalOpen = false;
+    let selectedMonth = new Date().getMonth();
+    let selectedYear = new Date().getFullYear();
+
+    const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
     const loadData = async () => {
         const res = await api.get('/finance');
-        if (!res.error) {
-            transactions = res;
+        transactions = res.error ? [] : res;
+    };
 
-            let income = 0;
-            let expenses = 0;
-            transactions.forEach(t => {
-                if (['income', 'entrada'].includes(t.type)) { income += parseFloat(t.amount || 0); }
-                if (['expense', 'salida'].includes(t.type)) { expenses += parseFloat(t.amount || 0); }
-            });
-            summary = { totalIncome: income, totalExpenses: expenses, netProfit: income - expenses };
-        } else {
-            transactions = [];
-        }
+    // Calcula resumen para un mes/año dado
+    const calcSummary = (month, year) => {
+        const filtered = transactions.filter(t => {
+            const d = new Date(t.date);
+            return d.getMonth() === month && d.getFullYear() === year;
+        });
+        let income = 0, expenses = 0;
+        filtered.forEach(t => {
+            const amt = parseFloat(t.amount || 0);
+            if (['income', 'entrada'].includes(t.type)) income += amt;
+            else expenses += amt;
+        });
+        return { income, expenses, net: income - expenses, count: filtered.length };
+    };
+
+    // Calcula resumen global (todos los registros)
+    const calcGlobal = () => {
+        let income = 0, expenses = 0;
+        transactions.forEach(t => {
+            const amt = parseFloat(t.amount || 0);
+            if (['income', 'entrada'].includes(t.type)) income += amt;
+            else expenses += amt;
+        });
+        return { income, expenses, net: income - expenses };
     };
 
     const safeRender = () => {
-        const total = summary.totalIncome + summary.totalExpenses;
-        const incomePct = total > 0 ? (summary.totalIncome / total) * 100 : 0;
-        const expensePct = total > 0 ? (summary.totalExpenses / total) * 100 : 0;
+        const now = new Date();
+        const curMonth = now.getMonth();
+        const curYear = now.getFullYear();
+        const prevMonth = curMonth === 0 ? 11 : curMonth - 1;
+        const prevYear = curMonth === 0 ? curYear - 1 : curYear;
+
+        const thisMo = calcSummary(curMonth, curYear);
+        const lastMo = calcSummary(prevMonth, prevYear);
+        const global = calcGlobal();
+
+        // Variación respecto al mes anterior
+        const incomeDiff = lastMo.income > 0
+            ? (((thisMo.income - lastMo.income) / lastMo.income) * 100).toFixed(1)
+            : null;
+        const incomeDiffPositive = parseFloat(incomeDiff) >= 0;
+
+        // Transacciones del mes seleccionado
+        const monthTx = transactions.filter(t => {
+            const d = new Date(t.date);
+            return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+        });
+
+        const total = thisMo.income + thisMo.expenses;
+        const incomePct = total > 0 ? (thisMo.income / total) * 100 : 0;
+        const expensePct = total > 0 ? (thisMo.expenses / total) * 100 : 0;
 
         container.innerHTML = `
-            <div class="space-y-6 pb-24 md:pb-0">
-                <!-- Header -->
-                <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                        Finanzas <span class="text-sm font-normal text-gray-400">| Panel de Control</span>
-                    </h2>
+            <div class="p-8 w-full max-w-7xl mx-auto space-y-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-black text-gray-800">Finanzas</h1>
+                        <p class="text-gray-400 font-medium mt-1">Panel de control financiero · Oh-Nails</p>
+                    </div>
+                    <button id="addTxBtn"
+                        class="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-colors shadow-md">
+                        <i data-lucide="plus" width="18"></i> Registrar movimiento
+                    </button>
                 </div>
 
-                <!-- Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                     <div class="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                        <p class="text-gray-500 text-xs font-bold uppercase">Beneficio Neto</p>
-                        <p class="text-3xl font-bold ${summary.netProfit >= 0 ? 'text-emerald-600' : 'text-red-500'}">
-                            ${summary.netProfit.toFixed(2)}€
+                <!-- KPIs globales -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Beneficio neto global</p>
+                        <p class="text-3xl font-black mt-2 ${global.net >= 0 ? 'text-emerald-600' : 'text-red-500'}">
+                            ${global.net >= 0 ? '+' : ''}${global.net.toFixed(2)}€
                         </p>
+                        <p class="text-xs text-gray-400 mt-1">Acumulado total · ${transactions.length} movimientos</p>
                     </div>
-                    <div class="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                        <p class="text-emerald-600 text-xs font-bold uppercase">Ingresos</p>
-                        <p class="text-xl font-bold text-gray-800">${summary.totalIncome.toFixed(2)}€</p>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <p class="text-xs font-bold uppercase tracking-wider text-emerald-500">Ingresos globales</p>
+                        <p class="text-2xl font-black text-gray-800 mt-2">${global.income.toFixed(2)}€</p>
                     </div>
-                     <div class="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                        <p class="text-red-500 text-xs font-bold uppercase">Gastos</p>
-                        <p class="text-xl font-bold text-gray-800">${summary.totalExpenses.toFixed(2)}€</p>
-                    </div>
-                </div>
-
-                <!-- Visual Report -->
-                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                    <h3 class="font-bold text-gray-800 mb-4 text-sm uppercase">Balance Visual</h3>
-                    <div class="flex h-4 rounded-full overflow-hidden bg-gray-100">
-                        <div class="bg-emerald-500 h-full transition-all duration-500 relative group" style="width: ${incomePct}%">
-                        </div>
-                        <div class="bg-red-500 h-full transition-all duration-500 relative group" style="width: ${expensePct}%">
-                        </div>
-                    </div>
-                    <div class="flex justify-between mt-2 text-xs font-bold text-gray-500">
-                        <span class="text-emerald-600">Ingresos ${incomePct.toFixed(0)}%</span>
-                        <span class="text-red-500">Gastos ${expensePct.toFixed(0)}%</span>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <p class="text-xs font-bold uppercase tracking-wider text-red-400">Gastos globales</p>
+                        <p class="text-2xl font-black text-gray-800 mt-2">${global.expenses.toFixed(2)}€</p>
                     </div>
                 </div>
 
-                <!-- Action Button -->
-                <button id="addTxBtn" class="w-full md:w-auto px-6 py-3 bg-gray-900 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all">
-                    Registrar Movimiento
-                </button>
-
-                 <!-- Transactions List -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="divide-y divide-gray-100">
-                        ${transactions.length > 0 ? transactions.map(t => `
-                             <div class="p-4 flex justify-between items-center hover:bg-gray-50 group">
-                                <div class="flex items-center gap-3">
-                                    <div class="p-2 rounded-lg ${['income', 'entrada'].includes(t.type) ? 'bg-emerald-100 text-emerald-600' : 'bg-red-50 text-red-500'}">
-                                        <i data-lucide="${['income', 'entrada'].includes(t.type) ? 'dollar-sign' : 'shopping-bag'}" width="20"></i>
-                                    </div>
-                                    <div>
-                                        <p class="font-bold text-gray-800 text-sm">${t.category || t.category || 'Sin Categoría'}</p>
-                                        <p class="text-xs text-gray-400">${t.description || new Date(t.date).toISOString().split('T')[0]}</p>
-                                    </div>
+                <!-- Comparativa mensual -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Este mes -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-black text-gray-800">${MONTHS[curMonth]} ${curYear}</h3>
+                            <span class="text-xs font-bold px-3 py-1 rounded-full ${thisMo.net >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}">
+                                ${thisMo.net >= 0 ? '+' : ''}${thisMo.net.toFixed(2)}€ neto
+                            </span>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-2 text-sm text-gray-500 font-medium">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Ingresos
                                 </div>
-                                <div class="flex items-center gap-4">
-                                    <span class="font-bold ${['income', 'entrada'].includes(t.type) ? 'text-emerald-600' : 'text-red-600'}">
-                                        ${['income', 'entrada'].includes(t.type) ? '+' : '-'}${parseFloat(t.amount).toFixed(2)}€
-                                    </span>
-                                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                         <button class="text-blue-500 hover:bg-blue-50 p-1 rounded edit-tx" data-id="${t.id}">
-                                            <i data-lucide="edit-2" width="14"></i>
-                                        </button>
-                                        <button class="text-red-500 hover:bg-red-50 p-1 rounded delete-tx" data-id="${t.id}">
-                                            <i data-lucide="trash" width="14"></i>
-                                        </button>
-                                    </div>
-                                </div>
+                                <span class="font-black text-emerald-600">${thisMo.income.toFixed(2)}€</span>
                             </div>
-                        `).join('') : '<p class="p-8 text-center text-gray-400">No hay movimientos registrados.</p>'}
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-2 text-sm text-gray-500 font-medium">
+                                    <span class="w-2 h-2 rounded-full bg-red-400"></span> Gastos
+                                </div>
+                                <span class="font-black text-red-500">${thisMo.expenses.toFixed(2)}€</span>
+                            </div>
+                        </div>
+                        <!-- Barra visual -->
+                        <div class="mt-4 flex h-2.5 rounded-full overflow-hidden bg-gray-100">
+                            <div class="bg-emerald-500 h-full transition-all duration-500" style="width: ${incomePct}%"></div>
+                            <div class="bg-red-400 h-full transition-all duration-500" style="width: ${expensePct}%"></div>
+                        </div>
+                        <div class="flex justify-between mt-1.5 text-xs font-bold text-gray-400">
+                            <span class="text-emerald-500">${incomePct.toFixed(0)}% ingresos</span>
+                            <span class="text-red-400">${expensePct.toFixed(0)}% gastos</span>
+                        </div>
+                    </div>
+
+                    <!-- Mes anterior -->
+                    <div class="bg-gray-50 p-6 rounded-3xl border border-gray-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-black text-gray-500">${MONTHS[prevMonth]} ${prevYear}</h3>
+                            <span class="text-xs font-bold text-gray-400">Mes anterior</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-400 font-medium">Ingresos</span>
+                                <span class="font-black text-gray-600">${lastMo.income.toFixed(2)}€</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-400 font-medium">Gastos</span>
+                                <span class="font-black text-gray-500">${lastMo.expenses.toFixed(2)}€</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+                                <span class="text-sm text-gray-400 font-medium">Neto</span>
+                                <span class="font-black ${lastMo.net >= 0 ? 'text-emerald-600' : 'text-red-500'}">${lastMo.net >= 0 ? '+' : ''}${lastMo.net.toFixed(2)}€</span>
+                            </div>
+                        </div>
+                        ${incomeDiff !== null ? `
+                        <div class="mt-4 p-3 rounded-xl ${incomeDiffPositive ? 'bg-emerald-50' : 'bg-red-50'} flex items-center gap-2">
+                            <i data-lucide="${incomeDiffPositive ? 'trending-up' : 'trending-down'}" width="16"
+                                class="${incomeDiffPositive ? 'text-emerald-500' : 'text-red-500'}"></i>
+                            <span class="text-xs font-bold ${incomeDiffPositive ? 'text-emerald-700' : 'text-red-700'}">
+                                Ingresos ${incomeDiffPositive ? '+' : ''}${incomeDiff}% vs mes anterior
+                            </span>
+                        </div>` : `
+                        <div class="mt-4 p-3 rounded-xl bg-gray-100 text-xs text-gray-400 font-medium">
+                            Sin datos del mes anterior para comparar.
+                        </div>`}
+                    </div>
+                </div>
+
+                <!-- Filtro de mes + lista de transacciones -->
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex items-center justify-between gap-4">
+                        <h3 class="font-black text-gray-800">Movimientos</h3>
+                        <div class="flex items-center gap-2">
+                            <button id="prevMonthBtn" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                                <i data-lucide="chevron-left" width="18"></i>
+                            </button>
+                            <span class="text-sm font-bold text-gray-700 min-w-[120px] text-center">
+                                ${MONTHS[selectedMonth]} ${selectedYear}
+                            </span>
+                            <button id="nextMonthBtn" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                                <i data-lucide="chevron-right" width="18"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="divide-y divide-gray-50">
+                        ${monthTx.length === 0
+                ? `<p class="p-10 text-center text-gray-400 font-medium">No hay movimientos en ${MONTHS[selectedMonth]} ${selectedYear}.</p>`
+                : monthTx.map(t => {
+                    const isIncome = ['income', 'entrada'].includes(t.type);
+                    return `
+                                <div class="p-4 flex justify-between items-center hover:bg-gray-50 group transition-colors">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2.5 rounded-xl ${isIncome ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}">
+                                            <i data-lucide="${isIncome ? 'arrow-down-circle' : 'arrow-up-circle'}" width="18"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-bold text-gray-800 text-sm">${t.category || 'Sin categoría'}</p>
+                                            <p class="text-xs text-gray-400">${new Date(t.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span class="font-black text-base ${isIncome ? 'text-emerald-600' : 'text-red-500'}">
+                                            ${isIncome ? '+' : '-'}${parseFloat(t.amount).toFixed(2)}€
+                                        </span>
+                                        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button class="p-1.5 text-blue-400 hover:bg-blue-50 rounded-lg edit-tx" data-id="${t.id}">
+                                                <i data-lucide="pencil" width="14"></i>
+                                            </button>
+                                            <button class="p-1.5 text-red-400 hover:bg-red-50 rounded-lg delete-tx" data-id="${t.id}">
+                                                <i data-lucide="trash-2" width="14"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>`;
+                }).join('')}
                     </div>
                 </div>
             </div>
 
-             <!-- Modal -->
-             <div id="txModal" class="fixed inset-0 z-50 bg-black/60 hidden backdrop-blur-sm flex items-center justify-center p-4">
-                <div class="bg-white rounded-2xl w-full max-w-md p-6">
-                     <h3 class="text-xl font-bold text-gray-800 mb-6" id="modalTitle">${editingId ? 'Editar Movimiento' : 'Registrar'}</h3>
-                     <form id="txForm" class="space-y-4">
-                         <div class="flex p-1 bg-gray-100 rounded-xl mb-4">
-                            <button type="button" class="flex-1 py-2 rounded-lg font-bold bg-white text-red-500 shadow-sm" id="btnExpense">Gasto</button>
-                            <button type="button" class="flex-1 py-2 rounded-lg font-bold text-gray-400" id="btnIncome">Ingreso</button>
-                         </div>
-                         <input type="hidden" name="type" id="txType" value="expense">
-                         <input type="hidden" name="id" id="txId">
-                         
-                         <input type="number" name="amount" id="txAmount" step="0.01" class="w-full text-3xl font-bold p-4 border rounded-xl" placeholder="0.00 €" required>
-                         <input type="text" name="category" id="txCategory" class="w-full p-3 border rounded-xl" placeholder="Categoría (ej. Luz, Material)" required>
-                         <input type="text" name="description" id="txDescription" class="w-full p-3 border rounded-xl" placeholder="Descripción">
-                         
-                         <div class="flex gap-3">
-                            <button type="button" id="closeTxModal" class="flex-1 py-3 bg-gray-100 rounded-xl font-bold">Cancelar</button>
-                            <button type="submit" class="flex-1 py-3 bg-gray-900 text-white rounded-xl font-bold">Guardar</button>
-                         </div>
-                     </form>
+            <!-- Modal -->
+            ${isModalOpen ? `
+            <div class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md">
+                    <div class="p-8 border-b border-gray-100 flex items-center justify-between">
+                        <h2 class="text-xl font-black text-gray-800">${editingId ? 'Editar movimiento' : 'Nuevo movimiento'}</h2>
+                        <button id="closeModal" class="p-2 hover:bg-gray-100 rounded-xl"><i data-lucide="x" width="20"></i></button>
+                    </div>
+                    <form id="txForm" class="p-8 space-y-4">
+                        <!-- Tipo -->
+                        <div class="flex p-1 bg-gray-100 rounded-xl">
+                            <button type="button" id="btnExpense"
+                                class="flex-1 py-2.5 rounded-lg font-bold bg-white text-red-500 shadow-sm transition-all">
+                                Gasto
+                            </button>
+                            <button type="button" id="btnIncome"
+                                class="flex-1 py-2.5 rounded-lg font-bold text-gray-400 transition-all">
+                                Ingreso
+                            </button>
+                        </div>
+                        <input type="hidden" name="type" id="txType" value="expense">
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Importe (€) *</label>
+                            <input type="number" name="amount" id="txAmount" step="0.01" min="0" required
+                                class="w-full text-2xl font-black p-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300"
+                                placeholder="0.00" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Categoría *</label>
+                            <input type="text" name="category" id="txCategory" required
+                                class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300"
+                                placeholder="Ej: Material, Luz, Nómina..." />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Fecha</label>
+                            <input type="date" name="date" id="txDate"
+                                class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300"
+                                value="${new Date().toISOString().split('T')[0]}" />
+                        </div>
+                        <div class="flex gap-3 pt-2">
+                            <button type="button" id="cancelBtn"
+                                class="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50">
+                                Cancelar
+                            </button>
+                            <button type="submit"
+                                class="flex-1 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800">
+                                ${editingId ? 'Guardar cambios' : 'Registrar'}
+                            </button>
+                        </div>
+                    </form>
                 </div>
-             </div>
+            </div>` : ''}
         `;
 
         lucide.createIcons();
+        bindEvents();
+    };
 
-        // Modal Logic
-        const modal = document.getElementById('txModal');
-        const form = document.getElementById('txForm');
-
-        document.getElementById('addTxBtn').addEventListener('click', () => {
+    const bindEvents = () => {
+        // Abrir modal nuevo
+        document.getElementById('addTxBtn')?.addEventListener('click', () => {
             editingId = null;
-            document.getElementById('modalTitle').textContent = 'Registrar';
-            form.reset();
-            setType('expense');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            isModalOpen = true;
+            safeRender();
         });
 
-        document.getElementById('closeTxModal').addEventListener('click', () => {
+        document.getElementById('closeModal')?.addEventListener('click', () => {
+            isModalOpen = false;
             editingId = null;
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            safeRender();
+        });
+        document.getElementById('cancelBtn')?.addEventListener('click', () => {
+            isModalOpen = false;
+            editingId = null;
+            safeRender();
         });
 
-        // Toggle Type Logic
-        const btnExpense = document.getElementById('btnExpense');
-        const btnIncome = document.getElementById('btnIncome');
-        const txType = document.getElementById('txType');
+        // Navegación de meses
+        document.getElementById('prevMonthBtn')?.addEventListener('click', () => {
+            if (selectedMonth === 0) { selectedMonth = 11; selectedYear--; }
+            else selectedMonth--;
+            safeRender();
+        });
+        document.getElementById('nextMonthBtn')?.addEventListener('click', () => {
+            if (selectedMonth === 11) { selectedMonth = 0; selectedYear++; }
+            else selectedMonth++;
+            safeRender();
+        });
 
+        // Toggle tipo gasto/ingreso
         const setType = (type) => {
-            txType.value = type;
-            if (['expense', 'salida'].includes(type)) {
-                btnExpense.className = "flex-1 py-2 rounded-lg font-bold bg-white text-red-500 shadow-sm transition-all";
-                btnIncome.className = "flex-1 py-2 rounded-lg font-bold text-gray-400 hover:text-gray-600 transition-all";
-            } else {
-                btnIncome.className = "flex-1 py-2 rounded-lg font-bold bg-white text-emerald-500 shadow-sm transition-all";
-                btnExpense.className = "flex-1 py-2 rounded-lg font-bold text-gray-400 hover:text-gray-600 transition-all";
-            }
+            document.getElementById('txType').value = type;
+            const isExpense = type === 'expense';
+            document.getElementById('btnExpense').className = `flex-1 py-2.5 rounded-lg font-bold transition-all ${isExpense ? 'bg-white text-red-500 shadow-sm' : 'text-gray-400'}`;
+            document.getElementById('btnIncome').className = `flex-1 py-2.5 rounded-lg font-bold transition-all ${!isExpense ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-400'}`;
         };
+        document.getElementById('btnExpense')?.addEventListener('click', () => setType('expense'));
+        document.getElementById('btnIncome')?.addEventListener('click', () => setType('income'));
 
-        btnExpense.addEventListener('click', () => setType('expense'));
-        btnIncome.addEventListener('click', () => setType('income'));
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = {
-                type: formData.get('type'),
-                amount: parseFloat(formData.get('amount')),
-                category: formData.get('category'),
-                description: formData.get('description'),
-                date: new Date().toISOString().split('T')[0]
-            };
-
-            let response;
-            if (editingId) {
-                response = await api.put(`/finance/${editingId}`, data);
-            } else {
-                response = await api.post('/finance', data);
-            }
-
-            if (!response.error) {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                await loadData();
-                safeRender();
-            }
-        });
-
-        document.querySelectorAll('.delete-tx').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                if (confirm('¿PURGAR transacción permanentemente?')) {
-                    const id = parseInt(btn.getAttribute('data-id'));
-                    const response = await api.delete(`/finance/${id}`);
-                    if (!response.error) {
-                        await loadData();
-                        safeRender();
-                    }
-                }
-            });
-        });
-
+        // Editar
         document.querySelectorAll('.edit-tx').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const id = parseInt(btn.getAttribute('data-id'));
-                const t = transactions.find(tx => tx.id === id);
-                if (t) {
-                    editingId = id;
-                    document.getElementById('modalTitle').textContent = 'Editar Movimiento';
-                    document.getElementById('txId').value = t.id;
+                const t = transactions.find(tx => tx.id === parseInt(btn.getAttribute('data-id')));
+                if (!t) return;
+                editingId = t.id;
+                isModalOpen = true;
+                safeRender();
+                setTimeout(() => {
                     document.getElementById('txAmount').value = t.amount;
-                    document.getElementById('txCategory').value = t.category || t.category;
-                    document.getElementById('txDescription').value = t.description || '';
-                    setType(t.type);
-
-                    modal.classList.remove('hidden');
-                    modal.classList.add('flex');
-                }
+                    document.getElementById('txCategory').value = t.category || '';
+                    document.getElementById('txDate').value = new Date(t.date).toISOString().split('T')[0];
+                    const setTypeFn = (type) => {
+                        document.getElementById('txType').value = type;
+                        const isExpense = type === 'expense';
+                        document.getElementById('btnExpense').className = `flex-1 py-2.5 rounded-lg font-bold transition-all ${isExpense ? 'bg-white text-red-500 shadow-sm' : 'text-gray-400'}`;
+                        document.getElementById('btnIncome').className = `flex-1 py-2.5 rounded-lg font-bold transition-all ${!isExpense ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-400'}`;
+                    };
+                    setTypeFn(t.type);
+                }, 0);
             });
+        });
+
+        // Eliminar
+        document.querySelectorAll('.delete-tx').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (!confirm('¿Eliminar este movimiento?')) return;
+                const res = await api.delete(`/finance/${btn.getAttribute('data-id')}`);
+                if (!res.error) { await loadData(); safeRender(); }
+            });
+        });
+
+        // Submit
+        document.getElementById('txForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const payload = {
+                type: fd.get('type'),
+                amount: parseFloat(fd.get('amount')),
+                category: fd.get('category'),
+                date: fd.get('date') || new Date().toISOString().split('T')[0]
+            };
+            const res = editingId
+                ? await api.put(`/finance/${editingId}`, payload)
+                : await api.post('/finance', payload);
+            if (!res.error) {
+                isModalOpen = false;
+                editingId = null;
+                await loadData();
+                safeRender();
+            } else {
+                alert('Error al guardar el movimiento.');
+            }
         });
     };
 
