@@ -31,11 +31,11 @@ export const renderBoutiqueHome = async (container) => {
     ];
 
     container.innerHTML = `
-        <div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div class="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <!-- Header con Acción Rápida Integrada -->
             <div class="flex justify-between items-center">
                 <div>
-                    <h2 class="text-3xl font-bold text-gray-800">Hola, ${userName}</h2>
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-800">Hola, ${userName}</h2>
                     <p class="text-gray-500 mt-1">Resumen de tu actividad en Oh-Nails</p>
                 </div>
                 <button onclick="window.location.hash = '#/boutique/calendar'" data-link href="/boutique-welcome/calendario" class="hidden md:flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-medium transition-all shadow-md hover:shadow-lg hover:opacity-90">
@@ -45,27 +45,27 @@ export const renderBoutiqueHome = async (container) => {
             </div>
 
             <!-- Stats/Metric Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                 ${cards.map(card => `
-                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-50 hover:shadow-xl transition-all duration-300 flex items-center justify-between group">
+                    <div class="bg-white p-4 md:p-6 rounded-2xl shadow-lg border border-gray-50 hover:shadow-xl transition-all duration-300 flex items-center justify-between group">
                         <div>
-                            <p class="text-sm font-medium text-gray-500 mb-1">${card.title}</p>
-                            <h3 class="text-4xl font-bold text-gray-800 group-hover:text-emerald-600 transition-colors">${card.value}</h3>
+                            <p class="text-xs md:text-sm font-medium text-gray-500 mb-1">${card.title}</p>
+                            <h3 class="text-3xl md:text-4xl font-bold text-gray-800 group-hover:text-emerald-600 transition-colors">${card.value}</h3>
                         </div>
-                        <div class="p-4 rounded-xl bg-emerald-50 text-emerald-600">
-                             <i data-lucide="${card.icon}"></i>
+                        <div class="p-3 md:p-4 rounded-xl bg-emerald-50 text-emerald-600">
+                             <i data-lucide="${card.icon}" class="w-5 h-5 md:w-6 md:h-6"></i>
                         </div>
                     </div>
                 `).join('')}
             </div>
 
             <!-- Listas Dinámicas e Interactivas (WhatsApp API Hooked) -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
                 
                 <!-- Citas de Hoy -->
-                <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-50">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <i data-lucide="sun" class="text-orange-500" width="20"></i> Citas de hoy
+                <div class="bg-white p-4 md:p-6 rounded-2xl shadow-lg border border-gray-50">
+                    <h3 class="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
+                        <i data-lucide="sun" class="text-orange-500 w-5 h-5 md:w-6 md:h-6"></i> Citas de hoy
                     </h3>
                     <div class="space-y-3">
                         ${todayList.length === 0
@@ -89,9 +89,9 @@ export const renderBoutiqueHome = async (container) => {
                 </div>
 
                 <!-- Citas para Mañana -->
-                <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-50">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <i data-lucide="calendar-clock" class="text-blue-500" width="20"></i> Citas para mañana
+                <div class="bg-white p-4 md:p-6 rounded-2xl shadow-lg border border-gray-50">
+                    <h3 class="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
+                        <i data-lucide="calendar-clock" class="text-blue-500 w-5 h-5 md:w-6 md:h-6"></i> Citas para mañana
                     </h3>
                     <div class="space-y-3">
                         ${tomorrowList.length === 0
@@ -115,8 +115,8 @@ export const renderBoutiqueHome = async (container) => {
                 </div>
 
                 <!-- Mis Fieles (Top Clients Real) -->
-                <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-50">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <div class="bg-white p-4 md:p-6 rounded-2xl shadow-lg border border-gray-50">
+                    <h3 class="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
                         👑 Mis Fieles <span class="text-xs font-normal text-gray-400">(Top 5)</span>
                     </h3>
                     <div class="space-y-4">

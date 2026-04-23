@@ -34,26 +34,26 @@ export const renderClients = async (container) => {
         const editing = getEditingClient();
 
         container.innerHTML = `
-            <div class="p-8 w-full max-w-7xl mx-auto">
+            <div class="p-4 md:p-8 w-full max-w-7xl mx-auto">
                 <div class="flex items-center justify-between mb-2">
-                    <h1 class="text-3xl font-black text-gray-800">Clientas</h1>
+                    <h1 class="text-2xl md:text-3xl font-black text-gray-800">Clientas</h1>
                     <button id="addClientBtn"
-                        class="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-200">
-                        <i data-lucide="user-plus" width="18"></i> Nueva Clienta
+                        class="flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 text-sm md:text-base bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-200">
+                        <i data-lucide="user-plus" class="w-4 h-4 md:w-5 md:h-5"></i> <span class="hidden sm:inline">Nueva Clienta</span><span class="sm:hidden">Nueva</span>
                     </button>
                 </div>
                 <p class="text-gray-400 font-medium mb-8">Gestión de clientas recurrentes de Oh-Nails</p>
 
                 <!-- KPIs -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between">
                         <div>
                             <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Total clientas</p>
                             <p class="text-3xl font-black text-gray-800 mt-1">${clients.length}</p>
                         </div>
                         <div class="p-3 bg-emerald-50 text-emerald-500 rounded-2xl"><i data-lucide="users" width="24"></i></div>
                     </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow"
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow"
                         id="atRiskCard">
                         <div>
                             <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Sin visita +30 días</p>
@@ -63,7 +63,7 @@ export const renderClients = async (container) => {
                             <i data-lucide="bell-ring" width="24"></i>
                         </div>
                     </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between">
                         <div>
                             <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Clientas activas</p>
                             <p class="text-3xl font-black text-emerald-600 mt-1">${clients.length - atRiskClients.length}</p>
@@ -73,13 +73,13 @@ export const renderClients = async (container) => {
                 </div>
 
                 <!-- Tabs -->
-                <div class="flex gap-2 mb-6">
+                <div class="flex flex-wrap gap-2 mb-6">
                     <button data-tab="all"
-                        class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm transition-colors ${activeTab === 'all' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'}">
+                        class="tab-btn px-4 py-2 md:px-5 md:py-2.5 rounded-xl font-bold text-xs md:text-sm transition-colors ${activeTab === 'all' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'}">
                         Todas (${clients.length})
                     </button>
                     <button data-tab="at-risk"
-                        class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm transition-colors ${activeTab === 'at-risk' ? 'bg-amber-500 text-white' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'}">
+                        class="tab-btn px-4 py-2 md:px-5 md:py-2.5 rounded-xl font-bold text-xs md:text-sm transition-colors ${activeTab === 'at-risk' ? 'bg-amber-500 text-white' : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'}">
                         <span class="flex items-center gap-2">
                             <i data-lucide="alert-circle" width="14"></i>
                             Requieren atención (${atRiskClients.length})
@@ -184,14 +184,14 @@ export const renderClients = async (container) => {
                 <!-- Modal crear / editar -->
                 ${isModalOpen ? `
                 <div class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md">
-                        <div class="p-8 border-b border-gray-100 flex items-center justify-between">
-                            <h2 class="text-xl font-black text-gray-800">${editingId ? 'Editar Clienta' : 'Nueva Clienta'}</h2>
+                    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+                        <div class="p-6 md:p-8 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
+                            <h2 class="text-lg md:text-xl font-black text-gray-800">${editingId ? 'Editar Clienta' : 'Nueva Clienta'}</h2>
                             <button id="closeModal" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
                                 <i data-lucide="x" width="20"></i>
                             </button>
                         </div>
-                        <form id="clientForm" class="p-8 space-y-4">
+                        <form id="clientForm" class="p-6 md:p-8 space-y-4">
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-1">Nombre *</label>
                                 <input name="name" required value="${editing?.name || ''}"
