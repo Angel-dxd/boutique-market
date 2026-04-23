@@ -1,47 +1,90 @@
+// frontend/js/features/shared/logoutModal.js
 import { navigateTo } from '../core/app.js';
 
-export const renderLogoutModal = (fromTheme = 'boutique') => {
+export const renderLogoutModal = (from) => {
     const app = document.getElementById('app');
 
-    // Theme Config
-    const isMarket = fromTheme === 'market';
-    const color = isMarket ? 'bg-[#0077b6]' : 'bg-[#059669]';
-    const name = isMarket ? 'El Gallo Azul' : 'Oh-Nails';
+    // Determinamos el estilo y nombre basado en el tenant
+    const isBoutique = from === 'boutique';
+    const color = isBoutique ? 'bg-emerald-600' : 'bg-orange-500';
+    const name = isBoutique ? 'Oh-Nails' : 'El Gallo Azul';
 
-    // We overlay this on top of current view, BUT since we route to pages, 
-    // we can treat this as a page or an overlay. Logic suggests it's a page in React router 
-    // but here let's make it a full screen takeover.
+    // Limpiamos el contenedor
+    app.innerHTML = '';
 
-    app.innerHTML = `
-        <div class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full text-center animate-in zoom-in duration-200">
-                <div class="w-16 h-16 rounded-full ${color} text-white flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <i data-lucide="log-out" width="32"></i>
-                </div>
+    // 1. Contenedor principal
+    const container = document.createElement('div');
+    container.className = 'min-h-screen bg-gray-100 flex items-center justify-center p-4';
 
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">¿Cerrar Sesión?</h2>
-                <p class="text-gray-500 text-sm mb-8">
-                    Estás saliendo de <span class="font-bold">${name}</span>.
-                </p>
+    // 2. Tarjeta del modal
+    const card = document.createElement('div');
+    card.className = 'bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full text-center animate-in zoom-in duration-200';
 
-                <div class="space-y-3">
-                    <button id="confirmLogout" class="w-full ${color} hover:opacity-90 text-white py-3 rounded-xl font-bold transition-all shadow-md">
-                        Confirmar Salida
-                    </button>
-                    <button id="cancelLogout" class="w-full bg-white border border-gray-200 text-gray-600 py-3 rounded-xl font-medium hover:bg-gray-50">
-                        Cancelar
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    lucide.createIcons();
+    // 3. Icono
+    const iconContainer = document.createElement('div');
+    iconContainer.className = `w-16 h-16 rounded-full ${color} text-white flex items-center justify-center mx-auto mb-6 shadow-lg`;
+    const icon = document.createElement('i');
+    icon.setAttribute('data-lucide', 'log-out');
+    icon.setAttribute('width', '32');
+    iconContainer.appendChild(icon);
 
+    // 4. Título
+    const title = document.createElement('h2');
+    title.className = 'text-2xl font-bold text-gray-800 mb-2';
+    title.textContent = '¿Cerrar Sesión?';
+
+    // 5. Texto descriptivo (AQUÍ ESTÁ LA SEGURIDAD XSS)
+    const desc = document.createElement('p');
+    desc.className = 'text-gray-500 text-sm mb-8';
+    desc.textContent = 'Estás saliendo de ';
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'font-bold';
+    nameSpan.textContent = name; // textContent escapa automáticamente cualquier código malicioso
+    desc.appendChild(nameSpan);
+    desc.appendChild(document.createTextNode('.'));
+
+    // 6. Contenedor de Botones
+    const btnContainer = document.createElement('div');
+    btnContainer.className = 'space-y-3';
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.id = 'confirmLogout';
+    confirmBtn.className = `w-full ${color} hover:opacity-90 text-white py-3 rounded-xl font-bold transition-all shadow-md`;
+    confirmBtn.textContent = 'Confirmar Salida';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.id = 'cancelLogout';
+    cancelBtn.className = 'w-full bg-white border border-gray-200 text-gray-600 py-3 rounded-xl font-medium hover:bg-gray-50';
+    cancelBtn.textContent = 'Cancelar';
+
+    // Ensamblaje del DOM
+    btnContainer.appendChild(confirmBtn);
+    btnContainer.appendChild(cancelBtn);
+
+    card.appendChild(iconContainer);
+    card.appendChild(title);
+    card.appendChild(desc);
+    card.appendChild(btnContainer);
+
+    container.appendChild(card);
+    app.appendChild(container);
+
+    // Renderizar iconos de Lucide
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
+
+    // Event listeners
     document.getElementById('confirmLogout').addEventListener('click', () => {
+        localStorage.removeItem('currentUser');
         navigateTo('/');
     });
 
     document.getElementById('cancelLogout').addEventListener('click', () => {
-        history.back(); // Go back to where we were
+        if (isBoutique) {
+            navigateTo('/boutique-welcome');
+        } else {
+            navigateTo('/market');
+        }
     });
 };
