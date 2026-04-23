@@ -306,11 +306,34 @@ export const renderClients = async (container) => {
         document.getElementById('clientForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
+            const name = formData.get('name');
+            const phone = formData.get('phone') || null;
+            const email = formData.get('email') || null;
+            let force = false;
+
+            // Check duplicate locally
+            const existingContact = clients.find(c => 
+                (c.name && c.name.toLowerCase() !== name.toLowerCase() && c.id !== editingId) && 
+                ((phone && c.phone === phone) || (email && c.email === email))
+            );
+
+            if (existingContact) {
+                const confirmed = await showConfirm(
+                    'Cliente Existente',
+                    `Ya tienes una clienta (${existingContact.name}) registrada con ese mismo correo o teléfono. ¿Seguro que quieres añadirla de todos modos?`,
+                    'Sí, añadir',
+                    'Cancelar'
+                );
+                if (!confirmed) return;
+                force = true;
+            }
+
             const payload = {
-                name: formData.get('name'),
-                phone: formData.get('phone') || null,
-                email: formData.get('email') || null,
-                notes: formData.get('notes') || null
+                name,
+                phone,
+                email,
+                notes: formData.get('notes') || null,
+                force
             };
 
             const res = editingId
@@ -323,7 +346,7 @@ export const renderClients = async (container) => {
                 await loadData();
                 safeRender();
             } else {
-                api.showToast('Error al guardar la clienta. Revisa los datos.', true);
+                api.showToast(res.error, true);
             }
         });
     };

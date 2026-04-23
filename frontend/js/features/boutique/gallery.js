@@ -5,6 +5,8 @@ export const renderInstagramGallery = (container) => {
     let isLoading = true;
     let editingId = null;
     let deletingId = null;
+    let cropper = null;
+    let currentFilter = 'none';
 
     // 1. OBTENER DISEÑOS
     const fetchAndRender = async () => {
@@ -45,24 +47,38 @@ export const renderInstagramGallery = (container) => {
 
         let base64Image = null;
 
-        // Si es nuevo y no hay foto, error. (Si es edicion, la foto existe en bd).
-        if (!editingId && fileInput.files.length === 0) {
+        // Validar si es nuevo y no hay cropper
+        if (!editingId && !cropper) {
             return api.showToast('Debes seleccionar una imagen local', true);
-        }
-
-        if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            if (file.size > 10 * 1024 * 1024) return api.showToast('La foto excede 10MB', true);
-            
-            btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-5 h-5"></i> Guardando...';
-            btn.disabled = true;
-            lucide.createIcons();
-            base64Image = await toBase64(file);
         }
 
         btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-5 h-5"></i> Guardando...';
         btn.disabled = true;
-        
+        lucide.createIcons();
+
+        if (cropper) {
+            // Generar el canvas recortado
+            const croppedCanvas = cropper.getCroppedCanvas({
+                width: 800,
+                height: 800,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+            
+            // Si hay filtro que no sea 'none', lo aplicamos físicamente a un nuevo canvas
+            if (currentFilter !== 'none') {
+                const filteredCanvas = document.createElement('canvas');
+                filteredCanvas.width = croppedCanvas.width;
+                filteredCanvas.height = croppedCanvas.height;
+                const ctx = filteredCanvas.getContext('2d');
+                ctx.filter = currentFilter;
+                ctx.drawImage(croppedCanvas, 0, 0);
+                base64Image = filteredCanvas.toDataURL('image/jpeg', 0.85);
+            } else {
+                base64Image = croppedCanvas.toDataURL('image/jpeg', 0.85);
+            }
+        }
+
         let response;
         if (editingId) {
             const currentWork = works.find(w => String(w.id) === String(editingId));
@@ -114,16 +130,25 @@ export const renderInstagramGallery = (container) => {
         document.getElementById('nailTitle').value = title;
         document.getElementById('nailFile').value = '';
         
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        
+        currentFilter = 'none';
+        document.getElementById('filtersContainer').classList.add('hidden');
+        document.getElementById('changePhotoBtn').classList.add('hidden');
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('ring-2', 'ring-emerald-500'));
+        document.querySelector('.filter-btn[data-filter="none"]')?.classList.add('ring-2', 'ring-emerald-500');
+
         const fotoLabel = document.getElementById('fotoLabel');
         const formTitle = document.getElementById('formTitle');
         
         if (id && imageUrl) {
             // MODO EDICION: Mostrar foto actual
-            document.getElementById('previewImage').src = imageUrl;
-            document.getElementById('uploadPlaceholder').classList.add('hidden');
-            document.getElementById('previewContainer').classList.remove('hidden');
             formTitle.innerHTML = '<i data-lucide="pencil" class="text-emerald-500 w-8 h-8"></i> <span class="text-2xl font-black">Editar Trabajo</span>';
-            fotoLabel.innerText = 'Fotografía Actual (Toca para Reemplazar)';
+            fotoLabel.innerText = 'Fotografía (Ajusta el encuadre)';
+            initCropper(imageUrl);
         } else {
             // MODO CREACION
             document.getElementById('previewImage').src = '';
@@ -142,6 +167,10 @@ export const renderInstagramGallery = (container) => {
         document.getElementById('nailModalOverlay').classList.add('hidden');
         document.getElementById('nailModalOverlay').classList.remove('flex');
         editingId = null;
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
     };
 
     const openDeleteModal = (id) => {
@@ -156,13 +185,47 @@ export const renderInstagramGallery = (container) => {
         document.getElementById('deleteModalOverlay').classList.remove('flex');
     };
 
+    const applyFilterToPreview = () => {
+        const previewImages = document.querySelectorAll('.cropper-canvas img, .cropper-view-box img');
+        previewImages.forEach(img => {
+            img.style.filter = currentFilter;
+        });
+    };
+
+    const initCropper = (url) => {
+        const img = document.getElementById('previewImage');
+        img.src = url;
+        document.getElementById('uploadPlaceholder').classList.add('hidden');
+        document.getElementById('previewContainer').classList.remove('hidden');
+        document.getElementById('filtersContainer').classList.remove('hidden');
+        document.getElementById('changePhotoBtn').classList.remove('hidden');
+        
+        if (cropper) cropper.destroy();
+        
+        // Timeout para asegurar que la imagen se ha cargado en el DOM antes de inicializar
+        setTimeout(() => {
+            cropper = new Cropper(img, {
+                aspectRatio: 1, // Cuadrado estricto
+                viewMode: 1,
+                dragMode: 'move',
+                background: false,
+                autoCropArea: 1,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                guides: true,
+                ready: function () {
+                    applyFilterToPreview();
+                }
+            });
+        }, 50);
+    };
+
     const handleFilePreview = (e) => {
         const file = e.target.files[0];
         if (file) {
+            if (file.size > 10 * 1024 * 1024) return api.showToast('La foto excede 10MB', true);
             const previewUrl = URL.createObjectURL(file);
-            document.getElementById('previewImage').src = previewUrl;
-            document.getElementById('uploadPlaceholder').classList.add('hidden');
-            document.getElementById('previewContainer').classList.remove('hidden');
+            initCropper(previewUrl);
         }
     };
 
@@ -245,8 +308,11 @@ export const renderInstagramGallery = (container) => {
 
                         <!-- Foto -->
                         <div class="space-y-1">
-                            <label id="fotoLabel" class="text-xs font-bold text-gray-500 uppercase tracking-widest"></label>
-                            <div class="relative w-full aspect-square border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 hover:bg-emerald-50/30 hover:border-emerald-300 transition-all text-center cursor-pointer overflow-hidden group">
+                            <div class="flex justify-between items-end">
+                                <label id="fotoLabel" class="text-xs font-bold text-gray-500 uppercase tracking-widest">Fotografía</label>
+                                <button type="button" id="changePhotoBtn" class="hidden text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md transition-colors"><i data-lucide="upload" class="w-3 h-3 inline"></i> Cambiar</button>
+                            </div>
+                            <div class="relative w-full aspect-square border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 hover:bg-emerald-50/30 hover:border-emerald-300 transition-all text-center overflow-hidden group">
                                 <input type="file" id="nailFile" accept="image/jpeg, image/png, image/webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50" />
                                 
                                 <div id="uploadPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4 pointer-events-none">
@@ -256,15 +322,20 @@ export const renderInstagramGallery = (container) => {
                                     <span class="text-sm font-bold text-gray-700 block mb-1">Buscar foto en PC o Móvil</span>
                                 </div>
 
-                                <div id="previewContainer" class="absolute inset-0 hidden pointer-events-none bg-black">
-                                    <img id="previewImage" src="" class="absolute inset-0 w-full h-full object-cover opacity-90 transition-opacity group-hover:opacity-75" />
-                                    <!-- Tint en modo edición activo -->
-                                    <div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-                                        <span class="text-white font-bold bg-emerald-600/80 px-4 py-2 rounded-full text-xs flex items-center gap-2">
-                                            <i data-lucide="refresh-cw" class="w-3 h-3"></i> Tocar para cambiar
-                                        </span>
-                                    </div>
+                                <div id="previewContainer" class="absolute inset-0 hidden bg-black z-[60]">
+                                    <img id="previewImage" src="" class="block max-w-full" />
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Filtros (Visible solo cuando hay foto) -->
+                        <div id="filtersContainer" class="hidden space-y-2 pt-2 animate-in fade-in slide-in-from-bottom-2">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Filtros</label>
+                            <div class="flex gap-2 overflow-x-auto pb-2">
+                                <button type="button" class="filter-btn flex-1 py-2 px-3 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold border border-indigo-200 active:scale-95 transition-all" data-filter="none">Original</button>
+                                <button type="button" class="filter-btn flex-1 py-2 px-3 bg-gray-50 text-gray-700 rounded-lg text-xs font-bold border border-gray-200 active:scale-95 transition-all" data-filter="grayscale(100%)">B/N</button>
+                                <button type="button" class="filter-btn flex-1 py-2 px-3 bg-amber-50 text-amber-700 rounded-lg text-xs font-bold border border-amber-200 active:scale-95 transition-all" data-filter="sepia(80%)">Cálido</button>
+                                <button type="button" class="filter-btn flex-1 py-2 px-3 bg-slate-800 text-white rounded-lg text-xs font-bold border border-slate-900 active:scale-95 transition-all" data-filter="contrast(150%) saturate(120%)">Vívido</button>
                             </div>
                         </div>
 
@@ -309,6 +380,21 @@ export const renderInstagramGallery = (container) => {
         
         document.getElementById('newNailForm')?.addEventListener('submit', handleSave);
         document.getElementById('nailFile')?.addEventListener('change', handleFilePreview);
+        
+        document.getElementById('changePhotoBtn')?.addEventListener('click', () => {
+            document.getElementById('nailFile').click();
+        });
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('ring-2', 'ring-emerald-500'));
+                e.target.classList.add('ring-2', 'ring-emerald-500');
+                currentFilter = e.target.getAttribute('data-filter');
+                if (cropper) {
+                    applyFilterToPreview();
+                }
+            });
+        });
 
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {

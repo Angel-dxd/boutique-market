@@ -13,7 +13,7 @@ const port = process.env.PORT || 3000;
 // ─── Middlewares de seguridad y parseo ───────────────────────────────────────
 app.use(helmet()); // cabeceras de seguridad HTTP con una línea
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:4200'
+    origin: '*' // Permite acceso desde cualquier IP (ej. móviles en la misma red WiFi)
 }));
 app.use(express.json({ limit: '10mb' })); // 50mb es excesivo — reduce la superficie de ataque
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));

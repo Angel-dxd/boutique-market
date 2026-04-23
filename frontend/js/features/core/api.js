@@ -25,25 +25,28 @@ const hideLoading = () => {
 const showToast = (message, isError = false) => {
     const toast = document.createElement('div');
 
-    const bgColor = isError ? 'bg-red-500' : 'bg-green-500';
-    toast.className = `fixed bottom-5 right-5 text-white px-6 py-3 rounded-lg shadow-2xl z-[9999] transform translate-y-10 opacity-0 transition-all duration-300 font-medium ${bgColor}`;
+    const bgColor = isError ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800';
+    const iconColor = isError ? 'text-red-500 bg-red-100' : 'text-emerald-500 bg-emerald-100';
+    const svgIcon = isError 
+        ? `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+
+    toast.className = `fixed bottom-6 right-6 border ${bgColor} px-4 py-3 rounded-2xl shadow-xl shadow-black/5 z-[9999] transform translate-y-12 opacity-0 transition-all duration-400 ease-out font-bold flex items-center gap-3 max-w-sm w-[calc(100%-3rem)] sm:w-max`;
 
     toast.innerHTML = `
-        <div class="flex items-center gap-2">
-            <span>${isError ? '⚠️' : '✅'}</span>
-            <span>${message}</span>
-        </div>
+        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${iconColor}">${svgIcon}</div>
+        <p class="text-sm leading-tight flex-1">${message}</p>
     `;
 
     document.body.appendChild(toast);
 
     requestAnimationFrame(() => {
-        toast.classList.remove('translate-y-10', 'opacity-0');
+        toast.classList.remove('translate-y-12', 'opacity-0');
     });
 
     setTimeout(() => {
-        toast.classList.add('translate-y-10', 'opacity-0');
-        setTimeout(() => toast.remove(), 300);
+        toast.classList.add('translate-y-12', 'opacity-0');
+        setTimeout(() => toast.remove(), 400);
     }, 3500);
 };
 
