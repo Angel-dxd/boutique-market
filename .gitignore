@@ -134,3 +134,23 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Vite temp/cache
+.vite/
+**/.vite/
+
+# Configuración con datos reales
+backend/config.json
+backend/*.db
+
+# Base de datos SQLite
+*.db
+*.sqlite
+
+# Scripts de desarrollo (solo los temporales)
+test_*.sh
+debug_*.sh
