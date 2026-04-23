@@ -183,7 +183,7 @@ export const renderClients = async (container) => {
 
                 <!-- Modal crear / editar -->
                 ${isModalOpen ? `
-                <div class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[200] p-4">
                     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
                         <div class="p-6 md:p-8 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
                             <h2 class="text-lg md:text-xl font-black text-gray-800">${editingId ? 'Editar Clienta' : 'Nueva Clienta'}</h2>

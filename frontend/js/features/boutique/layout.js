@@ -48,30 +48,58 @@ export const renderBoutiqueLayout = () => {
     if (!layoutMounted) {
         app.innerHTML = `
             <div class="flex min-h-screen bg-gray-50">
-                <aside class="w-16 md:w-20 lg:w-64 bg-slate-900 text-white flex flex-col fixed h-full transition-all duration-300 z-50">
-                    <div class="p-4 md:p-6 flex justify-center lg:justify-start items-center gap-3">
-                        <div class="w-8 h-8 md:w-10 md:h-10 bg-emerald-500 rounded-xl flex items-center justify-center font-black text-lg md:text-xl shadow-lg shadow-emerald-500/50">O</div>
-                        <span class="font-black text-xl hidden lg:block tracking-tight text-white">OH-NAILS</span>
+            <!-- Sidebar (solo visible en md+) -->
+            <aside class="hidden md:flex w-20 lg:w-64 bg-slate-900 text-white flex-col fixed h-full transition-all duration-300 z-50">
+                <div class="p-4 md:p-6 flex justify-center lg:justify-start items-center gap-3">
+                    <div class="w-8 h-8 md:w-10 md:h-10 bg-emerald-500 rounded-xl flex items-center justify-center font-black text-lg md:text-xl shadow-lg shadow-emerald-500/50">O</div>
+                    <span class="font-black text-xl hidden lg:block tracking-tight text-white">OH-NAILS</span>
+                </div>
+                <nav id="sidebar-nav" class="flex-1 mt-4 md:mt-6 px-2 md:px-4 space-y-2">
+                    ${renderSidebar(path)}
+                    <div class="pt-4 mt-4 border-t border-slate-700">
+                        <button id="logoutBtn"
+                            class="w-full nav-item flex items-center justify-center lg:justify-start gap-3 p-3 rounded-xl hover:bg-red-900/50 text-red-400 hover:text-red-200 transition-colors">
+                            <i data-lucide="log-out" class="w-5 h-5 md:w-6 md:h-6"></i>
+                            <span class="hidden lg:block font-bold">Salir</span>
+                        </button>
                     </div>
-                    <nav id="sidebar-nav" class="flex-1 mt-4 md:mt-6 px-2 md:px-4 space-y-2">
-                        ${renderSidebar(path)}
-                        <div class="pt-4 mt-4 border-t border-slate-700">
-                            <button id="logoutBtn"
-                                class="w-full nav-item flex items-center justify-center lg:justify-start gap-3 p-3 rounded-xl hover:bg-red-900/50 text-red-400 hover:text-red-200 transition-colors">
-                                <i data-lucide="log-out" class="w-5 h-5 md:w-6 md:h-6"></i>
-                                <span class="hidden lg:block font-bold">Salir</span>
-                            </button>
-                        </div>
-                    </nav>
-                </aside>
-                <main class="flex-1 ml-16 md:ml-20 lg:ml-64 p-4 md:p-8 overflow-x-hidden">
-                    <div id="layout-content" class="max-w-7xl mx-auto"></div>
-                </main>
-            </div>`;
+                </nav>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="flex-1 md:ml-20 lg:ml-64 p-4 md:p-8 overflow-x-hidden pb-24 md:pb-8">
+                <div id="layout-content" class="max-w-7xl mx-auto"></div>
+            </main>
+
+            <!-- Bottom Nav (solo visible en móvil) -->
+            <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-2xl z-50 safe-area-bottom">
+                <div class="flex items-stretch justify-around h-16">
+                    ${NAV_ITEMS.map(item => {
+                        const isActive = path === item.href;
+                        return `
+                        <a href="${item.href}" data-link class="flex flex-col items-center justify-center flex-1 gap-0.5 transition-colors ${
+                            isActive ? 'text-emerald-600' : 'text-gray-400'
+                        }">
+                            <i data-lucide="${item.icon}" class="w-5 h-5"></i>
+                            <span class="text-[10px] font-bold">${item.label}</span>
+                            ${isActive ? '<div class="absolute top-0 w-8 h-0.5 bg-emerald-500 rounded-full"></div>' : ''}
+                        </a>`;
+                    }).join('')}
+                    <button id="logoutBtnMobile" class="flex flex-col items-center justify-center flex-1 gap-0.5 text-red-400">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                        <span class="text-[10px] font-bold">Salir</span>
+                    </button>
+                </div>
+            </nav>
+        </div>`;
 
         lucide.createIcons();
 
-        document.getElementById('logoutBtn').addEventListener('click', () => {
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
+            layoutMounted = false;
+            navigateTo('/logout-confirmation', { from: 'boutique' });
+        });
+        document.getElementById('logoutBtnMobile')?.addEventListener('click', () => {
             layoutMounted = false;
             navigateTo('/logout-confirmation', { from: 'boutique' });
         });
@@ -96,8 +124,18 @@ export const renderBoutiqueLayout = () => {
                     <span class="hidden lg:block font-bold">Salir</span>
                 </button>
             </div>`;
+
+        // Actualizar bottom nav activo en móvil
+        const bottomNav = document.querySelector('nav.md\\:hidden .flex');
+        if (bottomNav) {
+            bottomNav.querySelectorAll('a[data-link]').forEach(a => {
+                const isActive = a.getAttribute('href') === path;
+                a.className = `flex flex-col items-center justify-center flex-1 gap-0.5 transition-colors ${isActive ? 'text-emerald-600' : 'text-gray-400'}`;
+            });
+        }
+
         lucide.createIcons();
-        document.getElementById('logoutBtn').addEventListener('click', () => {
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
             layoutMounted = false;
             navigateTo('/logout-confirmation', { from: 'boutique' });
         });

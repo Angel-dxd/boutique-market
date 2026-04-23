@@ -171,6 +171,9 @@ export const renderInstagramGallery = (container) => {
             cropper.destroy();
             cropper = null;
         }
+        // Restaurar altura original de la zona de upload
+        const zone = document.getElementById('uploadZone');
+        if (zone) zone.style.height = '140px';
     };
 
     const openDeleteModal = (id) => {
@@ -199,20 +202,24 @@ export const renderInstagramGallery = (container) => {
         document.getElementById('previewContainer').classList.remove('hidden');
         document.getElementById('filtersContainer').classList.remove('hidden');
         document.getElementById('changePhotoBtn').classList.remove('hidden');
+
+        // Ampliar la zona de upload para que el cropper tenga espacio
+        const zone = document.getElementById('uploadZone');
+        if (zone) zone.style.height = '250px';
         
         if (cropper) cropper.destroy();
         
-        // Timeout para asegurar que la imagen se ha cargado en el DOM antes de inicializar
         setTimeout(() => {
             cropper = new Cropper(img, {
-                aspectRatio: 1, // Cuadrado estricto
+                aspectRatio: 1,
                 viewMode: 1,
                 dragMode: 'move',
                 background: false,
-                autoCropArea: 1,
+                autoCropArea: 0.9,
                 cropBoxMovable: true,
-                cropBoxResizable: true,
-                guides: true,
+                cropBoxResizable: false, // En móvil mejor fijo para no confundir
+                guides: false,
+                highlight: false,
                 ready: function () {
                     applyFilterToPreview();
                 }
@@ -288,68 +295,107 @@ export const renderInstagramGallery = (container) => {
                 </div>
             </div>
 
-            <!-- MODAL DE SUBIDA/EDICIÓN (Estilo Idéntico a Clientes) -->
-            <div id="nailModalOverlay" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4">
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-                    <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                        <h3 class="text-xl font-bold text-gray-800" id="formTitle"></h3>
-                        <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600 transition-colors">
-                            <i data-lucide="x" width="24"></i>
+            <!-- MODAL DE SUBIDA/EDICIÓN -->
+            <!-- z-[200] > z-50 de la bottom nav, así nunca queda tapado -->
+            <div id="nailModalOverlay" class="fixed inset-0 z-[200] bg-slate-900/50 backdrop-blur-sm hidden items-end md:items-center justify-center md:p-4">
+                <div class="bg-white
+                            w-full rounded-t-3xl
+                            md:max-w-md md:rounded-3xl
+                            shadow-2xl flex flex-col overflow-hidden
+                            animate-in fade-in slide-in-from-bottom-4 duration-300"
+                     style="max-height: calc(100dvh - 80px);">
+                    <!-- 80px = 64px bottom nav + 16px margen de aire -->
+
+                    <!-- Header fijo -->
+                    <div class="flex justify-between items-center px-5 pt-5 pb-4 border-b border-gray-100 flex-shrink-0">
+                        <div id="formTitle" class="flex items-center gap-2 font-black text-gray-800 text-lg"></div>
+                        <button id="closeModalBtn"
+                            class="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors flex-shrink-0">
+                            <i data-lucide="x" class="w-4 h-4"></i>
                         </button>
                     </div>
-                    
-                    <form id="newNailForm" class="p-6 space-y-5">
-                        
-                        <!-- Título -->
-                        <div class="space-y-1">
-                            <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Título del Trabajo</label>
-                            <input type="text" id="nailTitle" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium text-gray-800" placeholder="P Ej. Efecto Espejo Rosa..." />
-                        </div>
 
-                        <!-- Foto -->
-                        <div class="space-y-1">
-                            <div class="flex justify-between items-end">
-                                <label id="fotoLabel" class="text-xs font-bold text-gray-500 uppercase tracking-widest">Fotografía</label>
-                                <button type="button" id="changePhotoBtn" class="hidden text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md transition-colors"><i data-lucide="upload" class="w-3 h-3 inline"></i> Cambiar</button>
+                    <!-- Cuerpo con scroll -->
+                    <form id="newNailForm" class="flex flex-col flex-1 min-h-0">
+                        <div class="overflow-y-auto flex-1 px-5 py-4 space-y-4">
+
+                            <!-- Título -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Título del Trabajo</label>
+                                <input type="text" id="nailTitle" required
+                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all font-semibold text-gray-800 text-base"
+                                    placeholder="Ej. Efecto Espejo Rosa..." />
                             </div>
-                            <div class="relative w-full aspect-square border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 hover:bg-emerald-50/30 hover:border-emerald-300 transition-all text-center overflow-hidden group">
-                                <input type="file" id="nailFile" accept="image/jpeg, image/png, image/webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50" />
-                                
-                                <div id="uploadPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4 pointer-events-none">
-                                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 group-hover:scale-110 group-hover:text-emerald-500 transition-all mb-2">
-                                        <i data-lucide="image-plus" class="w-6 h-6"></i>
+
+                            <!-- Foto -->
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <label id="fotoLabel" class="text-xs font-bold text-gray-400 uppercase tracking-widest">Fotografía</label>
+                                    <button type="button" id="changePhotoBtn"
+                                        class="hidden text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200 transition-colors active:scale-95">
+                                        <i data-lucide="refresh-cw" class="w-3 h-3 inline mr-1"></i>Cambiar foto
+                                    </button>
+                                </div>
+
+                                <!-- Zona de upload -->
+                                <div id="uploadZone"
+                                    class="relative border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50 text-center overflow-hidden group transition-all hover:border-emerald-400 hover:bg-emerald-50/30"
+                                    style="height: 160px">
+                                    <input type="file" id="nailFile" accept="image/jpeg, image/png, image/webp"
+                                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50" />
+                                    <div id="uploadPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4 pointer-events-none">
+                                        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 group-hover:scale-110 group-hover:text-emerald-500 transition-all mb-2">
+                                            <i data-lucide="image-plus" class="w-6 h-6"></i>
+                                        </div>
+                                        <span class="text-sm font-bold text-gray-600">Toca para elegir una foto</span>
+                                        <span class="text-xs text-gray-400 mt-1">JPG, PNG o WEBP · Máx. 10MB</span>
                                     </div>
-                                    <span class="text-sm font-bold text-gray-700 block mb-1">Buscar foto en PC o Móvil</span>
-                                </div>
-
-                                <div id="previewContainer" class="absolute inset-0 hidden bg-black z-[60]">
-                                    <img id="previewImage" src="" class="block max-w-full" />
+                                    <div id="previewContainer" class="absolute inset-0 hidden bg-black z-[60]">
+                                        <img id="previewImage" src="" class="block max-w-full" />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Filtros (Visible solo cuando hay foto) -->
-                        <div id="filtersContainer" class="hidden space-y-2 pt-2 animate-in fade-in slide-in-from-bottom-2">
-                            <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Filtros</label>
-                            <div class="flex gap-2 overflow-x-auto pb-2">
-                                <button type="button" class="filter-btn flex-1 py-2 px-3 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold border border-indigo-200 active:scale-95 transition-all" data-filter="none">Original</button>
-                                <button type="button" class="filter-btn flex-1 py-2 px-3 bg-gray-50 text-gray-700 rounded-lg text-xs font-bold border border-gray-200 active:scale-95 transition-all" data-filter="grayscale(100%)">B/N</button>
-                                <button type="button" class="filter-btn flex-1 py-2 px-3 bg-amber-50 text-amber-700 rounded-lg text-xs font-bold border border-amber-200 active:scale-95 transition-all" data-filter="sepia(80%)">Cálido</button>
-                                <button type="button" class="filter-btn flex-1 py-2 px-3 bg-slate-800 text-white rounded-lg text-xs font-bold border border-slate-900 active:scale-95 transition-all" data-filter="contrast(150%) saturate(120%)">Vívido</button>
+                            <!-- Filtros (visibles solo cuando hay foto) -->
+                            <div id="filtersContainer" class="hidden space-y-2">
+                                <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Estilo de imagen</label>
+                                <div class="grid grid-cols-4 gap-2">
+                                    <button type="button" class="filter-btn flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-2xl border-2 border-indigo-200 bg-indigo-50 active:scale-95 transition-all" data-filter="none">
+                                        <div class="w-7 h-7 rounded-xl bg-gradient-to-br from-blue-400 to-purple-400 shadow-sm"></div>
+                                        <span class="text-[10px] font-black text-indigo-600 uppercase leading-none">Original</span>
+                                    </button>
+                                    <button type="button" class="filter-btn flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-2xl border-2 border-gray-200 bg-gray-50 active:scale-95 transition-all" data-filter="grayscale(100%)">
+                                        <div class="w-7 h-7 rounded-xl bg-gradient-to-br from-gray-300 to-gray-600 shadow-sm"></div>
+                                        <span class="text-[10px] font-black text-gray-500 uppercase leading-none">B/N</span>
+                                    </button>
+                                    <button type="button" class="filter-btn flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-2xl border-2 border-amber-200 bg-amber-50 active:scale-95 transition-all" data-filter="sepia(80%)">
+                                        <div class="w-7 h-7 rounded-xl bg-gradient-to-br from-amber-300 to-orange-500 shadow-sm"></div>
+                                        <span class="text-[10px] font-black text-amber-700 uppercase leading-none">Cálido</span>
+                                    </button>
+                                    <button type="button" class="filter-btn flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-2xl border-2 border-violet-200 bg-violet-50 active:scale-95 transition-all" data-filter="contrast(150%) saturate(120%)">
+                                        <div class="w-7 h-7 rounded-xl bg-gradient-to-br from-pink-400 to-violet-600 shadow-sm"></div>
+                                        <span class="text-[10px] font-black text-violet-700 uppercase leading-none">Vívido</span>
+                                    </button>
+                                </div>
                             </div>
+
                         </div>
 
-                        <div class="pt-4 flex gap-3">
-                            <button type="button" id="cancelModalBtn" class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-colors">
+                        <!-- Botones FIJOS al fondo — siempre visibles -->
+                        <div class="flex-shrink-0 px-5 pb-5 pt-3 border-t border-gray-100 bg-white flex gap-3">
+                            <button type="button" id="cancelModalBtn"
+                                class="flex-1 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-bold transition-colors active:scale-95">
                                 Cancelar
                             </button>
-                            <button type="submit" id="saveNailBtn" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/20 transition-all flex justify-center items-center gap-2">
-                                Guardar
+                            <button type="submit" id="saveNailBtn"
+                                class="flex-1 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-500/30 transition-all flex justify-center items-center gap-2 active:scale-95">
+                                <i data-lucide="check" class="w-4 h-4"></i> Guardar
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
+
 
             <!-- MODAL DE BORRADO PROFESIONAL -->
             <div id="deleteModalOverlay" class="fixed inset-0 z-[1000] bg-slate-900/60 backdrop-blur-md hidden items-center justify-center p-4">
