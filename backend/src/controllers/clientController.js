@@ -12,7 +12,28 @@ exports.getAllClients = async (req, res, next) => {
 
 exports.createClient = async (req, res, next) => {
     try {
-        const { name, phone, email, notes } = req.body; // ya viene limpio del middleware
+        const { name, phone, email, notes, force } = req.body; // ya viene limpio del middleware
+
+        // Check for duplicates (phone or email)
+        if (!force && (phone || email)) {
+            const conditions = [];
+            const values = [];
+            if (phone) { conditions.push('phone = ?'); values.push(phone); }
+            if (email) { conditions.push('email = ?'); values.push(email); }
+            
+            const [existing] = await db.query(
+                `SELECT id, name FROM clients WHERE ${conditions.join(' OR ')} LIMIT 1`,
+                values
+            );
+            
+            if (existing.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    errors: [`Ya existe otro cliente (${existing[0].name}) con este mismo teléfono o email.`]
+                });
+            }
+        }
+
         const [result] = await db.query(
             `INSERT INTO clients (name, phone, email, notes) VALUES (?, ?, ?, ?)`,
             [name, phone, email, notes]
@@ -25,10 +46,35 @@ exports.createClient = async (req, res, next) => {
 
 exports.updateClient = async (req, res, next) => {
     try {
-        const { name, phone, email, notes } = req.body;
+        const { name, phone, email, notes, force } = req.body;
+        const clientId = req.params.id;
+
+        // Check for duplicates (phone or email) excluding current client
+        if (!force && (phone || email)) {
+            const conditions = [];
+            const values = [];
+            if (phone) { conditions.push('phone = ?'); values.push(phone); }
+            if (email) { conditions.push('email = ?'); values.push(email); }
+            
+            // Add clientId to values array
+            values.push(clientId);
+            
+            const [existing] = await db.query(
+                `SELECT id, name FROM clients WHERE (${conditions.join(' OR ')}) AND id != ? LIMIT 1`,
+                values
+            );
+            
+            if (existing.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    errors: [`Ya existe otro cliente (${existing[0].name}) con este mismo teléfono o email.`]
+                });
+            }
+        }
+
         const [result] = await db.query(
             `UPDATE clients SET name = ?, phone = ?, email = ?, notes = ? WHERE id = ?`,
-            [name, phone, email, notes, req.params.id]
+            [name, phone, email, notes, clientId]
         );
         if (result.affectedRows === 0) {
             return res.status(404).json({ success: false, errors: ["Cliente no encontrado."] });

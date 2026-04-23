@@ -34,5 +34,15 @@ services:
       - db
     restart: always
 
+  frontend:
+    build:
+      context: ./frontend
+    container_name: boutique_market_ui
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    restart: always
+
 volumes:
   db_data:

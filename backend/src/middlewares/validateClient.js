@@ -1,61 +1,36 @@
 // middlewares/validateClient.js
+const { clientSchema } = require('../utils/schemas');
 
 /**
  * Validaciones para creación y actualización de clientes.
  * Se usa como middleware antes de llegar al controlador.
  */
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_REGEX = /^[0-9+\s\-().]{7,20}$/;
-
 /**
- * Valida y limpia el body para crear o editar un cliente.
+ * Valida y limpia el body para crear o editar un cliente usando Zod.
  * Aplica a POST y PUT /api/clients
  */
 exports.validateClientBody = (req, res, next) => {
-    const errors = [];
-    let { name, phone, email, notes } = req.body;
-
-    // --- Nombre ---
-    if (!name || typeof name !== 'string' || name.trim() === '') {
-        errors.push("El nombre del cliente es obligatorio.");
-    } else if (name.trim().length > 100) {
-        errors.push("El nombre no puede superar los 100 caracteres.");
-    }
-
-    // --- Teléfono (opcional) ---
-    if (phone !== undefined && phone !== null && phone !== '') {
-        const cleanPhone = phone.toString().replace(/\s+/g, '');
-        if (!PHONE_REGEX.test(cleanPhone)) {
-            errors.push("El teléfono no tiene un formato válido (7-20 dígitos).");
+    try {
+        const parsed = clientSchema.parse(req.body);
+        
+        // Limpieza de espacios en phone (Zod parsea y limpia pero por asegurar)
+        if (parsed.phone) {
+            parsed.phone = parsed.phone.replace(/\s+/g, '');
         }
-    }
-
-    // --- Email (opcional) ---
-    if (email !== undefined && email !== null && email !== '') {
-        if (!EMAIL_REGEX.test(email)) {
-            errors.push("El email no tiene un formato válido.");
-        } else if (email.length > 150) {
-            errors.push("El email no puede superar los 150 caracteres.");
+        
+        req.body = parsed;
+        next();
+    } catch (error) {
+        if (error.errors) {
+            const errorMessages = error.errors.map(err => err.message);
+            return res.status(400).json({
+                success: false,
+                errors: errorMessages
+            });
         }
+        next(error);
     }
-
-    // --- Notas (opcional) ---
-    if (notes && notes.length > 500) {
-        errors.push("Las notas no pueden superar los 500 caracteres.");
-    }
-
-    if (errors.length > 0) {
-        return res.status(400).json({ success: false, errors });
-    }
-
-    // Limpieza centralizada — el controlador recibe datos ya saneados
-    req.body.name = name.trim();
-    req.body.phone = phone ? phone.toString().replace(/\s+/g, '') : null;
-    req.body.email = email || null;
-    req.body.notes = notes || null;
-
-    next();
 };
 
 /**

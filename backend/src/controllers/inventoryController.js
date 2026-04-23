@@ -2,8 +2,20 @@ const db = require('../config/db');
 
 const getProducts = async (req, res, next) => {
     try {
-        const [rows] = await db.query('SELECT * FROM inventory ORDER BY id DESC');
-        res.status(200).json(rows);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50; // Default limit large enough for backwards compatibility
+        const offset = (page - 1) * limit;
+
+        const [[{ total }]] = await db.query('SELECT COUNT(*) as total FROM inventory');
+        const [rows] = await db.query('SELECT * FROM inventory ORDER BY id DESC LIMIT ? OFFSET ?', [limit, offset]);
+        
+        res.status(200).json({
+            data: rows,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        });
     } catch (err) { next(err); }
 };
 

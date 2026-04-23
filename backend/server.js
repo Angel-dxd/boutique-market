@@ -99,7 +99,11 @@ app.use((err, req, res, next) => {
 });
 
 // ─── Arranque ─────────────────────────────────────────────────────────────────
-app.listen(port, () => {
-    console.log(`\n🚀 Backend corriendo en http://localhost:${port}`);
-    console.log(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}\n`);
-});
+if (require.main === module) {
+    app.listen(port, () => {
+        console.log(`\n🚀 Backend corriendo en http://localhost:${port}`);
+        console.log(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}\n`);
+    });
+}
+
+module.exports = app;

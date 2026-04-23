@@ -8,9 +8,9 @@ export const renderMarketHome = async (container) => {
         const invoicesResponse = await api.get('/invoices');
         const suppliersResponse = await api.get('/providers');
 
-        const products = productsResponse.error ? [] : productsResponse;
-        const invoices = invoicesResponse.error ? [] : invoicesResponse;
-        const suppliers = suppliersResponse.error ? [] : suppliersResponse;
+        const products = productsResponse.error ? [] : (productsResponse.data || productsResponse);
+        const invoices = invoicesResponse.error ? [] : (invoicesResponse.data || invoicesResponse);
+        const suppliers = suppliersResponse.error ? [] : (suppliersResponse.data || suppliersResponse);
 
         // KPIs
         const criticalStock = products.filter(p => parseInt(p.stock) <= parseInt(p.min_stock)).length;

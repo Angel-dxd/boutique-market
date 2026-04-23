@@ -1,4 +1,5 @@
 import { api } from '../core/api.js';
+import { showConfirm } from '../shared/modal.js';
 
 export const renderFinance = async (container) => {
     let editingId = null;
@@ -347,9 +348,16 @@ export const renderFinance = async (container) => {
         document.querySelectorAll('.delete-tx').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (!confirm('¿Eliminar este movimiento?')) return;
+                const confirmed = await showConfirm(
+                    'Eliminar Movimiento',
+                    '¿Eliminar este movimiento? Esta acción no se puede deshacer.',
+                    'Sí, eliminar',
+                    'Cancelar'
+                );
+                if (!confirmed) return;
                 const res = await api.delete(`/finance/${btn.getAttribute('data-id')}`);
                 if (!res.error) { await loadData(); safeRender(); }
+                else { api.showToast('Error al eliminar el movimiento.', true); }
             });
         });
 
@@ -372,7 +380,7 @@ export const renderFinance = async (container) => {
                 await loadData();
                 safeRender();
             } else {
-                alert('Error al guardar el movimiento.');
+                api.showToast('Error al guardar el movimiento.', true);
             }
         });
     };

@@ -50,7 +50,11 @@ const showToast = (message, isError = false) => {
 const processResponse = async (res) => {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-        throw new Error(data.error || 'Error procesando solicitud en el servidor');
+        let errorMsg = data.error || 'Error procesando solicitud en el servidor';
+        if (data.errors && data.errors.length > 0) {
+            errorMsg = data.errors[0];
+        }
+        throw new Error(errorMsg);
     }
     return data;
 };

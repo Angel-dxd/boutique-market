@@ -1,4 +1,5 @@
 import { api } from '../core/api.js';
+import { showConfirm } from '../shared/modal.js';
 
 export const renderProveedores = async (container) => {
     let isModalOpen = false;
@@ -153,12 +154,20 @@ export const renderProveedores = async (container) => {
         document.querySelectorAll('.delete-supplier').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                if (confirm('¿PURGAR proveedor permanentemente?')) {
+                const confirmed = await showConfirm(
+                    'Eliminar Proveedor',
+                    '¿PURGAR proveedor permanentemente?',
+                    'Sí, purgar',
+                    'Cancelar'
+                );
+                if (confirmed) {
                     const id = parseInt(btn.getAttribute('data-id'));
                     const response = await api.delete(`/providers/${id}`);
                     if (!response.error) {
                         await loadData();
                         safeRender();
+                    } else {
+                        api.showToast('Error al eliminar proveedor.', true);
                     }
                 }
             });

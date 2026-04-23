@@ -1,17 +1,22 @@
 import { api } from '../core/api.js';
+import { showConfirm } from '../shared/modal.js';
 
 export const renderInventario = async (container) => {
     let products = [];
     let providers = [];
     let isModalOpen = false;
     let editingId = null;
+    let currentPage = 1;
+    let totalPages = 1;
+    const limit = 10;
 
     const loadData = async () => {
         const [prodRes, provRes] = await Promise.all([
-            api.get('/products'),
+            api.get(`/products?page=${currentPage}&limit=${limit}`),
             api.get('/providers')
         ]);
-        products = prodRes.error ? [] : prodRes;
+        products = prodRes.error ? [] : (prodRes.data || prodRes);
+        totalPages = prodRes.totalPages || 1;
         providers = provRes.error ? [] : provRes;
     };
 
@@ -129,6 +134,16 @@ export const renderInventario = async (container) => {
                             </tbody>
                         </table>
                     </div>
+                    
+                    <!-- Paginación -->
+                    ${totalPages > 1 ? `
+                    <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+                        <span class="text-sm text-gray-500">Página <span class="font-bold">${currentPage}</span> de ${totalPages}</span>
+                        <div class="flex gap-2">
+                            <button id="prevPageBtn" class="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors" ${currentPage === 1 ? 'disabled' : ''}>Anterior</button>
+                            <button id="nextPageBtn" class="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors" ${currentPage === totalPages ? 'disabled' : ''}>Siguiente</button>
+                        </div>
+                    </div>` : ''}
                 </div>
 
                 <!-- Modal crear / editar -->
@@ -246,14 +261,21 @@ export const renderInventario = async (container) => {
                 e.stopPropagation();
                 const id = parseInt(btn.getAttribute('data-delete'));
                 const product = products.find(p => p.id === id);
-                if (!confirm(`¿Eliminar "${product?.title}"? Esta acción no se puede deshacer.`)) return;
+                
+                const confirmed = await showConfirm(
+                    'Eliminar Producto',
+                    `¿Estás seguro de eliminar "${product?.title}"? Esta acción no se puede deshacer.`,
+                    'Sí, eliminar',
+                    'Cancelar'
+                );
+                if (!confirmed) return;
 
                 const res = await api.delete(`/products/${id}`);
                 if (!res.error) {
                     await loadData();
                     safeRender();
                 } else {
-                    alert('Error al eliminar el producto.');
+                    api.showToast('Error al eliminar el producto.', true);
                 }
             });
         });
@@ -282,7 +304,23 @@ export const renderInventario = async (container) => {
                 await loadData();
                 safeRender();
             } else {
-                alert('Error al guardar el producto. Revisa los datos e inténtalo de nuevo.');
+                api.showToast('Error al guardar el producto. Revisa los datos e inténtalo de nuevo.', true);
+            }
+        });
+
+        // Controles de Paginación
+        document.getElementById('prevPageBtn')?.addEventListener('click', async () => {
+            if (currentPage > 1) {
+                currentPage--;
+                await loadData();
+                safeRender();
+            }
+        });
+        document.getElementById('nextPageBtn')?.addEventListener('click', async () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                await loadData();
+                safeRender();
             }
         });
     };

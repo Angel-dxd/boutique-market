@@ -1,4 +1,5 @@
 import { api } from '../core/api.js';
+import { showConfirm } from '../shared/modal.js';
 
 export const renderCalendar = async (container) => {
     let currentDate = new Date();
@@ -167,15 +168,12 @@ export const renderCalendar = async (container) => {
                         <h3 class="font-bold text-gray-800 text-xl mb-6 flex items-center gap-2"><i data-lucide="calendar-plus" class="text-emerald-600"></i> Agendar Cita</h3>
                         
                         <form id="aptForm">
-                            <!-- Datalist Autocomplete integration -->
-                            <datalist id="clientsList">
-                                ${globalClients.map(c => `<option value="${c.name || ''}"></option>`).join('')}
-                            </datalist>
-
                             <div class="space-y-4">
-                                <div>
+                                <div class="relative">
                                     <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Busca o escribe client</label>
-                                    <input name="client" id="aptClientInput" list="clientsList" autocomplete="off" class="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all font-medium text-gray-800" placeholder="Ej. Mariana López" required />
+                                    <input name="client" id="aptClientInput" autocomplete="off" class="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all font-medium text-gray-800" placeholder="Ej. Mariana López" required />
+                                    <!-- Custom Autocomplete Dropdown -->
+                                    <div id="autocompleteDropdown" class="hidden absolute z-10 w-full mt-1 bg-white shadow-xl rounded-xl border border-gray-100 max-h-48 overflow-y-auto"></div>
                                 </div>
                                 
                                 <div class="grid grid-cols-2 gap-4">
@@ -283,13 +281,54 @@ export const renderCalendar = async (container) => {
 
             // Autocomplete listener
             const aptClientInput = document.getElementById('aptClientInput');
-            if (aptClientInput) {
+            const dropdown = document.getElementById('autocompleteDropdown');
+            if (aptClientInput && dropdown) {
+                // Ocultar dropdown al hacer click fuera
+                document.addEventListener('click', (e) => {
+                    if (!aptClientInput.contains(e.target) && !dropdown.contains(e.target)) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+
                 aptClientInput.addEventListener('input', (e) => {
-                    const typedName = e.target.value;
-                    const match = globalClients.find(c => c.name && c.name.toLowerCase() === typedName.toLowerCase());
-                    if (match) {
-                        document.getElementById('aptPhoneInput').value = match.phone || '';
-                        document.getElementById('aptEmailInput').value = match.email || '';
+                    const typedName = e.target.value.toLowerCase().trim();
+                    if (typedName.length === 0) {
+                        dropdown.classList.add('hidden');
+                        return;
+                    }
+
+                    // Filtrar clientes
+                    const matches = globalClients.filter(c => 
+                        (c.name && c.name.toLowerCase().includes(typedName)) ||
+                        (c.phone && c.phone.includes(typedName)) ||
+                        (c.email && c.email.toLowerCase().includes(typedName))
+                    );
+
+                    if (matches.length > 0) {
+                        dropdown.innerHTML = matches.map(c => `
+                            <div class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 autocomplete-item"
+                                 data-name="${c.name || ''}" data-phone="${c.phone || ''}" data-email="${c.email || ''}">
+                                <p class="font-bold text-sm text-gray-800">${c.name}</p>
+                                <p class="text-xs text-gray-500 flex gap-2">
+                                    ${c.phone ? `<span><i data-lucide="phone" width="10" class="inline"></i> ${c.phone}</span>` : ''}
+                                    ${c.email ? `<span><i data-lucide="mail" width="10" class="inline"></i> ${c.email}</span>` : ''}
+                                </p>
+                            </div>
+                        `).join('');
+                        dropdown.classList.remove('hidden');
+                        lucide.createIcons({ root: dropdown });
+
+                        // Eventos para click en el item
+                        dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
+                            item.addEventListener('click', () => {
+                                aptClientInput.value = item.getAttribute('data-name');
+                                document.getElementById('aptPhoneInput').value = item.getAttribute('data-phone');
+                                document.getElementById('aptEmailInput').value = item.getAttribute('data-email');
+                                dropdown.classList.add('hidden');
+                            });
+                        });
+                    } else {
+                        dropdown.classList.add('hidden');
                     }
                 });
             }
@@ -303,11 +342,38 @@ export const renderCalendar = async (container) => {
 
                 api.showLoading();
                 try {
+                    let clientRes;
+                    let force = false;
+
+                    const existingContact = globalClients.find(c => 
+                        (c.name && c.name.toLowerCase() !== clientName.toLowerCase()) && 
+                        ((phone && c.phone === phone) || (email && c.email === email))
+                    );
+
+                    if (existingContact) {
+                        api.hideLoading();
+                        const confirmed = await showConfirm(
+                            'Cliente existente',
+                            `Ya tienes una clienta (${existingContact.name}) con ese correo o teléfono. ¿Seguro que quieres añadirla de todos modos?`,
+                            'Sí, añadir',
+                            'Cancelar'
+                        );
+                        if (!confirmed) return;
+                        force = true;
+                        api.showLoading();
+                    }
+
                     const existingClient = globalClients.find(c => c.name && c.name.toLowerCase() === clientName.toLowerCase());
                     if (existingClient) {
-                        await api.put(`/clients/${existingClient.id}`, { name: clientName, phone, email, notes: existingClient.notes || '' });
+                        clientRes = await api.put(`/clients/${existingClient.id}`, { name: clientName, phone, email, notes: existingClient.notes || '', force });
                     } else {
-                        await api.post('/clients', { name: clientName, phone, email, notes: '' });
+                        clientRes = await api.post('/clients', { name: clientName, phone, email, notes: '', force });
+                    }
+
+                    // Verificar si hubo error de validación (ahora api.js devuelve el error en la propiedad error directamente)
+                    if (clientRes.error) {
+                        api.showToast(clientRes.error, true);
+                        return; // Detenemos la creación de la cita si el cliente es inválido
                     }
 
                     // Save the Appointment
@@ -322,6 +388,9 @@ export const renderCalendar = async (container) => {
                         appointmentModalOpen = false;
                         await loadData(); // this also auto updates earnings module
                         safeRender();
+                        api.showToast('Cita guardada correctamente');
+                    } else {
+                        api.showToast('Error al guardar la cita', true);
                     }
                 } finally {
                     api.hideLoading();

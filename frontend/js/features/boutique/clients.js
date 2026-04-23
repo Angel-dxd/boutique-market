@@ -1,4 +1,5 @@
 import { api } from '../core/api.js';
+import { showConfirm } from '../shared/modal.js';
 
 export const renderClients = async (container) => {
     let clients = [];
@@ -283,14 +284,20 @@ export const renderClients = async (container) => {
                 e.stopPropagation();
                 const id = parseInt(btn.getAttribute('data-delete'));
                 const client = clients.find(c => c.id === id);
-                if (!confirm(`¿Eliminar a "${client?.name}"?`)) return;
+                const confirmed = await showConfirm(
+                    'Eliminar Clienta',
+                    `¿Eliminar a "${client?.name}"? Esta acción no se puede deshacer.`,
+                    'Sí, eliminar',
+                    'Cancelar'
+                );
+                if (!confirmed) return;
 
                 const res = await api.delete(`/clients/${id}`);
                 if (!res.error) {
                     await loadData();
                     safeRender();
                 } else {
-                    alert('Error al eliminar la clienta.');
+                    api.showToast('Error al eliminar la clienta.', true);
                 }
             });
         });
@@ -316,7 +323,7 @@ export const renderClients = async (container) => {
                 await loadData();
                 safeRender();
             } else {
-                alert('Error al guardar la clienta. Revisa los datos.');
+                api.showToast('Error al guardar la clienta. Revisa los datos.', true);
             }
         });
     };

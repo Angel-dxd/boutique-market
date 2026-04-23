@@ -10,8 +10,8 @@ export const renderEstadisticas = async (container) => {
             api.get('/products'),
             api.get('/invoices')
         ]);
-        products = prodRes.error ? [] : prodRes;
-        invoices = invRes.error ? [] : invRes;
+        products = prodRes.error ? [] : (prodRes.data || prodRes);
+        invoices = invRes.error ? [] : (invRes.data || invRes);
     };
 
     const safeRender = () => {

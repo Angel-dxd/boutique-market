@@ -1,0 +1,62 @@
+const { z } = require('zod');
+
+// Schema for Products (Inventory)
+const productSchema = z.object({
+    title: z.string({ required_error: 'El título es obligatorio' })
+        .min(2, 'El título debe tener al menos 2 caracteres')
+        .trim(),
+    price: z.number({ required_error: 'El precio es obligatorio', invalid_type_error: 'El precio debe ser un número' })
+        .min(0, 'El precio no puede ser negativo'),
+    cost: z.number({ invalid_type_error: 'El coste debe ser un número' }).min(0).optional().default(0),
+    stock: z.number({ invalid_type_error: 'El stock debe ser un número entero' }).int().min(0).optional().default(0),
+    min_stock: z.number({ invalid_type_error: 'El stock mínimo debe ser entero' }).int().min(0).optional().default(5),
+    category: z.string().optional().default('General'),
+    provider_id: z.number().int().positive().nullable().optional()
+});
+
+// Schema for updating just the stock
+const stockUpdateSchema = z.object({
+    stock: z.number({ required_error: 'El stock es obligatorio', invalid_type_error: 'El stock debe ser numérico' })
+        .int('El stock debe ser un número entero')
+        .min(0, 'El stock no puede ser negativo')
+});
+
+// Schema for Authentication (Login)
+const authLoginSchema = z.object({
+    username: z.string({ required_error: 'El nombre de usuario es obligatorio' }).trim(),
+    password: z.string({ required_error: 'La contraseña es obligatoria' })
+});
+
+// Schema for Clients
+const clientSchema = z.object({
+    name: z.string({ required_error: 'El nombre del cliente es obligatorio' })
+        .min(2, 'El nombre debe tener al menos 2 caracteres')
+        .max(100, 'El nombre no puede superar los 100 caracteres')
+        .trim(),
+    phone: z.string()
+        .trim()
+        .regex(/^[0-9+\s\-().]{9,20}$/, 'El teléfono debe tener un formato válido (mínimo 9 caracteres numéricos)')
+        .nullable()
+        .optional()
+        .transform(val => (val === '' ? null : val)), // Convert empty string to null
+    email: z.string()
+        .trim()
+        .email('El email no tiene un formato válido')
+        .max(150, 'El email no puede superar los 150 caracteres')
+        .nullable()
+        .optional()
+        .transform(val => (val === '' ? null : val)), // Convert empty string to null
+    notes: z.string()
+        .max(500, 'Las notas no pueden superar los 500 caracteres')
+        .nullable()
+        .optional()
+        .transform(val => (val === '' ? null : val)),
+    force: z.boolean().optional()
+});
+
+module.exports = {
+    productSchema,
+    stockUpdateSchema,
+    authLoginSchema,
+    clientSchema
+};
