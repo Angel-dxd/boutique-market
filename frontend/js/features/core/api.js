@@ -3,24 +3,10 @@ const API_URL = window.REACT_APP_API_URL || `http://${window.location.hostname}:
 
 // --- SISTEMA GLOBAL DE CARGA Y NOTIFICACIONES (Vanilla JS) ---
 
-const showLoading = () => {
-    if (document.getElementById('global-spinner')) return;
-
-    const overlay = document.createElement('div');
-    overlay.id = 'global-spinner';
-    overlay.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm cursor-wait';
-
-    const spinner = document.createElement('div');
-    spinner.className = 'w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin';
-
-    overlay.appendChild(spinner);
-    document.body.appendChild(overlay);
-};
-
-const hideLoading = () => {
-    const overlay = document.getElementById('global-spinner');
-    if (overlay) overlay.remove();
-};
+// Spinner global desactivado — cada módulo gestiona su propio estado de carga
+// para no bloquear la navegación entre apartados
+const showLoading = () => {};
+const hideLoading = () => {};
 
 const showToast = (message, isError = false) => {
     const toast = document.createElement('div');
