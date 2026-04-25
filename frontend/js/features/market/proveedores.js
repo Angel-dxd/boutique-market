@@ -18,20 +18,20 @@ export const renderProveedores = async (container) => {
 
     const safeRender = () => {
         container.innerHTML = `
-             <div class="p-8 w-full max-w-7xl mx-auto">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+             <div class="p-4 md:p-8 w-full max-w-7xl mx-auto">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-10 gap-3">
                     <div>
-                        <h1 class="text-4xl font-black text-gray-800 tracking-tight">Proveedores</h1>
-                        <p class="text-gray-500 font-medium">Aliados comerciales</p>
+                        <h1 class="text-xl md:text-4xl font-black text-gray-800 tracking-tight">Proveedores</h1>
+                        <p class="text-gray-500 font-medium text-sm">Aliados comerciales</p>
                     </div>
-                     <button id="addSupplierBtn" class="bg-[#1e293b] text-white px-8 py-4 rounded-3xl font-black flex items-center gap-3 shadow-xl">
-                        <i data-lucide="user-plus" width="22"></i> NUEVO CONTACTO
+                     <button id="addSupplierBtn" class="bg-[#1e293b] text-white px-5 py-3 rounded-2xl font-black flex items-center gap-2 shadow-xl text-sm">
+                        <i data-lucide="user-plus" width="18"></i> NUEVO CONTACTO
                     </button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
                     ${suppliers.map(s => `
-                        <div class="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 hover:shadow-xl transition-all group relative">
+                        <div class="bg-white p-5 md:p-8 rounded-[32px] shadow-sm border border-gray-100 hover:shadow-xl transition-all group relative">
                              <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <div class="text-green-500 hover:text-green-600 cursor-pointer wapp-provider-btn" title="Contactar por WhatsApp" data-provider="${s.name}">
                                     <i data-lucide="message-circle" width="16"></i>
@@ -43,12 +43,12 @@ export const renderProveedores = async (container) => {
                                     <i data-lucide="trash" width="16"></i>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-5 mb-6">
-                                <div class="p-4 bg-blue-50 text-blue-600 rounded-3xl">
-                                    <i data-lucide="building-2" width="28"></i>
+                            <div class="flex items-center gap-3 mb-4 md:mb-6">
+                                <div class="p-3 bg-blue-50 text-blue-600 rounded-2xl">
+                                    <i data-lucide="building-2" width="22"></i>
                                 </div>
                                 <div>
-                                    <h3 class="font-black text-gray-800 text-xl leading-tight">${s.name}</h3>
+                                    <h3 class="font-black text-gray-800 text-base md:text-xl leading-tight">${s.name}</h3>
                                     <span class="text-[10px] bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-black uppercase tracking-widest mt-1 inline-block">
                                         ${s.category || s.category || 'General'}
                                     </span>

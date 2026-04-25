@@ -75,14 +75,14 @@ export const renderEstadisticas = async (container) => {
             </div>` : '';
 
         container.innerHTML = `
-            <div class="p-8 w-full max-w-7xl mx-auto space-y-8">
+            <div class="p-4 md:p-8 w-full max-w-7xl mx-auto space-y-6 md:space-y-8">
                 <div>
-                    <h1 class="text-3xl font-black text-gray-800">Estadísticas</h1>
-                    <p class="text-gray-400 font-medium mt-1">Análisis financiero · El Gallo Azul</p>
+                    <h1 class="text-xl md:text-3xl font-black text-gray-800">Estadísticas</h1>
+                    <p class="text-gray-400 font-medium mt-1 text-sm">Análisis financiero · El Gallo Azul</p>
                 </div>
 
                 <!-- KPIs -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                         <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Salud financiera</p>
                         <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full font-bold text-sm ${healthColor}">
@@ -90,19 +90,19 @@ export const renderEstadisticas = async (container) => {
                             ${healthLabel}
                         </div>
                     </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                        <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Deuda en facturas</p>
-                        <p class="text-2xl font-black text-gray-800 mt-1">${totalDebt.toFixed(2)}€</p>
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Deuda en facturas</p>
+                        <p class="text-xl md:text-2xl font-black text-gray-800 mt-1">${totalDebt.toFixed(2)}€</p>
                         <p class="text-xs text-gray-400 mt-1">${invoices.length} facturas registradas</p>
                     </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100">
                         <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Valor stock (venta)</p>
-                        <p class="text-2xl font-black text-gray-800 mt-1">${totalStockValue.toFixed(2)}€</p>
+                        <p class="text-xl md:text-2xl font-black text-gray-800 mt-1">${totalStockValue.toFixed(2)}€</p>
                         <p class="text-xs text-emerald-500 font-bold mt-1">Margen potencial: +${potentialMargin.toFixed(2)}€</p>
                     </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100">
                         <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Alertas de stock</p>
-                        <p class="text-2xl font-black ${(lowStock.length + outOfStock.length) > 0 ? 'text-red-500' : 'text-gray-800'} mt-1">
+                        <p class="text-xl md:text-2xl font-black ${(lowStock.length + outOfStock.length) > 0 ? 'text-red-500' : 'text-gray-800'} mt-1">
                             ${lowStock.length + outOfStock.length}
                         </p>
                         <p class="text-xs text-gray-400 mt-1">${outOfStock.length} sin stock · ${lowStock.length} bajo mínimo</p>

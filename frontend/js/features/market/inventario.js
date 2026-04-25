@@ -40,36 +40,36 @@ export const renderInventario = async (container) => {
         const totalValue = products.reduce((sum, p) => sum + (p.stock * parseFloat(p.price || 0)), 0);
 
         container.innerHTML = `
-            <div class="p-8 w-full max-w-7xl mx-auto">
-                <div class="flex items-center justify-between mb-2">
-                    <h1 class="text-3xl font-black text-gray-800">Inventario</h1>
+            <div class="p-4 md:p-8 w-full max-w-7xl mx-auto">
+                <div class="flex items-center justify-between mb-1 md:mb-2">
+                    <h1 class="text-xl md:text-3xl font-black text-gray-800">Inventario</h1>
                     <button id="addProdBtn"
                         class="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200">
                         <i data-lucide="plus" width="18"></i> Nuevo Producto
                     </button>
                 </div>
-                <p class="text-gray-400 font-medium mb-8">Stock y precios del Gallo Azul</p>
+                <p class="text-gray-400 font-medium mb-4 md:mb-8 text-sm">Stock y precios del Gallo Azul</p>
 
                 <!-- KPIs -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-10">
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between">
                         <div>
                             <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Valor total stock</p>
-                            <p class="text-3xl font-black text-gray-800 mt-1">${totalValue.toFixed(2)}€</p>
+                            <p class="text-xl md:text-3xl font-black text-gray-800 mt-1">${totalValue.toFixed(2)}€</p>
                         </div>
                         <div class="p-3 bg-indigo-50 text-indigo-500 rounded-2xl"><i data-lucide="package" width="24"></i></div>
                     </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between">
                         <div>
                             <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Stock bajo</p>
-                            <p class="text-3xl font-black text-amber-500 mt-1">${lowStockCount}</p>
+                            <p class="text-xl md:text-3xl font-black text-amber-500 mt-1">${lowStockCount}</p>
                         </div>
                         <div class="p-3 bg-amber-50 text-amber-500 rounded-2xl"><i data-lucide="alert-triangle" width="24"></i></div>
                     </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between">
                         <div>
                             <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Sin stock</p>
-                            <p class="text-3xl font-black text-red-500 mt-1">${outOfStockCount}</p>
+                            <p class="text-xl md:text-3xl font-black text-red-500 mt-1">${outOfStockCount}</p>
                         </div>
                         <div class="p-3 bg-red-50 text-red-500 rounded-2xl"><i data-lucide="x-circle" width="24"></i></div>
                     </div>

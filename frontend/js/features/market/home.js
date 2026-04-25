@@ -19,19 +19,19 @@ export const renderMarketHome = async (container) => {
         const activeSuppliers = suppliers.length;
 
         container.innerHTML = `
-            <div class="p-8 w-full max-w-7xl mx-auto space-y-10">
+            <div class="p-4 md:p-8 w-full max-w-7xl mx-auto space-y-6 md:space-y-10">
                 <header>
-                    <h1 class="text-4xl font-black text-gray-800 tracking-tight">Market Dashboard</h1>
-                    <p class="text-gray-500 font-medium">Resumen general de El Gallo Azul</p>
+                    <h1 class="text-2xl md:text-4xl font-black text-gray-800 tracking-tight">Market Dashboard</h1>
+                    <p class="text-gray-500 font-medium text-sm md:text-base">Resumen general de El Gallo Azul</p>
                 </header>
 
                 <!-- KPIs -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
                     <!-- Stock Crítico -->
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer" onclick="window.navigateTo('/market/inventario')">
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer" onclick="window.navigateTo('/market/inventario')">
                         <div>
                             <p class="text-gray-400 font-bold uppercase text-xs tracking-wider">Stock Crítico</p>
-                            <h2 class="text-4xl font-black ${criticalStock > 0 ? 'text-red-500' : 'text-emerald-500'} mt-2">${criticalStock}</h2>
+                            <h2 class="text-2xl md:text-4xl font-black ${criticalStock > 0 ? 'text-red-500' : 'text-emerald-500'} mt-1 md:mt-2">${criticalStock}</h2>
                             <p class="text-xs text-gray-400 mt-1">Productos bajo mínimo</p>
                         </div>
                         <div class="p-4 rounded-2xl ${criticalStock > 0 ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500'}">
@@ -40,10 +40,10 @@ export const renderMarketHome = async (container) => {
                     </div>
 
                     <!-- Facturas Pendientes -->
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer" onclick="window.navigateTo('/market/pedidos')">
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer" onclick="window.navigateTo('/market/pedidos')">
                         <div>
                             <p class="text-gray-400 font-bold uppercase text-xs tracking-wider">Facturas Pendientes</p>
-                            <h2 class="text-4xl font-black text-blue-600 mt-2">${pendingInvoices}</h2>
+                            <h2 class="text-2xl md:text-4xl font-black text-blue-600 mt-1 md:mt-2">${pendingInvoices}</h2>
                             <p class="text-xs text-gray-400 mt-1">Total: ${totalDebt.toFixed(2)}€</p>
                         </div>
                         <div class="p-4 rounded-2xl bg-blue-50 text-blue-600">
@@ -52,10 +52,10 @@ export const renderMarketHome = async (container) => {
                     </div>
 
                     <!-- Proveedores Activos -->
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer" onclick="window.navigateTo('/market/proveedores')">
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer" onclick="window.navigateTo('/market/proveedores')">
                         <div>
                             <p class="text-gray-400 font-bold uppercase text-xs tracking-wider">Proveedores</p>
-                            <h2 class="text-4xl font-black text-purple-600 mt-2">${activeSuppliers}</h2>
+                            <h2 class="text-2xl md:text-4xl font-black text-purple-600 mt-1 md:mt-2">${activeSuppliers}</h2>
                             <p class="text-xs text-gray-400 mt-1">Registrados</p>
                         </div>
                         <div class="p-4 rounded-2xl bg-purple-50 text-purple-600">
@@ -66,33 +66,36 @@ export const renderMarketHome = async (container) => {
 
                 <!-- Quick Actions -->
                 <div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-6">Acciones Rápidas</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <button id="btnInv" class="p-8 bg-white border border-gray-200 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group">
-                            <div class="p-4 bg-emerald-100 text-emerald-600 rounded-2xl w-fit mb-4 group-hover:scale-110 transition-transform">
-                                <i data-lucide="package" width="32"></i>
+                    <h3 class="text-base md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Acciones Rápidas</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
+                        <button id="btnInv" class="p-4 md:p-8 bg-white border border-gray-200 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group">
+                            <div class="p-3 md:p-4 bg-emerald-100 text-emerald-600 rounded-2xl w-fit mb-3 md:mb-4 group-hover:scale-110 transition-transform">
+                                <i data-lucide="package" width="24" class="md:hidden"></i>
+                                <i data-lucide="package" width="32" class="hidden md:block"></i>
                             </div>
-                            <h4 class="text-xl font-black text-gray-800">Inventario</h4>
-                            <p class="text-sm text-gray-500 mt-1">Gestionar stock y productos</p>
+                            <h4 class="text-base md:text-xl font-black text-gray-800">Inventario</h4>
+                            <p class="text-xs md:text-sm text-gray-500 mt-1">Gestionar stock y productos</p>
                         </button>
 
-                        <button id="btnOrders" class="p-8 bg-white border border-gray-200 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group">
-                            <div class="p-4 bg-blue-100 text-blue-600 rounded-2xl w-fit mb-4 group-hover:scale-110 transition-transform">
-                                <i data-lucide="shopping-cart" width="32"></i>
+                        <button id="btnOrders" class="p-4 md:p-8 bg-white border border-gray-200 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group">
+                            <div class="p-3 md:p-4 bg-blue-100 text-blue-600 rounded-2xl w-fit mb-3 md:mb-4 group-hover:scale-110 transition-transform">
+                                <i data-lucide="shopping-cart" width="24" class="md:hidden"></i>
+                                <i data-lucide="shopping-cart" width="32" class="hidden md:block"></i>
                             </div>
-                            <h4 class="text-xl font-black text-gray-800">Pedidos</h4>
-                            <p class="text-sm text-gray-500 mt-1">Registrar facturas y compras</p>
+                            <h4 class="text-base md:text-xl font-black text-gray-800">Pedidos</h4>
+                            <p class="text-xs md:text-sm text-gray-500 mt-1">Registrar facturas y compras</p>
                         </button>
 
-                        <button id="btnCalc" class="p-8 bg-[#1e293b] text-white rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-left group relative overflow-hidden">
-                            <div class="absolute top-0 right-0 p-12 opacity-10">
-                                <i data-lucide="calculator" width="120"></i>
+                        <button id="btnCalc" class="p-4 md:p-8 bg-[#1e293b] text-white rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-left group relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-8 md:p-12 opacity-10">
+                                <i data-lucide="calculator" width="80"></i>
                             </div>
-                            <div class="p-4 bg-gray-700/50 rounded-2xl w-fit mb-4 group-hover:scale-110 transition-transform backdrop-blur-sm">
-                                <i data-lucide="calculator" width="32"></i>
+                            <div class="p-3 md:p-4 bg-gray-700/50 rounded-2xl w-fit mb-3 md:mb-4 group-hover:scale-110 transition-transform backdrop-blur-sm">
+                                <i data-lucide="calculator" width="24" class="md:hidden"></i>
+                                <i data-lucide="calculator" width="32" class="hidden md:block"></i>
                             </div>
-                            <h4 class="text-xl font-black">Calculadora</h4>
-                            <p class="text-sm text-gray-400 mt-1">Herramienta rápida</p>
+                            <h4 class="text-base md:text-xl font-black">Calculadora</h4>
+                            <p class="text-xs md:text-sm text-gray-400 mt-1">Herramienta rápida</p>
                         </button>
                     </div>
                 </div>

@@ -28,29 +28,29 @@ export const renderPedidos = async (container) => {
         const totalDebt = invoices.reduce((acc, inv) => acc + parseFloat(inv.amount || 0), 0);
 
         container.innerHTML = `
-            <div class="p-8 w-full max-w-7xl mx-auto">
-                <h1 class="text-3xl font-black text-gray-800 mb-2">Gestión de Pedidos</h1>
-                <p class="text-gray-500 font-medium mb-8">Control de facturas emitidas (MySQL Centralizado)</p>
+            <div class="p-4 md:p-8 w-full max-w-7xl mx-auto">
+                <h1 class="text-xl md:text-3xl font-black text-gray-800 mb-1 md:mb-2">Gestión de Pedidos</h1>
+                <p class="text-gray-500 font-medium mb-4 md:mb-8 text-sm">Control de facturas emitidas (MySQL Centralizado)</p>
 
                 <!-- Resumen Blocks -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex justify-between items-start">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-8 mb-6 md:mb-10">
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex justify-between items-start">
                          <div>
                             <p class="text-gray-400 font-bold uppercase text-xs tracking-wider">Deuda Pendiente</p>
-                            <h2 class="text-3xl font-black text-red-500 mt-1">${totalDebt.toFixed(2)}€</h2>
+                            <h2 class="text-xl md:text-3xl font-black text-red-500 mt-1">${totalDebt.toFixed(2)}€</h2>
                         </div>
                         <div class="p-3 bg-red-50 text-red-500 rounded-2xl"><i data-lucide="trending-down" width="24"></i></div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex justify-between items-start">
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex justify-between items-start">
                          <div>
                             <p class="text-gray-400 font-bold uppercase text-xs tracking-wider">Facturas Emitidas</p>
-                            <h2 class="text-3xl font-black text-blue-600 mt-1">${invoices.length}</h2>
+                            <h2 class="text-xl md:text-3xl font-black text-blue-600 mt-1">${invoices.length}</h2>
                         </div>
                         <div class="p-3 bg-blue-50 text-blue-600 rounded-2xl"><i data-lucide="file-text" width="24"></i></div>
                     </div>
 
-                    <div id="addInvoiceBtn" class="bg-[#1e293b] p-6 rounded-3xl shadow-xl flex items-center justify-center cursor-pointer hover:scale-105 transition-transform text-white">
+                    <div id="addInvoiceBtn" class="bg-[#1e293b] p-4 md:p-6 rounded-3xl shadow-xl flex items-center justify-center cursor-pointer hover:scale-105 transition-transform text-white">
                         <div class="text-center">
                             <i data-lucide="plus" width="32" class="mx-auto mb-1"></i>
                             <p class="font-bold">Añadir Factura</p>
