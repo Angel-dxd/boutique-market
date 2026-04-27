@@ -70,8 +70,7 @@ export const renderMarketHome = async (container) => {
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
                         <button id="btnInv" class="p-4 md:p-8 bg-white border border-gray-200 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group">
                             <div class="p-3 md:p-4 bg-emerald-100 text-emerald-600 rounded-2xl w-fit mb-3 md:mb-4 group-hover:scale-110 transition-transform">
-                                <i data-lucide="package" width="24" class="md:hidden"></i>
-                                <i data-lucide="package" width="32" class="hidden md:block"></i>
+                                <i data-lucide="package" class="w-6 h-6 md:w-8 md:h-8"></i>
                             </div>
                             <h4 class="text-base md:text-xl font-black text-gray-800">Inventario</h4>
                             <p class="text-xs md:text-sm text-gray-500 mt-1">Gestionar stock y productos</p>
@@ -79,8 +78,7 @@ export const renderMarketHome = async (container) => {
 
                         <button id="btnOrders" class="p-4 md:p-8 bg-white border border-gray-200 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group">
                             <div class="p-3 md:p-4 bg-blue-100 text-blue-600 rounded-2xl w-fit mb-3 md:mb-4 group-hover:scale-110 transition-transform">
-                                <i data-lucide="shopping-cart" width="24" class="md:hidden"></i>
-                                <i data-lucide="shopping-cart" width="32" class="hidden md:block"></i>
+                                <i data-lucide="shopping-cart" class="w-6 h-6 md:w-8 md:h-8"></i>
                             </div>
                             <h4 class="text-base md:text-xl font-black text-gray-800">Pedidos</h4>
                             <p class="text-xs md:text-sm text-gray-500 mt-1">Registrar facturas y compras</p>
@@ -91,8 +89,7 @@ export const renderMarketHome = async (container) => {
                                 <i data-lucide="calculator" width="80"></i>
                             </div>
                             <div class="p-3 md:p-4 bg-gray-700/50 rounded-2xl w-fit mb-3 md:mb-4 group-hover:scale-110 transition-transform backdrop-blur-sm">
-                                <i data-lucide="calculator" width="24" class="md:hidden"></i>
-                                <i data-lucide="calculator" width="32" class="hidden md:block"></i>
+                                <i data-lucide="calculator" class="w-6 h-6 md:w-8 md:h-8"></i>
                             </div>
                             <h4 class="text-base md:text-xl font-black">Calculadora</h4>
                             <p class="text-xs md:text-sm text-gray-400 mt-1">Herramienta rápida</p>

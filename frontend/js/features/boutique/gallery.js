@@ -256,13 +256,13 @@ export const renderInstagramGallery = (container) => {
                         </div>
                     </div>
                     
-                    <button id="addLocalBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-emerald-500/30 transition-transform hover:-translate-y-1 active:scale-95 w-full md:w-auto font-bold text-lg">
+                    <button id="addLocalBtn" class="hidden md:flex bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 rounded-2xl items-center justify-center gap-3 shadow-xl shadow-emerald-500/30 transition-transform hover:-translate-y-1 active:scale-95 font-bold text-lg">
                         <i data-lucide="plus" class="w-6 h-6"></i> Añadir Foto
                     </button>
                 </div>
                 
                 <!-- GRID: Tarjetas Claras con Funciones Visibles -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
                     ${isLoading ? getSkeletons() : works.map(w => `
                         <!-- Tarjeta de Contenido -->
                         <div class="bg-white rounded-[2rem] shadow-md border border-gray-100 overflow-hidden group transition-all duration-300 flex flex-col hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-100">
@@ -273,18 +273,18 @@ export const renderInstagramGallery = (container) => {
                             </div>
                             
                             <!-- Pie Fijo con Botones Visibles -->
-                            <div class="p-5 flex items-center justify-between gap-3 bg-white grow">
-                                <h4 class="font-bold text-gray-800 text-sm md:text-base line-clamp-2 leading-tight flex-1">
+                            <div class="p-3 md:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-3 bg-white grow">
+                                <h4 class="font-bold text-gray-800 text-xs md:text-base line-clamp-2 leading-tight flex-1">
                                     ${w.title}
                                 </h4>
                                 
                                 ${w.source !== 'mock' ? `
                                 <div class="flex gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity shrink-0">
-                                    <button class="edit-btn p-3 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors cursor-pointer" title="Modificar" data-id="${w.id}" data-title="${w.title}" data-image="${w.image}">
-                                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                                    <button class="edit-btn p-2 md:p-3 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors cursor-pointer" title="Modificar" data-id="${w.id}" data-title="${w.title}" data-image="${w.image}">
+                                        <i data-lucide="pencil" class="w-3.5 h-3.5 md:w-4 md:h-4"></i>
                                     </button>
-                                    <button class="delete-btn p-3 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors cursor-pointer" title="Borrar" data-id="${w.id}">
-                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    <button class="delete-btn p-2 md:p-3 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors cursor-pointer" title="Borrar" data-id="${w.id}">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5 md:w-4 md:h-4"></i>
                                     </button>
                                 </div>` : `
                                 <span class="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Demo</span>
@@ -294,6 +294,11 @@ export const renderInstagramGallery = (container) => {
                     `).join('')}
                 </div>
             </div>
+
+            <!-- Botón Flotante (FAB) para Añadir Foto -->
+            <button id="fabAddLocalBtn" class="fixed bottom-20 right-4 md:bottom-8 md:right-8 bg-emerald-500 hover:bg-emerald-600 text-white w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(16,185,129,0.4)] hover:-translate-y-1 active:scale-95 transition-all z-40 group" title="Añadir nueva foto">
+                <i data-lucide="plus" class="w-7 h-7 md:w-8 md:h-8 group-hover:rotate-90 transition-transform duration-300"></i>
+            </button>
 
             <!-- MODAL DE SUBIDA/EDICIÓN -->
             <!-- z-[200] > z-50 de la bottom nav, así nunca queda tapado -->
@@ -416,6 +421,7 @@ export const renderInstagramGallery = (container) => {
 
         // Limpiezas y Enlaces de Eventos
         document.getElementById('addLocalBtn')?.addEventListener('click', () => openModal(null, '', ''));
+        document.getElementById('fabAddLocalBtn')?.addEventListener('click', () => openModal(null, '', ''));
         
         document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
         document.getElementById('cancelModalBtn')?.addEventListener('click', closeModal);
