@@ -245,19 +245,19 @@ export const renderInstagramGallery = (container) => {
             <div class="space-y-8 animate-in fade-in zoom-in-95 duration-500 relative">
                 
                 <!-- Encabezado Clásico -->
-                <div class="flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] gap-6">
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 shadow-inner shrink-0">
-                            <i data-lucide="briefcase" width="28"></i>
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-5 md:p-6 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] gap-5 md:gap-6">
+                    <div class="flex items-center gap-4 w-full">
+                        <div class="w-12 h-12 md:w-14 md:h-14 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 shadow-inner shrink-0">
+                            <i data-lucide="briefcase" class="w-6 h-6 md:w-7 md:h-7"></i>
                         </div>
-                        <div>
-                            <h2 class="text-3xl font-black text-gray-800 tracking-tight">Mis Uñas</h2>
-                            <p class="text-gray-500 font-medium tracking-wide">Catálogo de Trabajos</p>
+                        <div class="flex-1">
+                            <h2 class="text-2xl md:text-3xl font-black text-gray-800 tracking-tight">Mis Uñas</h2>
+                            <p class="text-sm md:text-base text-gray-500 font-medium tracking-wide">Catálogo de Trabajos</p>
                         </div>
                     </div>
                     
-                    <button id="addLocalBtn" class="hidden md:flex bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 rounded-2xl items-center justify-center gap-3 shadow-xl shadow-emerald-500/30 transition-transform hover:-translate-y-1 active:scale-95 font-bold text-lg">
-                        <i data-lucide="plus" class="w-6 h-6"></i> Añadir Foto
+                    <button id="addLocalBtn" class="flex w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3.5 md:px-8 md:py-4 rounded-2xl items-center justify-center gap-2.5 md:gap-3 shadow-xl shadow-emerald-500/30 transition-transform hover:-translate-y-1 active:scale-95 font-bold text-base md:text-lg">
+                        <i data-lucide="plus" class="w-5 h-5 md:w-6 md:h-6"></i> Añadir Foto
                     </button>
                 </div>
                 
@@ -295,10 +295,7 @@ export const renderInstagramGallery = (container) => {
                 </div>
             </div>
 
-            <!-- Botón Flotante (FAB) para Añadir Foto -->
-            <button id="fabAddLocalBtn" class="fixed bottom-20 right-4 md:bottom-8 md:right-8 bg-emerald-500 hover:bg-emerald-600 text-white w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(16,185,129,0.4)] hover:-translate-y-1 active:scale-95 transition-all z-40 group" title="Añadir nueva foto">
-                <i data-lucide="plus" class="w-7 h-7 md:w-8 md:h-8 group-hover:rotate-90 transition-transform duration-300"></i>
-            </button>
+
 
             <!-- MODAL DE SUBIDA/EDICIÓN -->
             <!-- z-[200] > z-50 de la bottom nav, así nunca queda tapado -->
@@ -421,7 +418,6 @@ export const renderInstagramGallery = (container) => {
 
         // Limpiezas y Enlaces de Eventos
         document.getElementById('addLocalBtn')?.addEventListener('click', () => openModal(null, '', ''));
-        document.getElementById('fabAddLocalBtn')?.addEventListener('click', () => openModal(null, '', ''));
         
         document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
         document.getElementById('cancelModalBtn')?.addEventListener('click', closeModal);

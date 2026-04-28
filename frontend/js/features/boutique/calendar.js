@@ -167,7 +167,7 @@ export const renderCalendar = async (container) => {
                     <div class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl animate-in zoom-in-95">
                         <h3 class="font-bold text-gray-800 text-xl mb-6 flex items-center gap-2"><i data-lucide="calendar-plus" class="text-emerald-600"></i> Agendar Cita</h3>
                         
-                        <form id="aptForm">
+                        <form id="aptForm" novalidate>
                             <div class="space-y-4">
                                 <div class="relative">
                                     <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Busca o escribe client</label>
@@ -343,31 +343,11 @@ export const renderCalendar = async (container) => {
                 api.showLoading();
                 try {
                     let clientRes;
-                    let force = false;
-
-                    const existingContact = globalClients.find(c => 
-                        (c.name && c.name.toLowerCase() !== clientName.toLowerCase()) && 
-                        ((phone && c.phone === phone) || (email && c.email === email))
-                    );
-
-                    if (existingContact) {
-                        api.hideLoading();
-                        const confirmed = await showConfirm(
-                            'Cliente existente',
-                            `Ya tienes una clienta (${existingContact.name}) con ese correo o teléfono. ¿Seguro que quieres añadirla de todos modos?`,
-                            'Sí, añadir',
-                            'Cancelar'
-                        );
-                        if (!confirmed) return;
-                        force = true;
-                        api.showLoading();
-                    }
-
                     const existingClient = globalClients.find(c => c.name && c.name.toLowerCase() === clientName.toLowerCase());
                     if (existingClient) {
-                        clientRes = await api.put(`/clients/${existingClient.id}`, { name: clientName, phone, email, notes: existingClient.notes || '', force });
+                        clientRes = await api.put(`/clients/${existingClient.id}`, { name: clientName, phone, email, notes: existingClient.notes || '', force: true });
                     } else {
-                        clientRes = await api.post('/clients', { name: clientName, phone, email, notes: '', force });
+                        clientRes = await api.post('/clients', { name: clientName, phone, email, notes: '', force: true });
                     }
 
                     // Verificar si hubo error de validación (ahora api.js devuelve el error en la propiedad error directamente)

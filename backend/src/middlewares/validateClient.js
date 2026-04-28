@@ -23,7 +23,19 @@ exports.validateClientBody = (req, res, next) => {
         next();
     } catch (error) {
         if (error.errors) {
-            const errorMessages = error.errors.map(err => err.message);
+            const errorMessages = error.errors.map(err => {
+                if (typeof err.message === 'string' && err.message.trim().startsWith('[')) {
+                    try {
+                        const parsed = JSON.parse(err.message);
+                        if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].message) {
+                            return parsed[0].message;
+                        }
+                    } catch (e) {
+                        // ignore parse errors
+                    }
+                }
+                return err.message;
+            });
             return res.status(400).json({
                 success: false,
                 errors: errorMessages
