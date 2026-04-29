@@ -5,8 +5,11 @@ export const renderInstagramGallery = (container) => {
     let isLoading = true;
     let editingId = null;
     let deletingId = null;
+    let detailId = null;
     let cropper = null;
     let currentFilter = 'none';
+    let searchQuery = '';
+    let activeCategory = 'all';
 
     // 1. OBTENER DISEÑOS
     const fetchAndRender = async () => {
@@ -20,9 +23,9 @@ export const renderInstagramGallery = (container) => {
         } else {
             // MOCK STATE
             works = [
-                { id: 'ej1', image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80', title: 'Acrílicas Cereza', source: 'mock' },
-                { id: 'ej2', image: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80', title: 'Francesa Premium', source: 'mock' },
-                { id: 'ej3', image: 'https://images.unsplash.com/photo-1519014816548-bf5fe059e98b?auto=format&fit=crop&q=80', title: 'Pasteles Brillo', source: 'mock' }
+                { id: 'ej1', image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80', title: 'Acrílicas Cereza', category: 'Acrílicas', source: 'mock' },
+                { id: 'ej2', image: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80', title: 'Francesa Premium', category: 'Francesa', source: 'mock' },
+                { id: 'ej3', image: 'https://images.unsplash.com/photo-1519014816548-bf5fe059e98b?auto=format&fit=crop&q=80', title: 'Pasteles Brillo', category: 'Nail Art', source: 'mock' }
             ];
         }
         
@@ -188,6 +191,32 @@ export const renderInstagramGallery = (container) => {
         document.getElementById('deleteModalOverlay').classList.remove('flex');
     };
 
+    const openDetailModal = (id) => {
+        detailId = id;
+    };
+
+    const closeDetailModal = () => {
+        detailId = null;
+        render();
+    };
+
+    const getWorkCategory = (work) => {
+        if (work.category && typeof work.category === 'string' && work.category.trim()) {
+            return work.category.trim();
+        }
+        return 'General';
+    };
+
+    const getVisibleWorks = () => {
+        const query = searchQuery.trim().toLowerCase();
+        return works.filter((w) => {
+            const matchesSearch = !query || (w.title || '').toLowerCase().includes(query);
+            const category = getWorkCategory(w);
+            const matchesCategory = activeCategory === 'all' || category === activeCategory;
+            return matchesSearch && matchesCategory;
+        });
+    };
+
     const applyFilterToPreview = () => {
         const previewImages = document.querySelectorAll('.cropper-canvas img, .cropper-view-box img');
         previewImages.forEach(img => {
@@ -241,6 +270,10 @@ export const renderInstagramGallery = (container) => {
     `).join('');
 
     const render = () => {
+        const categories = ['all', ...new Set(works.map(getWorkCategory))];
+        const visibleWorks = getVisibleWorks();
+        const detailWork = detailId ? works.find((w) => String(w.id) === String(detailId)) : null;
+
         container.innerHTML = `
             <div class="space-y-8 animate-in fade-in zoom-in-95 duration-500 relative">
                 
@@ -260,23 +293,55 @@ export const renderInstagramGallery = (container) => {
                         <i data-lucide="plus" class="w-5 h-5 md:w-6 md:h-6"></i> Añadir Foto
                     </button>
                 </div>
+
+                <div class="bg-white p-4 md:p-5 rounded-[1.5rem] border border-gray-100 shadow-sm space-y-4">
+                    <div class="relative">
+                        <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2"></i>
+                        <input
+                            id="gallerySearch"
+                            type="text"
+                            value="${searchQuery}"
+                            placeholder="Buscar trabajo por nombre..."
+                            class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 text-sm font-medium text-gray-700"
+                        />
+                    </div>
+                    <div class="flex gap-2 overflow-x-auto pb-1">
+                        ${categories.map((cat) => `
+                            <button
+                                class="gallery-filter-btn whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${activeCategory === cat ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}"
+                                data-category="${cat}"
+                            >
+                                ${cat === 'all' ? 'Todas' : cat}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
                 
                 <!-- GRID: Tarjetas Claras con Funciones Visibles -->
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
-                    ${isLoading ? getSkeletons() : works.map(w => `
+                    ${isLoading ? getSkeletons() : visibleWorks.map(w => `
                         <!-- Tarjeta de Contenido -->
                         <div class="bg-white rounded-[2rem] shadow-md border border-gray-100 overflow-hidden group transition-all duration-300 flex flex-col hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-100">
                             
                             <!-- Foto Cuadrada Estricta -->
-                            <div class="relative w-full aspect-square bg-gray-50 shrink-0 border-b border-gray-50">
+                            <div class="relative w-full aspect-square bg-gray-50 shrink-0 border-b border-gray-50 cursor-pointer view-btn" data-id="${w.id}">
                                 <img src="${w.image}" alt="${w.title}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" loading="lazy" />
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3 px-2">
+                                    <div class="flex gap-2">
+                                        <button class="view-btn text-xs font-bold bg-white/95 text-gray-800 px-3 py-1.5 rounded-full" data-id="${w.id}">Ver</button>
+                                        ${w.source !== 'mock' ? `<button class="edit-btn text-xs font-bold bg-blue-500 text-white px-3 py-1.5 rounded-full" data-id="${w.id}" data-title="${w.title}" data-image="${w.image}">Editar</button>` : ''}
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- Pie Fijo con Botones Visibles -->
                             <div class="p-3 md:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-3 bg-white grow">
-                                <h4 class="font-bold text-gray-800 text-xs md:text-base line-clamp-2 leading-tight flex-1">
-                                    ${w.title}
-                                </h4>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-bold text-gray-800 text-xs md:text-base line-clamp-2 leading-tight">
+                                        ${w.title}
+                                    </h4>
+                                    <span class="inline-flex mt-1 text-[10px] md:text-xs font-bold px-2 py-1 rounded-full bg-emerald-50 text-emerald-700">${getWorkCategory(w)}</span>
+                                </div>
                                 
                                 ${w.source !== 'mock' ? `
                                 <div class="flex gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity shrink-0">
@@ -292,6 +357,13 @@ export const renderInstagramGallery = (container) => {
                             </div>
                         </div>
                     `).join('')}
+                    ${!isLoading && visibleWorks.length === 0 ? `
+                        <div class="col-span-full bg-white border border-dashed border-gray-300 rounded-3xl p-10 text-center">
+                            <i data-lucide="search-x" class="w-10 h-10 mx-auto text-gray-300 mb-3"></i>
+                            <h3 class="text-lg font-bold text-gray-700">No hay resultados</h3>
+                            <p class="text-sm text-gray-500 mt-1">Prueba con otra búsqueda o cambia el filtro.</p>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
 
@@ -413,6 +485,43 @@ export const renderInstagramGallery = (container) => {
                     </div>
                 </div>
             </div>
+
+            <div id="detailModalOverlay" class="fixed inset-0 z-[1000] bg-slate-900/60 backdrop-blur-sm ${detailWork ? 'flex' : 'hidden'} items-center justify-center p-4">
+                <div class="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
+                    ${detailWork ? `
+                        <div class="relative aspect-square bg-gray-100">
+                            <img src="${detailWork.image}" alt="${detailWork.title}" class="absolute inset-0 w-full h-full object-cover" />
+                            <button id="closeDetailBtn" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 text-gray-700 flex items-center justify-center">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <div class="p-5 space-y-4">
+                            <div>
+                                <h3 class="text-xl font-black text-gray-800">${detailWork.title}</h3>
+                                <span class="inline-flex mt-2 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">${getWorkCategory(detailWork)}</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 text-sm">
+                                <div class="bg-gray-50 rounded-xl p-3">
+                                    <p class="text-gray-400 text-xs uppercase font-bold">ID</p>
+                                    <p class="font-semibold text-gray-700">${detailWork.id}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-xl p-3">
+                                    <p class="text-gray-400 text-xs uppercase font-bold">Estado</p>
+                                    <p class="font-semibold text-gray-700">${detailWork.source === 'mock' ? 'Demo' : 'Real'}</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-3">
+                                ${detailWork.source !== 'mock' ? `
+                                    <button id="detailEditBtn" data-id="${detailWork.id}" data-title="${detailWork.title}" data-image="${detailWork.image}" class="flex-1 py-3 rounded-xl bg-blue-50 text-blue-700 font-bold hover:bg-blue-100">Editar</button>
+                                    <button id="detailDeleteBtn" data-id="${detailWork.id}" class="flex-1 py-3 rounded-xl bg-red-50 text-red-700 font-bold hover:bg-red-100">Eliminar</button>
+                                ` : `
+                                    <button id="detailCloseBtn" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200">Cerrar</button>
+                                `}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
         `;
         lucide.createIcons();
 
@@ -433,6 +542,18 @@ export const renderInstagramGallery = (container) => {
             document.getElementById('nailFile').click();
         });
 
+        document.getElementById('gallerySearch')?.addEventListener('input', (e) => {
+            searchQuery = e.target.value || '';
+            render();
+        });
+
+        document.querySelectorAll('.gallery-filter-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                activeCategory = btn.getAttribute('data-category') || 'all';
+                render();
+            });
+        });
+
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('ring-2', 'ring-emerald-500'));
@@ -447,7 +568,16 @@ export const renderInstagramGallery = (container) => {
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                closeDetailModal();
                 openModal(btn.getAttribute('data-id'), btn.getAttribute('data-title'), btn.getAttribute('data-image'));
+            });
+        });
+
+        document.querySelectorAll('.view-btn').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openDetailModal(btn.getAttribute('data-id'));
+                render();
             });
         });
 
@@ -455,6 +585,7 @@ export const renderInstagramGallery = (container) => {
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                closeDetailModal();
                 openDeleteModal(btn.getAttribute('data-id'));
             });
         });
@@ -465,6 +596,25 @@ export const renderInstagramGallery = (container) => {
         const deleteOverlay = document.getElementById('deleteModalOverlay');
         if (deleteOverlay) deleteOverlay.addEventListener('click', (e) => {
             if (e.target === deleteOverlay) closeDeleteModal();
+        });
+
+        document.getElementById('closeDetailBtn')?.addEventListener('click', closeDetailModal);
+        document.getElementById('detailCloseBtn')?.addEventListener('click', closeDetailModal);
+        document.getElementById('detailEditBtn')?.addEventListener('click', (e) => {
+            const id = e.currentTarget.getAttribute('data-id');
+            const title = e.currentTarget.getAttribute('data-title');
+            const image = e.currentTarget.getAttribute('data-image');
+            closeDetailModal();
+            openModal(id, title, image);
+        });
+        document.getElementById('detailDeleteBtn')?.addEventListener('click', (e) => {
+            const id = e.currentTarget.getAttribute('data-id');
+            closeDetailModal();
+            openDeleteModal(id);
+        });
+        const detailOverlay = document.getElementById('detailModalOverlay');
+        if (detailOverlay) detailOverlay.addEventListener('click', (e) => {
+            if (e.target === detailOverlay) closeDetailModal();
         });
     };
 
