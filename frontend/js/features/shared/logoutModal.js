@@ -77,6 +77,7 @@ export const renderLogoutModal = (from) => {
     // Event listeners
     document.getElementById('confirmLogout').addEventListener('click', () => {
         localStorage.removeItem('currentUser');
+        localStorage.removeItem('authToken');
         navigateTo('/');
     });
 

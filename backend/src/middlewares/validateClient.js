@@ -22,8 +22,9 @@ exports.validateClientBody = (req, res, next) => {
         req.body = parsed;
         next();
     } catch (error) {
-        if (error.errors) {
-            const errorMessages = error.errors.map(err => {
+        const issues = error.issues || error.errors;
+        if (issues) {
+            const errorMessages = issues.map(err => {
                 if (typeof err.message === 'string' && err.message.trim().startsWith('[')) {
                     try {
                         const parsed = JSON.parse(err.message);

@@ -27,6 +27,12 @@ const authLoginSchema = z.object({
     password: z.string({ required_error: 'La contraseña es obligatoria' })
 });
 
+const authRegisterSchema = z.object({
+    username: z.string({ required_error: 'El nombre de usuario es obligatorio' }).trim().min(3).max(50),
+    password: z.string({ required_error: 'La contraseña es obligatoria' }).min(3).max(100),
+    email: z.string().trim().email('El email no tiene un formato válido').optional().nullable()
+});
+
 // Schema for Clients
 const clientSchema = z.object({
     name: z.string({ required_error: 'El nombre del cliente es obligatorio' })
@@ -57,6 +63,7 @@ const clientSchema = z.object({
 module.exports = {
     productSchema,
     stockUpdateSchema,
+    authRegisterSchema,
     authLoginSchema,
     clientSchema
 };

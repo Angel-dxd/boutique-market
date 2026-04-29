@@ -5,9 +5,10 @@ const validate = (schema) => (req, res, next) => {
         req.body = parsed;
         next();
     } catch (error) {
-        // Zod throws an error that has an 'errors' array
-        if (error.errors) {
-            const errorMessages = error.errors.map(err => {
+        // Zod v4 exposes `issues` (older versions used `errors`)
+        const issues = error.issues || error.errors;
+        if (issues) {
+            const errorMessages = issues.map(err => {
                 let msg = err.message;
                 if (typeof msg === 'string' && msg.trim().startsWith('[')) {
                     try {

@@ -263,13 +263,12 @@ export const renderCalendar = async (container) => {
         }
 
         document.getElementById('newAptBtn').addEventListener('click', () => {
-            if (!selectedDate) selectedDate = new Date();
             appointmentModalOpen = true;
             safeRender();
 
             setTimeout(() => {
                 const dateInput = document.getElementById('aptDate');
-                if (dateInput) dateInput.value = formatDate(selectedDate);
+                if (dateInput) dateInput.value = formatDate(selectedDate || new Date());
             }, 0);
         });
 
@@ -361,7 +360,7 @@ export const renderCalendar = async (container) => {
                         client: clientName,
                         description: formData.get('time'),
                         profit: parseFloat(formData.get('price')),
-                        date: formData.get('date') || formatDate(selectedDate)
+                        date: formData.get('date') || formatDate(selectedDate || new Date())
                     });
 
                     if (!response.error) {

@@ -2,12 +2,12 @@ const crypto = require('crypto');
 
 // ─── Validación de clave al arranque ─────────────────────────────────────────
 // La clave DEBE venir del entorno. Sin ella el servidor no arranca.
-// Configúrala en /backend/.env como: ENCRYPTION_KEY=<32 caracteres aleatorios>
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+// Compatibilidad: aceptar ENCRYPTION_KEY (preferido) o CRYPTO_KEY (legado).
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || process.env.CRYPTO_KEY;
 const IV_LENGTH = 16; // AES siempre usa bloques de 16 bytes
 
 if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length < 32) {
-    console.error('\n❌ [CRYPTO] ENCRYPTION_KEY no definida o insuficiente (mínimo 32 caracteres).');
+    console.error('\n❌ [CRYPTO] ENCRYPTION_KEY/CRYPTO_KEY no definida o insuficiente (mínimo 32 caracteres).');
     console.error('   Añade ENCRYPTION_KEY=<clave_de_32_chars> a tu archivo /backend/.env\n');
     process.exit(1); // Detiene el servidor — no hay cifrado sin clave
 }
