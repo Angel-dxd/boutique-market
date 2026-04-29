@@ -33,8 +33,8 @@ export const renderCalendar = async (container) => {
 
         // Cargar todos los clientes para el Autocompletado del Input
         const resClients = await api.get('/clients');
-        if (!resClients.error && Array.isArray(resClients)) {
-            globalClients = resClients;
+        if (!resClients.error && Array.isArray(resClients.data)) {
+            globalClients = resClients.data;
         }
     };
 
@@ -170,13 +170,13 @@ export const renderCalendar = async (container) => {
                         <form id="aptForm" novalidate>
                             <div class="space-y-4">
                                 <div class="relative">
-                                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Busca o escribe client</label>
+                                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Buscar Cliente</label>
                                     <input name="client" id="aptClientInput" autocomplete="off" class="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all font-medium text-gray-800" placeholder="Ej. Mariana López" required />
                                     <!-- Custom Autocomplete Dropdown -->
                                     <div id="autocompleteDropdown" class="hidden absolute z-10 w-full mt-1 bg-white shadow-xl rounded-xl border border-gray-100 max-h-48 overflow-y-auto"></div>
                                 </div>
                                 
-                                <div class="grid grid-cols-2 gap-4">
+                                <div id="clientContactFields" class="grid grid-cols-2 gap-4 transition-all duration-300 overflow-hidden">
                                      <div>
                                         <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Teléfono</label>
                                         <input name="phone" id="aptPhoneInput" type="tel" class="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all font-medium text-gray-800" placeholder="600000000" />
@@ -290,6 +290,10 @@ export const renderCalendar = async (container) => {
                 });
 
                 aptClientInput.addEventListener('input', (e) => {
+                    // Si el usuario escribe algo, mostramos los campos de contacto asumiendo que puede ser alguien nuevo
+                    const contactFields = document.getElementById('clientContactFields');
+                    if (contactFields) contactFields.classList.remove('hidden');
+
                     const typedName = e.target.value.toLowerCase().trim();
                     if (typedName.length === 0) {
                         dropdown.classList.add('hidden');
@@ -324,6 +328,10 @@ export const renderCalendar = async (container) => {
                                 document.getElementById('aptPhoneInput').value = item.getAttribute('data-phone');
                                 document.getElementById('aptEmailInput').value = item.getAttribute('data-email');
                                 dropdown.classList.add('hidden');
+                                
+                                // Ocultar los campos de teléfono y email porque ya es un cliente existente
+                                const contactFields = document.getElementById('clientContactFields');
+                                if (contactFields) contactFields.classList.add('hidden');
                             });
                         });
                     } else {

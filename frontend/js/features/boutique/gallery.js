@@ -64,14 +64,21 @@ export const renderInstagramGallery = (container) => {
         // CASO: Múltiples fotos
         if (!editingId && !cropper && files.length > 1) {
             let successCount = 0;
+            let index = 1;
             for (const file of files) {
                 if (file.size > 10 * 1024 * 1024) continue;
                 try {
                     const base64 = await toBase64(file);
-                    // Usar nombre de archivo si el título está vacío
-                    const tempTitle = title || file.name.replace(/\.[^/.]+$/, "");
+                    // Usar nombre base + número, o el nombre de archivo si no hay título
+                    let tempTitle = file.name.replace(/\.[^/.]+$/, "");
+                    if (title) {
+                        tempTitle = `${title} #${index}`;
+                    }
                     const res = await api.post('/gallery', { title: tempTitle, category: 'Unas', image: base64 });
-                    if (!res.error) successCount++;
+                    if (!res.error) {
+                        successCount++;
+                        index++;
+                    }
                 } catch (e) {
                     console.error(e);
                 }
@@ -330,34 +337,31 @@ export const renderInstagramGallery = (container) => {
         const detailWork = detailId ? works.find((w) => String(w.id) === String(detailId)) : null;
 
         container.innerHTML = `
-            <div class="space-y-8 animate-in fade-in zoom-in-95 duration-500 relative">
+            <div class="p-4 md:p-8 w-full max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500 relative">
                 
-                <!-- Encabezado Clásico -->
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-5 md:p-6 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] gap-5 md:gap-6">
-                    <div class="flex items-center gap-4 w-full">
-                        <div class="w-12 h-12 md:w-14 md:h-14 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 shadow-inner shrink-0">
-                            <i data-lucide="briefcase" class="w-6 h-6 md:w-7 md:h-7"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h2 class="text-2xl md:text-3xl font-black text-gray-800 tracking-tight">Mis Uñas</h2>
-                            <p class="text-sm md:text-base text-gray-500 font-medium tracking-wide">Catálogo de Trabajos</p>
-                        </div>
+                <!-- Header (Mismo estilo que Clientas) -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h1 class="text-2xl md:text-3xl font-black text-gray-800">Mis Uñas</h1>
+                        <button id="addLocalBtn"
+                            class="flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 text-sm md:text-base bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-200">
+                            <i data-lucide="image-plus" class="w-4 h-4 md:w-5 md:h-5"></i> <span class="hidden sm:inline">Añadir Foto</span><span class="sm:hidden">Añadir</span>
+                        </button>
                     </div>
-                    
-                    <button id="addLocalBtn" class="flex w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3.5 md:px-8 md:py-4 rounded-2xl items-center justify-center gap-2.5 md:gap-3 shadow-xl shadow-emerald-500/30 transition-transform hover:-translate-y-1 active:scale-95 font-bold text-base md:text-lg">
-                        <i data-lucide="plus" class="w-5 h-5 md:w-6 md:h-6"></i> Añadir Foto
-                    </button>
+                    <p class="text-gray-400 font-medium mb-8">Catálogo de Trabajos y Portfolio</p>
                 </div>
 
                 <div class="bg-white p-4 md:p-5 rounded-[1.5rem] border border-gray-100 shadow-sm space-y-4">
-                    <div class="relative">
-                        <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2"></i>
+                    <div class="relative flex items-center">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                        </div>
                         <input
                             id="gallerySearch"
                             type="text"
                             value="${searchQuery}"
                             placeholder="Buscar trabajo por nombre..."
-                            class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 text-sm font-medium text-gray-700"
+                            class="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all font-medium text-gray-800"
                         />
                     </div>
                 </div>
@@ -366,7 +370,7 @@ export const renderInstagramGallery = (container) => {
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
                     ${isLoading ? getSkeletons() : visibleWorks.map(w => `
                         <!-- Tarjeta de Contenido -->
-                        <div class="bg-white rounded-[2rem] shadow-md border border-gray-100 overflow-hidden group transition-all duration-300 flex flex-col hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-100">
+                        <div class="gallery-card bg-white rounded-[2rem] shadow-md border border-gray-100 overflow-hidden group transition-all duration-300 flex flex-col hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-100" data-title="${w.title}">
                             
                             <!-- Foto Cuadrada Estricta -->
                             <div class="relative w-full aspect-square bg-gray-50 shrink-0 border-b border-gray-50 cursor-pointer view-btn" data-id="${w.id}">
@@ -402,12 +406,18 @@ export const renderInstagramGallery = (container) => {
                         </div>
                     `).join('')}
                     ${!isLoading && visibleWorks.length === 0 ? `
-                        <div class="col-span-full bg-white border border-dashed border-gray-300 rounded-3xl p-10 text-center">
+                        <div id="noResultsMsg" class="col-span-full bg-white border border-dashed border-gray-300 rounded-3xl p-10 text-center">
                             <i data-lucide="search-x" class="w-10 h-10 mx-auto text-gray-300 mb-3"></i>
                             <h3 class="text-lg font-bold text-gray-700">No hay resultados</h3>
-                            <p class="text-sm text-gray-500 mt-1">Prueba con otra búsqueda o cambia el filtro.</p>
+                            <p class="text-sm text-gray-500 mt-1">Prueba con otra búsqueda.</p>
                         </div>
-                    ` : ''}
+                    ` : `
+                        <div id="noResultsMsg" class="col-span-full bg-white border border-dashed border-gray-300 rounded-3xl p-10 text-center" style="display: none;">
+                            <i data-lucide="search-x" class="w-10 h-10 mx-auto text-gray-300 mb-3"></i>
+                            <h3 class="text-lg font-bold text-gray-700">No hay resultados</h3>
+                            <p class="text-sm text-gray-500 mt-1">Prueba con otra búsqueda.</p>
+                        </div>
+                    `}
                 </div>
             </div>
 
@@ -587,7 +597,23 @@ export const renderInstagramGallery = (container) => {
 
         document.getElementById('gallerySearch')?.addEventListener('input', (e) => {
             searchQuery = e.target.value || '';
-            render();
+            const query = searchQuery.toLowerCase().trim();
+            let visibleCount = 0;
+            
+            document.querySelectorAll('.gallery-card').forEach(card => {
+                const title = (card.getAttribute('data-title') || '').toLowerCase();
+                if (title.includes(query)) {
+                    card.style.display = '';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            const noResults = document.getElementById('noResultsMsg');
+            if (noResults) {
+                noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+            }
         });
 
         document.querySelectorAll('.gallery-filter-btn').forEach((btn) => {
