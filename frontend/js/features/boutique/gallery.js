@@ -540,35 +540,44 @@ export const renderInstagramGallery = (container) => {
                 </div>
             </div>
 
-            <div id="detailModalOverlay" class="fixed inset-0 z-[1000] bg-slate-900/60 backdrop-blur-sm ${detailWork ? 'flex' : 'hidden'} items-center justify-center p-4">
-                <div class="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
+            <div id="detailModalOverlay" class="fixed inset-0 z-[1000] bg-slate-900/70 backdrop-blur-md ${detailWork ? 'flex' : 'hidden'} items-center justify-center p-4">
+                <div class="bg-white rounded-[2.5rem] w-full max-w-sm overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] transform transition-all">
                     ${detailWork ? `
-                        <div class="relative aspect-square bg-gray-100">
+                        <div class="relative w-full" style="padding-top: 100%;">
                             <img src="${detailWork.image}" alt="${detailWork.title}" class="absolute inset-0 w-full h-full object-cover" />
-                            <button id="closeDetailBtn" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 text-gray-700 flex items-center justify-center">
-                                <i data-lucide="x" class="w-4 h-4"></i>
+                            <!-- Gradient overlay for top -->
+                            <div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 via-black/20 to-transparent pointer-events-none"></div>
+                            
+                            <button id="closeDetailBtn" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all z-10 shadow-sm hover:scale-105 active:scale-95">
+                                <i data-lucide="x" class="w-5 h-5"></i>
                             </button>
+                            
+                            ${detailWork.source === 'mock' ? `
+                                <div class="absolute bottom-4 left-4 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-white/20 flex items-center gap-1.5 z-10 shadow-sm">
+                                    <div class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
+                                    <span class="text-[10px] font-black text-white uppercase tracking-widest">Demo</span>
+                                </div>
+                            ` : ''}
                         </div>
-                        <div class="p-5 space-y-4">
-                            <div>
-                                <h3 class="text-xl font-black text-gray-800">${detailWork.title}</h3>
-                                </div>
-                            <div class="grid grid-cols-2 gap-3 text-sm">
-                                <div class="bg-gray-50 rounded-xl p-3">
-                                    <p class="text-gray-400 text-xs uppercase font-bold">ID</p>
-                                    <p class="font-semibold text-gray-700">${detailWork.id}</p>
-                                </div>
-                                <div class="bg-gray-50 rounded-xl p-3">
-                                    <p class="text-gray-400 text-xs uppercase font-bold">Estado</p>
-                                    <p class="font-semibold text-gray-700">${detailWork.source === 'mock' ? 'Demo' : 'Real'}</p>
-                                </div>
+                        
+                        <div class="p-6 md:p-8">
+                            <div class="text-center mb-6">
+                                <h3 class="text-2xl font-black text-gray-800 tracking-tight leading-tight">${detailWork.title}</h3>
+                                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Portfolio Oh-Nails</p>
                             </div>
+                            
                             <div class="flex gap-3">
                                 ${detailWork.source !== 'mock' ? `
-                                    <button id="detailEditBtn" data-id="${detailWork.id}" data-title="${detailWork.title}" data-image="${detailWork.image}" class="flex-1 py-3 rounded-xl bg-blue-50 text-blue-700 font-bold hover:bg-blue-100">Editar</button>
-                                    <button id="detailDeleteBtn" data-id="${detailWork.id}" class="flex-1 py-3 rounded-xl bg-red-50 text-red-700 font-bold hover:bg-red-100">Eliminar</button>
+                                    <button id="detailEditBtn" data-id="${detailWork.id}" data-title="${detailWork.title}" data-image="${detailWork.image}" class="flex-1 py-3.5 rounded-2xl bg-gray-50 text-gray-700 font-bold border border-gray-200 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95">
+                                        <i data-lucide="pencil" class="w-4 h-4"></i> Editar
+                                    </button>
+                                    <button id="detailDeleteBtn" data-id="${detailWork.id}" class="flex-1 py-3.5 rounded-2xl bg-red-50 text-red-600 font-bold border border-red-100 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar
+                                    </button>
                                 ` : `
-                                    <button id="detailCloseBtn" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200">Cerrar</button>
+                                    <button id="detailCloseBtn" class="w-full py-4 rounded-2xl bg-gray-900 text-white font-bold hover:bg-gray-800 transition-all shadow-lg shadow-gray-900/20 active:scale-95">
+                                        Cerrar Vista
+                                    </button>
                                 `}
                             </div>
                         </div>
