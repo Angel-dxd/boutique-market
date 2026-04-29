@@ -50,14 +50,41 @@ export const renderInstagramGallery = (container) => {
 
         let base64Image = null;
 
-        // Validar si es nuevo y no hay cropper
-        if (!editingId && !cropper) {
+        const files = fileInput.files ? Array.from(fileInput.files) : [];
+
+        // Validar si es nuevo y no hay cropper ni archivos múltiples
+        if (!editingId && !cropper && files.length <= 1) {
             return api.showToast('Debes seleccionar una imagen local', true);
         }
 
         btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-5 h-5"></i> Guardando...';
         btn.disabled = true;
         lucide.createIcons();
+
+        // CASO: Múltiples fotos
+        if (!editingId && !cropper && files.length > 1) {
+            let successCount = 0;
+            for (const file of files) {
+                if (file.size > 10 * 1024 * 1024) continue;
+                try {
+                    const base64 = await toBase64(file);
+                    // Usar nombre de archivo si el título está vacío
+                    const tempTitle = title || file.name.replace(/\.[^/.]+$/, "");
+                    const res = await api.post('/gallery', { title: tempTitle, category: 'Unas', image: base64 });
+                    if (!res.error) successCount++;
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            api.showToast(`${successCount} fotos añadidas exitosamente`, false);
+            closeModal();
+            await fetchAndRender();
+            
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            lucide.createIcons();
+            return;
+        }
 
         if (cropper) {
             // Generar el canvas recortado
@@ -257,11 +284,39 @@ export const renderInstagramGallery = (container) => {
     };
 
     const handleFilePreview = (e) => {
-        const file = e.target.files[0];
-        if (file) {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+
+        if (files.length === 1) {
+            const file = files[0];
             if (file.size > 10 * 1024 * 1024) return api.showToast('La foto excede 10MB', true);
+            
+            // Asegurar que restauramos el img si venimos de múltiples
+            const container = document.getElementById('previewContainer');
+            container.innerHTML = '<img id="previewImage" src="" class="block max-w-full" />';
+            
             const previewUrl = URL.createObjectURL(file);
             initCropper(previewUrl);
+        } else {
+            // Múltiples fotos
+            document.getElementById('uploadPlaceholder').classList.add('hidden');
+            document.getElementById('previewContainer').classList.remove('hidden');
+            document.getElementById('filtersContainer').classList.add('hidden');
+            document.getElementById('changePhotoBtn').classList.remove('hidden');
+            
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            
+            document.getElementById('previewContainer').innerHTML = `
+                <div class="h-full w-full flex flex-col items-center justify-center bg-emerald-50 text-emerald-600 rounded-2xl">
+                    <i data-lucide="layers" class="w-12 h-12 mb-2"></i>
+                    <span class="font-bold text-lg">${files.length} fotos listas</span>
+                    <span class="text-sm mt-1">Se subirán simultáneamente</span>
+                </div>
+            `;
+            lucide.createIcons();
         }
     };
 
@@ -305,16 +360,6 @@ export const renderInstagramGallery = (container) => {
                             class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 text-sm font-medium text-gray-700"
                         />
                     </div>
-                    <div class="flex gap-2 overflow-x-auto pb-1">
-                        ${categories.map((cat) => `
-                            <button
-                                class="gallery-filter-btn whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${activeCategory === cat ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}"
-                                data-category="${cat}"
-                            >
-                                ${cat === 'all' ? 'Todas' : cat}
-                            </button>
-                        `).join('')}
-                    </div>
                 </div>
                 
                 <!-- GRID: Tarjetas Claras con Funciones Visibles -->
@@ -340,7 +385,6 @@ export const renderInstagramGallery = (container) => {
                                     <h4 class="font-bold text-gray-800 text-xs md:text-base line-clamp-2 leading-tight">
                                         ${w.title}
                                     </h4>
-                                    <span class="inline-flex mt-1 text-[10px] md:text-xs font-bold px-2 py-1 rounded-full bg-emerald-50 text-emerald-700">${getWorkCategory(w)}</span>
                                 </div>
                                 
                                 ${w.source !== 'mock' ? `
@@ -415,7 +459,7 @@ export const renderInstagramGallery = (container) => {
                                 <div id="uploadZone"
                                     class="relative border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50 text-center overflow-hidden group transition-all hover:border-emerald-400 hover:bg-emerald-50/30"
                                     style="height: 160px">
-                                    <input type="file" id="nailFile" accept="image/jpeg, image/png, image/webp"
+                                    <input type="file" id="nailFile" accept="image/jpeg, image/png, image/webp" multiple
                                         class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50" />
                                     <div id="uploadPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center p-4 pointer-events-none">
                                         <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 group-hover:scale-110 group-hover:text-emerald-500 transition-all mb-2">
@@ -498,8 +542,7 @@ export const renderInstagramGallery = (container) => {
                         <div class="p-5 space-y-4">
                             <div>
                                 <h3 class="text-xl font-black text-gray-800">${detailWork.title}</h3>
-                                <span class="inline-flex mt-2 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">${getWorkCategory(detailWork)}</span>
-                            </div>
+                                </div>
                             <div class="grid grid-cols-2 gap-3 text-sm">
                                 <div class="bg-gray-50 rounded-xl p-3">
                                     <p class="text-gray-400 text-xs uppercase font-bold">ID</p>
