@@ -39,6 +39,7 @@ const renderSidebar = (activePath) => NAV_ITEMS.map(item => {
 }).join('');
 
 let layoutMounted = false;
+let tabContainers = {};
 
 export const renderBoutiqueLayout = () => {
     const app = document.getElementById('app');
@@ -97,10 +98,12 @@ export const renderBoutiqueLayout = () => {
 
         document.getElementById('logoutBtn')?.addEventListener('click', () => {
             layoutMounted = false;
+            tabContainers = {};
             navigateTo('/logout-confirmation', { from: 'boutique' });
         });
         document.getElementById('logoutBtnMobile')?.addEventListener('click', () => {
             layoutMounted = false;
+            tabContainers = {};
             navigateTo('/logout-confirmation', { from: 'boutique' });
         });
 
@@ -135,8 +138,10 @@ export const renderBoutiqueLayout = () => {
         }
 
         lucide.createIcons();
+
         document.getElementById('logoutBtn')?.addEventListener('click', () => {
             layoutMounted = false;
+            tabContainers = {};
             navigateTo('/logout-confirmation', { from: 'boutique' });
         });
     }
@@ -144,35 +149,50 @@ export const renderBoutiqueLayout = () => {
     // --- Siempre: cargar el contenido del apartado activo ---
     const contentContainer = document.getElementById('layout-content');
 
+    // Hide all cached tabs
+    Object.values(tabContainers).forEach(el => el.classList.add('hidden'));
+
+    if (tabContainers[path]) {
+        // Just show the cached tab instantly
+        tabContainers[path].classList.remove('hidden');
+        return;
+    }
+
+    // Create a new container for the route
+    const tabEl = document.createElement('div');
+    tabEl.className = 'w-full animate-in fade-in duration-200';
+    tabContainers[path] = tabEl;
+    contentContainer.appendChild(tabEl);
+
     // Skeleton instantáneo mientras carga el módulo
-    contentContainer.innerHTML = `
+    tabEl.innerHTML = `
         <div class="space-y-4 animate-pulse">
-            <div class="h-10 bg-gray-200 rounded-2xl w-1/3"></div>
+            <div class="h-10 bg-gray-200 dark:bg-gray-700 rounded-2xl w-1/3"></div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="h-28 bg-gray-100 rounded-2xl"></div>
-                <div class="h-28 bg-gray-100 rounded-2xl"></div>
-                <div class="h-28 bg-gray-100 rounded-2xl"></div>
+                <div class="h-28 bg-gray-100 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700"></div>
+                <div class="h-28 bg-gray-100 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700"></div>
+                <div class="h-28 bg-gray-100 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700"></div>
             </div>
-            <div class="h-64 bg-gray-100 rounded-2xl"></div>
+            <div class="h-64 bg-gray-100 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700"></div>
         </div>`;
 
     const loadContent = async () => {
         if (path === '/boutique-welcome') {
-            renderBoutiqueHome(contentContainer);
+            renderBoutiqueHome(tabEl);
         } else if (path === '/boutique-welcome/clientes') {
             const m = await getModule('clients');
-            m.renderClients(contentContainer);
+            m.renderClients(tabEl);
         } else if (path === '/boutique-welcome/calendario') {
             const m = await getModule('calendar');
-            m.renderCalendar(contentContainer);
+            m.renderCalendar(tabEl);
         } else if (path === '/boutique-welcome/gastos') {
             const m = await getModule('finance');
-            m.renderFinance(contentContainer);
+            m.renderFinance(tabEl);
         } else if (path === '/boutique-welcome/mis-unas') {
             const m = await getModule('gallery');
-            m.renderInstagramGallery(contentContainer);
+            m.renderInstagramGallery(tabEl);
         } else {
-            contentContainer.innerHTML = `<h2 class="text-2xl font-bold">WIP: ${path}</h2>`;
+            tabEl.innerHTML = `<h2 class="text-2xl font-bold">WIP: ${path}</h2>`;
         }
     };
 

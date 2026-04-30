@@ -4,7 +4,7 @@ const db = require('../config/db');
 const getAppointments = async (req, res, next) => {
     try {
         // Aprovecha la conexión dinámica configurada con x-tenant-id para aislar los datos
-        const [rows] = await db.query('SELECT * FROM calendar ORDER BY date ASC');
+        const [rows] = await db.query('SELECT * FROM calendar WHERE deleted_at IS NULL ORDER BY date ASC');
 
         let totalEarnings = 0;
         const formatted = rows.map(r => {
@@ -64,9 +64,9 @@ const getEarningsReport = async (req, res, next) => {
         const dateStr = req.query.date || new Date().toISOString().split('T')[0];
 
         // Consultas agrupadas nativamente en MySQL segmentando por el tenant actual
-        const [dayResult] = await db.query(`SELECT SUM(profit) as total FROM calendar WHERE DATE(date) = ?`, [dateStr]);
-        const [monthResult] = await db.query(`SELECT SUM(profit) as total FROM calendar WHERE MONTH(date) = MONTH(?) AND YEAR(date) = YEAR(?)`, [dateStr, dateStr]);
-        const [yearResult] = await db.query(`SELECT SUM(profit) as total FROM calendar WHERE YEAR(date) = YEAR(?)`, [dateStr]);
+        const [dayResult] = await db.query(`SELECT SUM(profit) as total FROM calendar WHERE DATE(date) = ? AND deleted_at IS NULL`, [dateStr]);
+        const [monthResult] = await db.query(`SELECT SUM(profit) as total FROM calendar WHERE MONTH(date) = MONTH(?) AND YEAR(date) = YEAR(?) AND deleted_at IS NULL`, [dateStr, dateStr]);
+        const [yearResult] = await db.query(`SELECT SUM(profit) as total FROM calendar WHERE YEAR(date) = YEAR(?) AND deleted_at IS NULL`, [dateStr]);
 
         res.status(200).json({
             today: parseFloat(dayResult[0].total || 0),
@@ -91,18 +91,18 @@ const getDashboardData = async (req, res, next) => {
         }
 
         const [todayRows] = await db.query(
-            'SELECT * FROM calendar WHERE date = ? ORDER BY description ASC',
+            'SELECT * FROM calendar WHERE date = ? AND deleted_at IS NULL ORDER BY description ASC',
             [today]
         );
 
         const [tomorrowRows] = await db.query(
-            'SELECT * FROM calendar WHERE date = ? ORDER BY description ASC',
+            'SELECT * FROM calendar WHERE date = ? AND deleted_at IS NULL ORDER BY description ASC',
             [tomorrow]
         );
 
         // Top 5 Clientes (Mis Fieles) basado puramente en historial de citas
         const [topClientsRows] = await db.query(
-            'SELECT client AS name, COUNT(*) AS visits FROM calendar GROUP BY client ORDER BY visits DESC LIMIT 5'
+            'SELECT client AS name, COUNT(*) AS visits FROM calendar WHERE deleted_at IS NULL GROUP BY client ORDER BY visits DESC LIMIT 5'
         );
 
         res.status(200).json({

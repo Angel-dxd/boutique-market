@@ -1,5 +1,6 @@
 import { api } from '../core/api.js';
 import { showConfirm } from '../shared/modal.js';
+import { renderSkeleton } from '../shared/ui.js';
 
 export const renderClients = async (container) => {
     let clients = [];
@@ -46,10 +47,10 @@ export const renderClients = async (container) => {
 
                 <!-- KPIs -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
-                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div class="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between">
                         <div>
                             <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Total clientas</p>
-                            <p class="text-3xl font-black text-gray-800 mt-1">${clients.length}</p>
+                            <p class="text-3xl font-black text-gray-800 dark:text-gray-100 mt-1">${clients.length}</p>
                         </div>
                         <div class="p-3 bg-emerald-50 text-emerald-500 rounded-2xl"><i data-lucide="users" width="24"></i></div>
                     </div>
@@ -133,11 +134,11 @@ export const renderClients = async (container) => {
                 </div>` : ''}
 
                 <!-- Lista de clientas -->
-                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead>
-                                <tr class="bg-gray-50 text-gray-400 uppercase text-xs tracking-wider">
+                                <tr class="bg-gray-50 dark:bg-gray-900 text-gray-400 uppercase text-xs tracking-wider">
                                     <th class="px-6 py-4 text-left font-bold">Nombre</th>
                                     <th class="px-6 py-4 text-left font-bold">Teléfono</th>
                                     <th class="px-6 py-4 text-left font-bold">Email</th>
@@ -350,6 +351,14 @@ export const renderClients = async (container) => {
             }
         });
     };
+
+    container.innerHTML = `
+        <div class="p-4 md:p-8 w-full max-w-7xl mx-auto">
+            <h1 class="text-2xl md:text-3xl font-black text-gray-800 dark:text-gray-100 mb-8">Clientas</h1>
+            ${renderSkeleton('cards')}
+            ${renderSkeleton('table')}
+        </div>
+    `;
 
     await loadData();
     safeRender();

@@ -1,5 +1,6 @@
 import { api } from '../core/api.js';
 import { showConfirm } from '../shared/modal.js';
+import { renderSkeleton } from '../shared/ui.js';
 
 export const renderCalendar = async (container) => {
     let currentDate = new Date();
@@ -187,14 +188,14 @@ export const renderCalendar = async (container) => {
                                     </div>
                                 </div>
 
-                                <div class="flex gap-4">
-                                    <div class="flex-1">
+                                <div class="flex gap-2 sm:gap-4">
+                                    <div class="flex-[3] min-w-0">
                                         <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Fecha</label>
-                                        <input name="date" type="date" id="aptDate" class="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-sm font-medium" required />
+                                        <input name="date" type="date" id="aptDate" class="w-full mt-1 px-2 py-3 sm:p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-[13px] sm:text-sm font-medium min-w-0" required />
                                     </div>
-                                    <div class="w-24">
+                                    <div class="flex-[2] min-w-0">
                                         <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Hora</label>
-                                        <select name="time" class="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-sm font-medium">
+                                        <select name="time" class="w-full mt-1 px-2 py-3 sm:p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-[13px] sm:text-sm font-medium min-w-0">
                                             <option value="09:00">09:00</option>
                                             <option value="10:00" selected>10:00</option>
                                             <option value="11:00">11:00</option>
@@ -437,6 +438,13 @@ export const renderCalendar = async (container) => {
             };
         }
     };
+
+    container.innerHTML = `
+        <div class="p-4 md:p-8 w-full max-w-7xl mx-auto">
+            <h1 class="text-2xl md:text-3xl font-black text-gray-800 dark:text-gray-100 mb-8">Agenda</h1>
+            ${renderSkeleton('calendar')}
+        </div>
+    `;
 
     await loadData();
     safeRender();

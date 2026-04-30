@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS clients (
     notes       TEXT            DEFAULT NULL,
     last_visit  DATE            DEFAULT NULL,  -- NULL hasta la primera visita real
     created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+    deleted_at  TIMESTAMP       NULL DEFAULT NULL,
 
     INDEX idx_clients_name       (name),
     INDEX idx_clients_last_visit (last_visit)   -- acelera consultas de fidelización
@@ -91,6 +92,7 @@ CREATE TABLE IF NOT EXISTS calendar (
     description VARCHAR(255)    DEFAULT NULL,
     profit      DECIMAL(10,2)   DEFAULT 0.00,
     created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+    deleted_at  TIMESTAMP       NULL DEFAULT NULL,
 
     INDEX idx_calendar_date   (date),
     INDEX idx_calendar_client (client)
