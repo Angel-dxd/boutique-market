@@ -1,6 +1,14 @@
-// controllers/clientController.js
+/**
+ * controllers/clientController.js
+ * Gestión de clientas para el módulo de Boutique.
+ * Incluye lógica de fidelización (at-risk) y validación de duplicados.
+ */
 const db = require('../config/db');
 
+/**
+ * Obtiene todas las clientas activas (no eliminadas).
+ * @route GET /api/clients
+ */
 exports.getAllClients = async (req, res, next) => {
     try {
         const [rows] = await db.query("SELECT * FROM clients WHERE deleted_at IS NULL ORDER BY name ASC");
@@ -10,6 +18,15 @@ exports.getAllClients = async (req, res, next) => {
     }
 };
 
+/**
+ * Crea una nueva clienta en el sistema.
+ * @route POST /api/clients
+ * @param {string} req.body.name - Nombre de la clienta.
+ * @param {string} [req.body.phone] - Teléfono de contacto.
+ * @param {string} [req.body.email] - Correo electrónico.
+ * @param {string} [req.body.notes] - Observaciones o preferencias.
+ * @param {boolean} [req.body.force] - Si es true, ignora la advertencia de duplicado.
+ */
 exports.createClient = async (req, res, next) => {
     try {
         const { name, phone, email, notes, force } = req.body; // ya viene limpio del middleware
@@ -44,19 +61,22 @@ exports.createClient = async (req, res, next) => {
     }
 };
 
+/**
+ * Actualiza los datos de una clienta existente.
+ * @route PUT /api/clients/:id
+ */
 exports.updateClient = async (req, res, next) => {
     try {
         const { name, phone, email, notes, force } = req.body;
         const clientId = req.params.id;
 
-        // Check for duplicates (phone or email) excluding current client
+        // Verificación de duplicados excluyendo a la propia clienta
         if (!force && (phone || email)) {
             const conditions = [];
             const values = [];
             if (phone) { conditions.push('phone = ?'); values.push(phone); }
             if (email) { conditions.push('email = ?'); values.push(email); }
             
-            // Add clientId to values array
             values.push(clientId);
             
             const [existing] = await db.query(
@@ -85,6 +105,10 @@ exports.updateClient = async (req, res, next) => {
     }
 };
 
+/**
+ * Elimina una clienta (Soft Delete).
+ * @route DELETE /api/clients/:id
+ */
 exports.deleteClient = async (req, res, next) => {
     try {
         const [result] = await db.query(`UPDATE clients SET deleted_at = NOW() WHERE id = ?`, [req.params.id]);

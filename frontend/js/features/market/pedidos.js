@@ -1,6 +1,15 @@
+/**
+ * market/pedidos.js
+ * Módulo de gestión de pedidos y facturas de proveedores para El Gallo Azul.
+ * Gestiona la deuda pendiente y el historial de compras.
+ */
 import { api } from '../core/api.js';
 import { showConfirm } from '../shared/modal.js';
 
+/**
+ * Renderiza la interfaz de gestión de pedidos.
+ * @param {HTMLElement} container - El elemento donde se inyectará el HTML.
+ */
 export const renderPedidos = async (container) => {
     let isModalOpen = false;
     let editingId = null;

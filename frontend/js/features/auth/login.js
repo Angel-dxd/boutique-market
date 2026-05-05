@@ -1,5 +1,13 @@
+/**
+ * auth/login.js
+ * Módulo de autenticación centralizado.
+ * Gestiona el acceso de usuarios (Arelys para Boutique, Santi para Market).
+ */
 import { navigateTo } from '../core/app.js';
 
+/**
+ * Renderiza la pantalla de inicio de sesión con diseño adaptativo.
+ */
 export const renderLogin = () => {
     const app = document.getElementById('app');
 

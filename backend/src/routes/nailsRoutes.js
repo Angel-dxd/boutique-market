@@ -1,8 +1,17 @@
+/**
+ * routes/nailsRoutes.js
+ * Rutas para la gestión de la galería de uñas (Mis Uñas).
+ * Nota: Este controlador está integrado directamente en el archivo de rutas.
+ */
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 
 // GET /api/nails
+/**
+ * Obtiene todos los diseños de uñas.
+ * @route GET /api/nails
+ */
 const getNails = async (req, res) => {
     try {
         const [rows] = await db.query('SELECT * FROM nails ORDER BY id DESC');
@@ -13,6 +22,10 @@ const getNails = async (req, res) => {
 };
 
 // POST /api/nails
+/**
+ * Registra un nuevo diseño de uñas.
+ * @route POST /api/nails
+ */
 const createNail = async (req, res) => {
     try {
         const { title, imageUrl } = req.body;

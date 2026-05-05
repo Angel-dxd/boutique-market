@@ -1,3 +1,9 @@
+/**
+ * core/api.js
+ * Wrapper para la comunicación con la API del backend.
+ * Gestiona cabeceras multitenant, autenticación, notificaciones (toasts) y errores.
+ */
+
 // Usa variable inyectada si existe, o asume que el backend corre en el mismo host que el frontend pero en el puerto 3000.
 const API_URL = window.REACT_APP_API_URL || `http://${window.location.hostname}:3000/api`;
 
@@ -8,6 +14,11 @@ const API_URL = window.REACT_APP_API_URL || `http://${window.location.hostname}:
 const showLoading = () => {};
 const hideLoading = () => {};
 
+/**
+ * Normaliza los mensajes de error de la API (incluyendo errores de validación de Zod).
+ * @param {string|Object|Array} rawMessage - El mensaje bruto recibido.
+ * @returns {string} Mensaje legible.
+ */
 const normalizeApiErrorMessage = (rawMessage) => {
     if (!rawMessage) return 'Ha ocurrido un error inesperado.';
 
@@ -54,6 +65,11 @@ const normalizeApiErrorMessage = (rawMessage) => {
     return 'Ha ocurrido un error inesperado.';
 };
 
+/**
+ * Muestra una notificación visual (toast) en la parte inferior derecha.
+ * @param {string} message - El mensaje a mostrar.
+ * @param {boolean} [isError=false] - Si es una alerta de error.
+ */
 const showToast = (message, isError = false) => {
     const toast = document.createElement('div');
 
@@ -104,6 +120,11 @@ const processResponse = async (res) => {
 };
 
 // Generador Dinámico de Cabeceras (Multitenant)
+/**
+ * Genera dinámicamente las cabeceras HTTP, incluyendo el Tenant ID y el Token de sesión.
+ * @param {Object} [extraHeaders={}] - Cabeceras adicionales (ej: Content-Type).
+ * @returns {Object} Cabeceras completas.
+ */
 const getHeaders = (extraHeaders = {}) => {
     const currentUser = localStorage.getItem('currentUser') || 'market';
     const tenantId = currentUser === 'santi' ? 'santi' : 'market';

@@ -1,12 +1,31 @@
+/**
+ * middlewares/auth.js
+ * Middleware para la verificación de tokens JWT y gestión del contexto de tenant.
+ */
 const jwt = require('jsonwebtoken');
 
+/**
+ * Extrae el token Bearer de la cabecera Authorization.
+ * @param {string} authorizationHeader 
+ * @returns {string|null}
+ */
 const getBearerToken = (authorizationHeader = '') => {
     const [scheme, token] = authorizationHeader.split(' ');
     if (scheme !== 'Bearer' || !token) return null;
     return token;
 };
 
+/**
+ * Verifica el token JWT y asocia el usuario a la petición (`req.user`).
+ * También valida que el tenant (inquilino) coincida entre el token y la cabecera.
+ * 
+ * @param {Object} req - Objeto de petición Express.
+ * @param {Object} options - Opciones de validación.
+ * @param {boolean} options.required - Si es true, fallará si no hay token. Si es false, permitirá seguir.
+ * @returns {Object|null} Retorna un objeto de error si falla, o null si todo es correcto.
+ */
 const verifyTokenAndAttachUser = (req, { required }) => {
+
     const token = getBearerToken(req.headers.authorization);
     if (!token && !required) return null;
     if (!token && required) {
@@ -58,6 +77,10 @@ const verifyTokenAndAttachUser = (req, { required }) => {
     }
 };
 
+/**
+ * Middleware que obliga a tener una sesión válida (JWT).
+ * Se usa para proteger rutas privadas.
+ */
 const requireAuth = (req, res, next) => {
     try {
         const error = verifyTokenAndAttachUser(req, { required: true });
@@ -71,6 +94,10 @@ const requireAuth = (req, res, next) => {
     }
 };
 
+/**
+ * Middleware opcional: si hay token, adjunta el usuario, si no, permite continuar.
+ * Útil para rutas que pueden comportarse distinto según si hay sesión (ej. registro).
+ */
 const attachAuthIfPresent = (req, res, next) => {
     const error = verifyTokenAndAttachUser(req, { required: false });
     if (error) return res.status(error.status).json(error.body);

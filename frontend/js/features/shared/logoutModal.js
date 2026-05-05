@@ -1,6 +1,14 @@
-// frontend/js/features/shared/logoutModal.js
+/**
+ * shared/logoutModal.js
+ * Modal de confirmación de cierre de sesión.
+ * Adapta su estilo visual según el tenant (Boutique vs Market).
+ */
 import { navigateTo } from '../core/app.js';
 
+/**
+ * Renderiza el modal de logout.
+ * @param {string} from - El origen de la petición ('boutique' o 'market').
+ */
 export const renderLogoutModal = (from) => {
     const app = document.getElementById('app');
 

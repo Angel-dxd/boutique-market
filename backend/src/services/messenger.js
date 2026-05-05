@@ -1,3 +1,8 @@
+/**
+ * services/messenger.js
+ * Servicio para el envío de mensajes integrando la API de WhatsApp (Simulado).
+ * Gestiona plantillas de mensajes y aislamiento de configuración por tenant.
+ */
 const fs = require('fs');
 const path = require('path');
 const db = require('../config/db'); // Contains tenantContext
@@ -10,7 +15,16 @@ try {
     console.error("Error reading config.json for messenger", error);
 }
 
+/**
+ * Clase que maneja el envío de notificaciones.
+ */
 class MessengerService {
+    /**
+     * Envía un mensaje según el tipo y los datos proporcionados.
+     * @param {string} type - El tipo de mensaje ('remind-appointment' | 'contact-provider').
+     * @param {Object} data - Datos necesarios para rellenar la plantilla.
+     * @returns {Promise<Object>} Resultado de la operación.
+     */
     async sendMessage(type, data) {
         // Enforce the tenant context correctly isolating the configuration
         const tenant = db.tenantContext.getStore() || 'market';

@@ -1,3 +1,7 @@
+/**
+ * routes/providerRoutes.js
+ * Rutas para la gestión de proveedores (Market).
+ */
 const express = require('express');
 const router = express.Router();
 const { getProviders, createProvider, bulkCreateProviders, deleteProvider } = require('../controllers/providerController');

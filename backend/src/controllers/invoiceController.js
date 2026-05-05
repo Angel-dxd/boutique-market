@@ -1,5 +1,13 @@
+/**
+ * controllers/invoiceController.js
+ * Gestión de facturas de proveedores para el módulo de Market.
+ */
 const db = require('../config/db');
 
+/**
+ * Obtiene el listado de todas las facturas registradas.
+ * @route GET /api/invoices
+ */
 const getInvoices = async (req, res, next) => {
     try {
         const [rows] = await db.query('SELECT * FROM invoices ORDER BY id DESC');
@@ -7,6 +15,10 @@ const getInvoices = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
+/**
+ * Registra una nueva factura de proveedor.
+ * @route POST /api/invoices
+ */
 const createInvoice = async (req, res, next) => {
     try {
         const { provider_id, amount, reference } = req.body;

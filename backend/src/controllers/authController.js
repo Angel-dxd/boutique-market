@@ -1,4 +1,8 @@
-// backend/src/controllers/authController.js
+/**
+ * controllers/authController.js
+ * Sistema de Autenticación y Registro.
+ * Implementa hashing de contraseñas con bcrypt y cifrado de datos sensibles con AES.
+ */
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db'); // Ajusta la ruta según tu estructura [cite: 20]
@@ -6,14 +10,18 @@ const { encrypt } = require('../utils/crypto');
 
 const SALT_ROUNDS = 10;
 
+/**
+ * Registra un nuevo usuario.
+ * @route POST /api/auth/register
+ */
 const register = async (req, res, next) => {
     try {
         const { username, password, email } = req.body;
         const tenant = req.headers['x-tenant-id'] === 'santi' ? 'santi' : 'market';
 
-        // Registration policy:
-        // - If ALLOW_PUBLIC_REGISTER=true, keep open (dev/bootstrap convenience).
-        // - Otherwise only allow bootstrap (0 users) or authenticated users of same tenant.
+        // Política de Registro:
+        // - Si ALLOW_PUBLIC_REGISTER=true, registro abierto (desarrollo).
+        // - De lo contrario, solo permite el bootstrap (0 usuarios) o usuarios autenticados del mismo tenant.
         const allowPublicRegister = process.env.ALLOW_PUBLIC_REGISTER === 'true';
         if (!allowPublicRegister) {
             const [countRows] = await db.query('SELECT COUNT(*) AS total FROM users');
@@ -29,13 +37,13 @@ const register = async (req, res, next) => {
             }
         }
 
-        // 1. Hashear contraseña (PSyP-5)
+        // 1. Hashear contraseña
         const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-        // 2. Cifrar email opcionalmente (PSyP-4) para demostrar AES
+        // 2. Cifrar email (AES-256)
         const encryptedEmail = encrypt(email);
 
-        // 3. Guardar en la base de datos
+        // 3. Guardar en base de datos
         const [result] = await db.execute(
             'INSERT INTO users (username, password, email) VALUES (?, ?, ?)',
             [username, hashedPassword, encryptedEmail]
@@ -43,10 +51,14 @@ const register = async (req, res, next) => {
 
         res.status(201).json({ success: true, message: 'Usuario registrado con éxito', id: result.insertId });
     } catch (err) {
-        next(err); // Manejo global de errores como sugiere tu informe [cite: 31]
+        next(err);
     }
 };
 
+/**
+ * Inicia sesión y devuelve un token JWT.
+ * @route POST /api/auth/login
+ */
 const login = async (req, res, next) => {
     try {
         const { username, password } = req.body;
@@ -57,7 +69,7 @@ const login = async (req, res, next) => {
 
         const user = users[0];
 
-        // Comparar hash (PSyP-5)
+        // Comparar hash
         const match = await bcrypt.compare(password, user.password);
 
         if (match) {

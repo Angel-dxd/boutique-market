@@ -1,10 +1,21 @@
+/**
+ * server.js
+ * Punto de entrada principal del backend para Boutique & Market.
+ * Configura middlewares de seguridad, gestión multitenant y registro de rutas.
+ */
+
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet'); // añade esto si no lo tienes: npm install helmet
+const helmet = require('helmet');
 const dotenv = require('dotenv');
 
+// Carga de variables de entorno
 dotenv.config();
 
+/**
+ * Contexto de Tenant: Permite el aislamiento de datos por base de datos
+ * dependiendo del identificador enviado en la cabecera 'x-tenant-id'.
+ */
 const { tenantContext } = require('./src/config/db');
 
 const app = express();

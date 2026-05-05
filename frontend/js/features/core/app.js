@@ -1,10 +1,18 @@
 
+/**
+ * core/app.js
+ * Orquestador principal del frontend.
+ * Maneja el enrutamiento (hash routing), la navegación y la inicialización de la app.
+ */
+
 import { renderLogin } from '../auth/login.js';
 import { renderMarketLayout } from '../market/layout.js';
 import { renderBoutiqueLayout } from '../boutique/layout.js';
 import { renderLogoutModal } from '../shared/logoutModal.js';
 
-// Route Definitions
+/**
+ * Definición de rutas disponibles y sus respectivos renders.
+ */
 const routes = {
     '/': {
         render: renderLogin,
@@ -12,7 +20,7 @@ const routes = {
     },
     '/logout-confirmation': {
         render: () => {
-            // Determine source from history state if possible, or defaulting
+            // Determina el origen desde el estado del historial
             const from = history.state?.from || 'boutique';
             renderLogoutModal(from);
         },
@@ -28,41 +36,39 @@ const routes = {
     }
 };
 
-// Navigate to a URL
+/**
+ * Navega a una URL específica usando Hash Routing.
+ * @param {string} url - El destino (ej: #/market).
+ * @param {Object} [state={}] - Estado opcional para el historial.
+ */
 export const navigateTo = (url, state = {}) => {
-    // Use Hash Routing to prevent 404s on static servers without rewrite rules
-    if (url.startsWith('#')) {
-        window.location.hash = url;
-    } else {
-        window.location.hash = url;
-    }
+    window.location.hash = url;
 };
 
-// Router
+/**
+ * Enrutador: extrae la ruta del hash y renderiza la vista correspondiente.
+ */
 const router = async () => {
-    // Extract path from hash (e.g. #/market -> /market)
+    // Extrae el path del hash (#/market -> /market)
     const rawPath = window.location.hash.slice(1) || '/';
-    // Remove query params if any, and trailing slashes
     const path = rawPath.split('?')[0].replace(/\/+$/, '') || '/';
 
-    // Simple matching (start with basic paths)
-    // For now we just check exact match or partial start for layouts
     let route = routes[path];
 
     if (!route) {
-        // Handle sub-routes
+        // Manejo de sub-rutas dinámicas
         if (path.startsWith('/market')) {
             route = routes['/market'];
         } else if (path.startsWith('/boutique-welcome')) {
             route = routes['/boutique-welcome'];
         } else {
-            // 404 - Redirect to home for now
+            // 404: Redirigir al inicio
             navigateTo('/');
             return;
         }
     }
 
-    // Render the view
+    // Ejecuta el render de la ruta encontrada
     route.render();
 };
 

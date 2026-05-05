@@ -1,5 +1,13 @@
+/**
+ * controllers/providerController.js
+ * Gestión de proveedores para el módulo de Market.
+ */
 const db = require('../config/db');
 
+/**
+ * Obtiene el listado de todos los proveedores activos.
+ * @route GET /api/providers
+ */
 const getProviders = async (req, res, next) => {
     try {
         const [rows] = await db.query('SELECT * FROM providers ORDER BY name ASC');
@@ -7,6 +15,10 @@ const getProviders = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
+/**
+ * Crea un nuevo proveedor.
+ * @route POST /api/providers
+ */
 const createProvider = async (req, res, next) => {
     try {
         let { name, phone, company, category } = req.body;

@@ -1,6 +1,7 @@
 /**
- * ui.js
- * Componentes visuales compartidos y utilidades de interfaz (Modo Oscuro, Skeletons)
+ * shared/ui.js
+ * Componentes visuales compartidos y utilidades de interfaz (Modo Oscuro, Skeletons).
+ * Proporciona elementos de carga (skeletons) para mejorar la percepción de velocidad.
  */
 
 /**

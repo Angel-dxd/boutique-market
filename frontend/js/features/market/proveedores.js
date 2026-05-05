@@ -1,6 +1,15 @@
+/**
+ * market/proveedores.js
+ * Módulo de gestión de proveedores para El Gallo Azul.
+ * Gestiona los contactos comerciales y la comunicación interactiva.
+ */
 import { api } from '../core/api.js';
 import { showConfirm } from '../shared/modal.js';
 
+/**
+ * Renderiza la interfaz de proveedores.
+ * @param {HTMLElement} container - El elemento donde se inyectará el HTML.
+ */
 export const renderProveedores = async (container) => {
     let isModalOpen = false;
     let editingId = null;

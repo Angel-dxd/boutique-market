@@ -1,20 +1,24 @@
 {
     "market": {
+        "_comentario_general": "PLANTILLA: Configuración de BD y WhatsApp para el inquilino 'market' (El Gallo Azul). Cópialo a config.json y pon datos reales.",
         "host": "localhost",
         "user": "root",
-        "password": "",
+        "password": "PON_TU_PASSWORD_AQUI",
         "database": "boutique_market",
         "whatsapp": {
+            "_comentario_whatsapp": "Token y PhoneID de Meta for Developers para envíos de WhatsApp.",
             "token": "EAA_DUMMY_TOKEN_ARELYS_MARKET_123",
             "phoneId": "101010101010_ARELYS"
         }
     },
     "santi": {
+        "_comentario_general": "PLANTILLA: Configuración de BD y WhatsApp para el inquilino 'santi' (Boutique Oh-Nails).",
         "host": "localhost",
         "user": "root",
-        "password": "",
+        "password": "PON_TU_PASSWORD_AQUI",
         "database": "boutique_santi",
         "whatsapp": {
+            "_comentario_whatsapp": "Token y PhoneID de Meta for Developers para envíos de WhatsApp.",
             "token": "EAA_DUMMY_TOKEN_SANTI_123",
             "phoneId": "202020202020_SANTI"
         }

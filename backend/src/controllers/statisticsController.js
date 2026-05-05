@@ -1,5 +1,13 @@
+/**
+ * controllers/statisticsController.js
+ * Generación de estadísticas y KPIs para el dashboard central.
+ */
 const db = require('../config/db');
 
+/**
+ * Calcula estadísticas agregadas para el dashboard.
+ * @route GET /api/dashboard/stats
+ */
 const getDashboardStats = async (req, res, next) => {
     try {
         const [financeRows] = await db.query('SELECT * FROM finance');

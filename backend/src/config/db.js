@@ -1,16 +1,31 @@
+/**
+ * Configuración de Base de Datos y Lógica Multitenant.
+ * Utiliza AsyncLocalStorage para gestionar el contexto de base de datos de forma aislada
+ * por cada petición HTTP sin necesidad de pasar el tenantId por todos los controladores.
+ */
+
 const mysql = require('mysql2/promise');
 const fs = require('fs');
 const path = require('path');
 const { AsyncLocalStorage } = require('async_hooks');
 
-// Entorno Asíncrono para Contexto de Inquilinos (Multitenant)
+/**
+ * Entorno Asíncrono para Contexto de Inquilinos (Multitenant).
+ * Almacena el ID del tenant ('market' o 'santi') para la ejecución actual.
+ */
 const tenantContext = new AsyncLocalStorage();
 
-// Carga Dinámica desde config.json
+/**
+ * Carga de configuración desde config.json.
+ * Contiene las credenciales para cada base de datos (tenant).
+ */
 const configPath = path.join(__dirname, '../../config.json');
 const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
-// Mapa de Pools de Conexión
+/**
+ * Mapa de Pools de Conexión.
+ * Se crea un pool independiente para cada base de datos definida en el config.json.
+ */
 const pools = {};
 for (const [tenant, config] of Object.entries(configData)) {
     pools[tenant] = mysql.createPool({
@@ -32,20 +47,39 @@ for (const [tenant, config] of Object.entries(configData)) {
         .catch(err => console.error(`❌ Error en pool de tenant '${tenant}':`, err.message));
 }
 
-// Interceptor de Base de Datos Dinámico
+/**
+ * Interceptor de Base de Datos Dinámico.
+ * Actúa como un proxy que selecciona automáticamente el pool de conexiones
+ * basándose en el contexto del tenant de la petición actual.
+ */
 const db = {
+    /**
+     * Ejecuta una consulta SQL genérica.
+     * @param {string} sql - La sentencia SQL.
+     * @param {Array} params - Parámetros para la consulta preparada.
+     * @returns {Promise<Array>} Resultado de la consulta.
+     */
     query: async (sql, params) => {
-        // Identificar quién pide la consulta, sino, por defecto market
         const tenant = tenantContext.getStore() || 'market';
         const pool = pools[tenant] || pools['market'];
         return pool.query(sql, params);
     },
+
+    /**
+     * Ejecuta una sentencia SQL preparada.
+     * @param {string} sql - La sentencia SQL.
+     * @param {Array} params - Parámetros.
+     * @returns {Promise<Array>} Resultado de la ejecución.
+     */
     execute: async (sql, params) => {
         const tenant = tenantContext.getStore() || 'market';
         const pool = pools[tenant] || pools['market'];
         return pool.execute(sql, params);
     },
-    // Exponer el contexto para el Middleware en server.js
+
+    /**
+     * Exponemos el contexto para que el middleware de server.js pueda setear el tenant.
+     */
     tenantContext
 };
 

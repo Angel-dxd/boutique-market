@@ -1,6 +1,12 @@
+/**
+ * utils/schemas.js
+ * Definición de esquemas de validación con Zod para toda la API.
+ */
 const { z } = require('zod');
 
-// Schema for Products (Inventory)
+/**
+ * Esquema para Productos (Inventario)
+ */
 const productSchema = z.object({
     title: z.string({ required_error: 'El título es obligatorio' })
         .min(2, 'El título debe tener al menos 2 caracteres')
@@ -14,14 +20,18 @@ const productSchema = z.object({
     provider_id: z.number().int().positive().nullable().optional()
 });
 
-// Schema for updating just the stock
+/**
+ * Esquema para actualización parcial de Stock
+ */
 const stockUpdateSchema = z.object({
     stock: z.number({ required_error: 'El stock es obligatorio', invalid_type_error: 'El stock debe ser numérico' })
         .int('El stock debe ser un número entero')
         .min(0, 'El stock no puede ser negativo')
 });
 
-// Schema for Authentication (Login)
+/**
+ * Esquema para Autenticación (Login y Registro)
+ */
 const authLoginSchema = z.object({
     username: z.string({ required_error: 'El nombre de usuario es obligatorio' }).trim(),
     password: z.string({ required_error: 'La contraseña es obligatoria' })
@@ -33,7 +43,9 @@ const authRegisterSchema = z.object({
     email: z.string().trim().email('El email no tiene un formato válido').optional().nullable()
 });
 
-// Schema for Clients
+/**
+ * Esquema para Clientes (Boutique)
+ */
 const clientSchema = z.object({
     name: z.string({ required_error: 'El nombre del cliente es obligatorio' })
         .min(2, 'El nombre debe tener al menos 2 caracteres')

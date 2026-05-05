@@ -1,3 +1,7 @@
+/**
+ * routes/messageRoutes.js
+ * Rutas para el envío de notificaciones y recordatorios.
+ */
 const express = require('express');
 const router = express.Router();
 const { remindAppointment, contactProvider } = require('../controllers/messageController');

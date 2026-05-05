@@ -1,9 +1,17 @@
+/**
+ * controllers/financeController.js
+ * Gestión de finanzas y transacciones (ingresos y gastos).
+ */
 const db = require('../config/db');
 
+/**
+ * Obtiene el historial completo de transacciones.
+ * @route GET /api/finance
+ */
 const getTransactions = async (req, res, next) => {
     try {
         const [rows] = await db.query('SELECT * FROM finance ORDER BY date DESC');
-        // Map to standard frontend shape
+        // Mapeo al formato estándar del frontend
         const transactions = rows.map(r => ({
             id: r.id,
             amount: r.amount,
@@ -15,6 +23,10 @@ const getTransactions = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
+/**
+ * Registra una nueva transacción financiera.
+ * @route POST /api/finance
+ */
 const createTransaction = async (req, res, next) => {
     try {
         const { amount, type, category, date, description } = req.body;
@@ -31,6 +43,10 @@ const createTransaction = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
+/**
+ * Actualiza los datos de una transacción existente.
+ * @route PUT /api/finance/:id
+ */
 const updateTransaction = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -46,6 +62,10 @@ const updateTransaction = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
+/**
+ * Elimina una transacción de forma permanente.
+ * @route DELETE /api/finance/:id
+ */
 const deleteTransaction = async (req, res, next) => {
     try {
         const [result] = await db.query(`DELETE FROM finance WHERE id = ?`, [req.params.id]);

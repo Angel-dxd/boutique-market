@@ -1,6 +1,15 @@
+/**
+ * market/home.js
+ * Vista de resumen (Dashboard) para El Gallo Azul.
+ * Muestra KPIs de inventario, facturas pendientes y accesos rápidos.
+ */
 import { api } from '../core/api.js';
 import { navigateTo } from '../core/app.js';
 
+/**
+ * Renderiza el contenido de la página de inicio del Market.
+ * @param {HTMLElement} container - El elemento donde se inyectará el HTML.
+ */
 export const renderMarketHome = async (container) => {
     const render = async () => {
         // Fetch real data from MySQL API directly instead of local store to persist on F5

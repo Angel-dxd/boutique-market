@@ -1,3 +1,8 @@
+/**
+ * boutique/layout.js
+ * Componente de diseño (Shell) para el módulo de Boutique.
+ * Gestiona la barra lateral (sidebar), navegación móvil y carga dinámica de pestañas.
+ */
 import { navigateTo } from '../core/app.js';
 import { renderBoutiqueHome } from './home.js';
 
@@ -41,6 +46,10 @@ const renderSidebar = (activePath) => NAV_ITEMS.map(item => {
 let layoutMounted = false;
 let tabContainers = {};
 
+/**
+ * Renderiza el layout principal de la Boutique.
+ * Implementa un sistema de caché de pestañas para evitar re-renders innecesarios.
+ */
 export const renderBoutiqueLayout = () => {
     const app = document.getElementById('app');
     const path = window.location.hash.slice(1).replace(/\/+$/, '') || '/boutique-welcome';

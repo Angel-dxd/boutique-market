@@ -1,6 +1,15 @@
+/**
+ * market/inventario.js
+ * Módulo de gestión de inventario para El Gallo Azul.
+ * Gestiona el listado de productos, control de stock y precios.
+ */
 import { api } from '../core/api.js';
 import { showConfirm } from '../shared/modal.js';
 
+/**
+ * Renderiza la interfaz de inventario.
+ * @param {HTMLElement} container - El elemento donde se inyectará el HTML.
+ */
 export const renderInventario = async (container) => {
     let products = [];
     let providers = [];

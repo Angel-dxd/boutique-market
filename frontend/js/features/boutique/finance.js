@@ -1,6 +1,15 @@
+/**
+ * boutique/finance.js
+ * Módulo de gestión financiera para la Boutique.
+ * Gestiona ingresos, gastos, KPIs mensuales y comparativas.
+ */
 import { api } from '../core/api.js';
 import { showConfirm } from '../shared/modal.js';
 
+/**
+ * Renderiza la interfaz de finanzas.
+ * @param {HTMLElement} container - El elemento donde se inyectará el HTML.
+ */
 export const renderFinance = async (container) => {
     let editingId = null;
     let transactions = [];

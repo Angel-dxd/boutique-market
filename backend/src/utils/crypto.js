@@ -1,3 +1,7 @@
+/**
+ * utils/crypto.js
+ * Utilidades de cifrado simétrico (AES-256-CBC) para proteger datos sensibles.
+ */
 const crypto = require('crypto');
 
 // ─── Validación de clave al arranque ─────────────────────────────────────────

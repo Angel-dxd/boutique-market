@@ -1,9 +1,20 @@
+/**
+ * controllers/inventoryController.js
+ * Gestión de inventario para el módulo de Market.
+ * Maneja productos, stock, precios y proveedores asociados.
+ */
 const db = require('../config/db');
 
+/**
+ * Obtiene la lista de productos con paginación.
+ * @route GET /api/products
+ * @param {number} [req.query.page=1] - Página actual.
+ * @param {number} [req.query.limit=50] - Cantidad de productos por página.
+ */
 const getProducts = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 50; // Default limit large enough for backwards compatibility
+        const limit = parseInt(req.query.limit) || 50; 
         const offset = (page - 1) * limit;
 
         const [[{ total }]] = await db.query('SELECT COUNT(*) as total FROM inventory');
@@ -19,6 +30,10 @@ const getProducts = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
+/**
+ * Crea un nuevo producto en el inventario.
+ * @route POST /api/products
+ */
 const createProduct = async (req, res, next) => {
     try {
         let { title, price, cost, stock, min_stock, category, provider_id } = req.body;
@@ -44,6 +59,10 @@ const createProduct = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
+/**
+ * Actualiza únicamente el stock de un producto.
+ * @route PATCH /api/products/:id/stock
+ */
 const updateProductStock = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -60,6 +79,10 @@ const updateProductStock = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
+/**
+ * Elimina un producto de forma permanente.
+ * @route DELETE /api/products/:id
+ */
 const deleteProduct = async (req, res, next) => {
     try {
         const [result] = await db.query(`DELETE FROM inventory WHERE id = ?`, [req.params.id]);
@@ -68,6 +91,10 @@ const deleteProduct = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
+/**
+ * Actualiza todos los datos de un producto.
+ * @route PUT /api/products/:id
+ */
 const updateProduct = async (req, res, next) => {
     try {
         const { id } = req.params;

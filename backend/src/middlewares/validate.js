@@ -1,3 +1,8 @@
+/**
+ * middlewares/validate.js
+ * Middleware genérico para la validación de cuerpos de petición (req.body) usando esquemas Zod.
+ * @param {ZodSchema} schema - El esquema de validación.
+ */
 const validate = (schema) => (req, res, next) => {
     try {
         const parsed = schema.parse(req.body);

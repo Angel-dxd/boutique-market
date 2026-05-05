@@ -1,3 +1,8 @@
+/**
+ * market/layout.js
+ * Componente de diseño (Shell) para el módulo de El Gallo Azul (Market).
+ * Gestiona la barra lateral (sidebar), navegación móvil y carga de vistas.
+ */
 import { navigateTo } from '../core/app.js';
 
 const NAV_ITEMS = [
@@ -10,6 +15,9 @@ const NAV_ITEMS = [
 
 let marketLayoutMounted = false;
 
+/**
+ * Renderiza el layout principal del Market.
+ */
 export const renderMarketLayout = () => {
     const app = document.getElementById('app');
     const path = window.location.hash.slice(1).replace(/\/+$/, '') || '/market';

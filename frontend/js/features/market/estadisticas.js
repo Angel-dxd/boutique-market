@@ -1,5 +1,14 @@
+/**
+ * market/estadisticas.js
+ * Módulo de análisis y estadísticas para El Gallo Azul.
+ * Muestra KPIs financieros, alertas de stock y calculadora de márgenes por lote.
+ */
 import { api } from '../core/api.js';
 
+/**
+ * Renderiza la interfaz de estadísticas y análisis.
+ * @param {HTMLElement} container - El elemento donde se inyectará el HTML.
+ */
 export const renderEstadisticas = async (container) => {
     let products = [];
     let invoices = [];

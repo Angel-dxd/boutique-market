@@ -1,5 +1,14 @@
+/**
+ * boutique/gallery.js
+ * Módulo de portfolio y galería de fotos (Mis Uñas) para la Boutique.
+ * Gestiona la subida de fotos, edición con Cropper, filtros y visualización.
+ */
 import { api } from '../core/api.js';
 
+/**
+ * Renderiza la galería de trabajos estilo Instagram.
+ * @param {HTMLElement} container - El elemento donde se inyectará el HTML.
+ */
 export const renderInstagramGallery = (container) => {
     let works = [];
     let isLoading = true;

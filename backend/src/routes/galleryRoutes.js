@@ -1,3 +1,7 @@
+/**
+ * routes/galleryRoutes.js
+ * Rutas para el portfolio/galería de trabajos realizados.
+ */
 const express = require('express');
 const router = express.Router();
 const galleryController = require('../controllers/galleryController');

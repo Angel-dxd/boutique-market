@@ -1,7 +1,16 @@
+/**
+ * boutique/clients.js
+ * Módulo de gestión de clientas para la Boutique.
+ * Gestiona el listado, alta, baja (soft delete) y panel de fidelización.
+ */
 import { api } from '../core/api.js';
 import { showConfirm } from '../shared/modal.js';
 import { renderSkeleton } from '../shared/ui.js';
 
+/**
+ * Renderiza la interfaz de gestión de clientas.
+ * @param {HTMLElement} container - El elemento donde se inyectará el HTML.
+ */
 export const renderClients = async (container) => {
     let clients = [];
     let atRiskClients = [];

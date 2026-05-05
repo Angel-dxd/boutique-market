@@ -1,7 +1,16 @@
+/**
+ * boutique/calendar.js
+ * Módulo de agenda y calendario para la Boutique.
+ * Gestiona citas, importación de CSV y reportes de ganancias.
+ */
 import { api } from '../core/api.js';
 import { showConfirm } from '../shared/modal.js';
 import { renderSkeleton } from '../shared/ui.js';
 
+/**
+ * Renderiza la interfaz de la agenda/calendario.
+ * @param {HTMLElement} container - El elemento donde se inyectará el HTML.
+ */
 export const renderCalendar = async (container) => {
     let currentDate = new Date();
     let selectedDate = null;

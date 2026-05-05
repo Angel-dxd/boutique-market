@@ -1,4 +1,7 @@
-// middlewares/validateClient.js
+/**
+ * middlewares/validateClient.js
+ * Validaciones específicas para el recurso de Clientes.
+ */
 const { clientSchema } = require('../utils/schemas');
 
 /**

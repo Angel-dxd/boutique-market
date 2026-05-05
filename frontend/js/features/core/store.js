@@ -1,19 +1,30 @@
-// Central Store for Data Persistence and Logic
-// Mimics the behavior of the original BoutiqueContext but uses LocalStorage for now.
+/**
+ * core/store.js
+ * Almacén central (Store) para la persistencia de datos y lógica de negocio en el frontend.
+ * Originalmente imitaba el comportamiento de BoutiqueContext usando LocalStorage.
+ * Actualmente se usa principalmente para persistencia temporal y mocks.
+ */
 
+/**
+ * Clase que gestiona el estado global de la aplicación.
+ * Implementa el patrón Observador para notificar cambios a los componentes.
+ */
 class BoutiqueStore {
     constructor() {
         this.listeners = [];
         this.state = this.loadState();
 
-        // Expose store globally for debugging
+        // Exponer el store globalmente para facilitar la depuración desde la consola
         window.boutiqueStore = this;
     }
 
     // --- Core State Management ---
 
+    /**
+     * Carga el estado inicial desde LocalStorage o usa datos por defecto (Mock).
+     * @returns {Object} El estado cargado.
+     */
     loadState() {
-        // Initial Mock Data if empty
         const defaultState = {
             clients: [
                 { id: 1, name: 'Lucía Méndez', phone: '600123456', email: 'lucia@example.com', notes: 'Prefiere tonos pastel' },

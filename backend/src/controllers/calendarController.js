@@ -1,9 +1,16 @@
+/**
+ * controllers/calendarController.js
+ * Gestión de la agenda y citas para la Boutique.
+ * Incluye generación de reportes de ganancias y datos para el dashboard.
+ */
 const db = require('../config/db');
 
-// Obtener Citas y sumar ganancias
+/**
+ * Obtiene todas las citas activas y calcula las ganancias totales.
+ * @route GET /api/calendar
+ */
 const getAppointments = async (req, res, next) => {
     try {
-        // Aprovecha la conexión dinámica configurada con x-tenant-id para aislar los datos
         const [rows] = await db.query('SELECT * FROM calendar WHERE deleted_at IS NULL ORDER BY date ASC');
 
         let totalEarnings = 0;
@@ -13,7 +20,6 @@ const getAppointments = async (req, res, next) => {
             return {
                 id: r.id,
                 client: r.client,
-                // Formateamos fecha a YYYY-MM-DD aislando la hora
                 date: r.date instanceof Date ? r.date.toISOString().split('T')[0] : r.date,
                 description: r.description,
                 profit: amount
@@ -25,7 +31,6 @@ const getAppointments = async (req, res, next) => {
             totalEarningsPerDay: totalEarnings
         });
     } catch (err) {
-        // Prevención de Errores: si el tenant (como santi) no tiene la tabla 'calendar'
         if (err.code === 'ER_NO_SUCH_TABLE') {
             return res.status(200).json({ calendarEvents: [], totalEarningsPerDay: 0 });
         }
@@ -33,7 +38,10 @@ const getAppointments = async (req, res, next) => {
     }
 };
 
-// Guardar nueva Cita
+/**
+ * Crea una nueva cita en la agenda.
+ * @route POST /api/calendar
+ */
 const createAppointment = async (req, res, next) => {
     try {
         const { client, date, description, profit } = req.body;
@@ -58,12 +66,14 @@ const createAppointment = async (req, res, next) => {
     }
 };
 
-// Generador del Reporte de Ganancias Estructurado
+/**
+ * Genera un reporte de ganancias para hoy, el mes y el año actual.
+ * @route GET /api/calendar/earnings
+ */
 const getEarningsReport = async (req, res, next) => {
     try {
         const dateStr = req.query.date || new Date().toISOString().split('T')[0];
 
-        // Consultas agrupadas nativamente en MySQL segmentando por el tenant actual
         const [dayResult] = await db.query(`SELECT SUM(profit) as total FROM calendar WHERE DATE(date) = ? AND deleted_at IS NULL`, [dateStr]);
         const [monthResult] = await db.query(`SELECT SUM(profit) as total FROM calendar WHERE MONTH(date) = MONTH(?) AND YEAR(date) = YEAR(?) AND deleted_at IS NULL`, [dateStr, dateStr]);
         const [yearResult] = await db.query(`SELECT SUM(profit) as total FROM calendar WHERE YEAR(date) = YEAR(?) AND deleted_at IS NULL`, [dateStr]);
@@ -81,7 +91,10 @@ const getEarningsReport = async (req, res, next) => {
     }
 };
 
-// Obtener datos resumidos para el Dashboard (Hoy, Mañana, Mis Fieles)
+/**
+ * Obtiene datos resumidos para el Dashboard (citas de hoy, mañana y clientes fieles).
+ * @route GET /api/calendar/dashboard
+ */
 const getDashboardData = async (req, res, next) => {
     try {
         const { today, tomorrow } = req.query;
@@ -100,7 +113,6 @@ const getDashboardData = async (req, res, next) => {
             [tomorrow]
         );
 
-        // Top 5 Clientes (Mis Fieles) basado puramente en historial de citas
         const [topClientsRows] = await db.query(
             'SELECT client AS name, COUNT(*) AS visits FROM calendar WHERE deleted_at IS NULL GROUP BY client ORDER BY visits DESC LIMIT 5'
         );
@@ -123,11 +135,13 @@ const getDashboardData = async (req, res, next) => {
     }
 };
 
-// Importar múltiples citas de golpe (CSV a MySQL)
+/**
+ * Importa múltiples citas desde un array (útil para migración de datos).
+ * @route POST /api/calendar/import
+ */
 const importAppointments = async (req, res, next) => {
     try {
         const { calendarEvents } = req.body;
-        // Fallback for previous property
         const events = calendarEvents || req.body.appointments;
         if (!Array.isArray(events) || events.length === 0) {
             return res.status(400).json({ error: 'Array de citas vacío o inválido.' });
@@ -135,7 +149,6 @@ const importAppointments = async (req, res, next) => {
 
         let insertedCount = 0;
 
-        // Iteramos las citas y las insertamos (Aprovechando que db.query usará la misma conexión del tenant en curso)
         for (const apt of events) {
             const { client, date, description, profit } = apt;
             if (client && date) {

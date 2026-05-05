@@ -1,3 +1,7 @@
+/**
+ * routes/invoiceRoutes.js
+ * Rutas para la gestión de facturas de proveedores.
+ */
 const express = require('express');
 const router = express.Router();
 const { getInvoices, createInvoice, updateInvoice, deleteInvoice } = require('../controllers/invoiceController');

@@ -1,5 +1,13 @@
+/**
+ * controllers/messageController.js
+ * Controlador para la gestión de recordatorios y comunicaciones externas.
+ */
 const messenger = require('../services/messenger');
 
+/**
+ * Envía un recordatorio de cita a un cliente (vía WhatsApp/SMS).
+ * @route POST /api/messages/remind
+ */
 const remindAppointment = async (req, res, next) => {
     try {
         const { client, date } = req.body;
@@ -12,6 +20,10 @@ const remindAppointment = async (req, res, next) => {
     }
 };
 
+/**
+ * Envía un mensaje de contacto a un proveedor (p. ej. para pedido de stock).
+ * @route POST /api/messages/contact-provider
+ */
 const contactProvider = async (req, res, next) => {
     try {
         const { providerName, productName } = req.body;

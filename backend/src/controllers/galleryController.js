@@ -1,6 +1,13 @@
+/**
+ * controllers/galleryController.js
+ * Gestión de la galería de trabajos (portfolio) para la Boutique.
+ */
 const db = require('../config/db');
 
-// GET all works
+/**
+ * Obtiene todos los trabajos de la galería.
+ * @route GET /api/gallery
+ */
 const getWorks = async (req, res, next) => {
     try {
         const [rows] = await db.query('SELECT * FROM gallery ORDER BY created_at DESC');
@@ -10,7 +17,10 @@ const getWorks = async (req, res, next) => {
     }
 };
 
-// GET single work
+/**
+ * Obtiene un trabajo específico por su ID.
+ * @route GET /api/gallery/:id
+ */
 const getWorkById = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -22,7 +32,10 @@ const getWorkById = async (req, res, next) => {
     }
 };
 
-// POST new work
+/**
+ * Sube un nuevo trabajo a la galería.
+ * @route POST /api/gallery
+ */
 const createWork = async (req, res, next) => {
     try {
         const { title, category, image } = req.body;

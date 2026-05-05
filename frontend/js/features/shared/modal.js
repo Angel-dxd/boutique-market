@@ -1,10 +1,16 @@
 /**
- * Modal personalizado para confirmaciones, reemplaza a window.confirm() nativo.
- * @param {string} title Título del modal
- * @param {string} message Mensaje del modal
- * @param {string} confirmText Texto del botón de confirmación
- * @param {string} cancelText Texto del botón de cancelar
- * @returns {Promise<boolean>} Promesa que resuelve a true si el usuario acepta, false si cancela
+ * shared/modal.js
+ * Modal de confirmación genérico para acciones destructivas o críticas.
+ * Reemplaza el uso de window.confirm().
+ */
+
+/**
+ * Muestra un modal de confirmación personalizado.
+ * @param {string} title - Título del modal.
+ * @param {string} message - Mensaje descriptivo.
+ * @param {string} [confirmText='Aceptar'] - Texto del botón de confirmación.
+ * @param {string} [cancelText='Cancelar'] - Texto del botón de cancelación.
+ * @returns {Promise<boolean>} Resuelve a true si se confirma, false si se cancela.
  */
 export const showConfirm = (title, message, confirmText = 'Aceptar', cancelText = 'Cancelar') => {
     return new Promise((resolve) => {

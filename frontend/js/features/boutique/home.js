@@ -1,5 +1,14 @@
+/**
+ * boutique/home.js
+ * Vista de resumen (Dashboard) para la Boutique.
+ * Muestra métricas clave, citas próximas y clientes top.
+ */
 import { api } from '../core/api.js';
 
+/**
+ * Renderiza el contenido de la página de inicio de la Boutique.
+ * @param {HTMLElement} container - El elemento donde se inyectará el HTML.
+ */
 export const renderBoutiqueHome = async (container) => {
     const userName = 'Arelys';
 
