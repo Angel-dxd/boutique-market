@@ -5,8 +5,16 @@
 const db = require('../config/db');
 
 /**
- * Obtiene el historial completo de transacciones.
- * @route GET /api/finance
+ * Obtiene el historial completo de transacciones financieras.
+ *
+ * Mapea los resultados al formato estándar esperado por el frontend.
+ *
+ * @async
+ * @function getTransactions
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para el manejo de errores.
+ * @returns {Promise<void>} Retorna un JSON con el listado de transacciones.
  */
 const getTransactions = async (req, res, next) => {
     try {
@@ -24,8 +32,22 @@ const getTransactions = async (req, res, next) => {
 };
 
 /**
- * Registra una nueva transacción financiera.
- * @route POST /api/finance
+ * Registra una nueva transacción financiera (ingreso o gasto).
+ *
+ * Valida que los campos obligatorios (`amount` y `type`) estén presentes.
+ *
+ * @async
+ * @function createTransaction
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.body - Cuerpo de la petición.
+ * @param {number|string} req.body.amount - Monto de la transacción.
+ * @param {string} req.body.type - Tipo de transacción ('income' o 'expense').
+ * @param {string} [req.body.category] - Categoría de la transacción.
+ * @param {string} [req.body.date] - Fecha de la transacción.
+ * @param {string} [req.body.description] - Descripción de la transacción (fallback a category).
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para el manejo de errores.
+ * @returns {Promise<void>} Retorna un JSON con los datos de la transacción creada.
  */
 const createTransaction = async (req, res, next) => {
     try {
@@ -45,7 +67,21 @@ const createTransaction = async (req, res, next) => {
 
 /**
  * Actualiza los datos de una transacción existente.
- * @route PUT /api/finance/:id
+ *
+ * @async
+ * @function updateTransaction
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.params - Parámetros de ruta.
+ * @param {string} req.params.id - Identificador de la transacción.
+ * @param {Object} req.body - Cuerpo de la petición con los nuevos datos.
+ * @param {number|string} req.body.amount - Monto actualizado.
+ * @param {string} req.body.type - Tipo actualizado.
+ * @param {string} [req.body.category] - Categoría actualizada.
+ * @param {string} [req.body.date] - Fecha actualizada.
+ * @param {string} [req.body.description] - Descripción actualizada.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para el manejo de errores.
+ * @returns {Promise<void>} Retorna un mensaje de éxito o lanza error si no existe.
  */
 const updateTransaction = async (req, res, next) => {
     try {
@@ -64,7 +100,15 @@ const updateTransaction = async (req, res, next) => {
 
 /**
  * Elimina una transacción de forma permanente.
- * @route DELETE /api/finance/:id
+ *
+ * @async
+ * @function deleteTransaction
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.params - Parámetros de ruta.
+ * @param {string} req.params.id - Identificador de la transacción a eliminar.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para el manejo de errores.
+ * @returns {Promise<void>} Retorna un mensaje confirmando la eliminación.
  */
 const deleteTransaction = async (req, res, next) => {
     try {

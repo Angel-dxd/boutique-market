@@ -9,10 +9,23 @@ const validate = require('../middlewares/validate');
 const { attachAuthIfPresent } = require('../middlewares/auth');
 const { authLoginSchema, authRegisterSchema } = require('../utils/schemas');
 
-// Registro de usuario (requiere validación de esquema y adjunta auth si existe para multitenant)
+/**
+ * @route POST /api/auth/register
+ * @description Registra un nuevo usuario en el sistema.
+ * @access Public/Private (dependiendo de ALLOW_PUBLIC_REGISTER y tenant)
+ * @middleware attachAuthIfPresent - Extrae el JWT si existe (para validación multitenant).
+ * @middleware validate(authRegisterSchema) - Valida la estructura del body (username, password, email).
+ * @controller authController.register
+ */
 router.post('/register', attachAuthIfPresent, validate(authRegisterSchema), authController.register);
 
-// Inicio de sesión (valida credenciales)
+/**
+ * @route POST /api/auth/login
+ * @description Inicia sesión y devuelve un token JWT.
+ * @access Public
+ * @middleware validate(authLoginSchema) - Valida la estructura del body (username, password).
+ * @controller authController.login
+ */
 router.post('/login', validate(authLoginSchema), authController.login);
 
 module.exports = router;

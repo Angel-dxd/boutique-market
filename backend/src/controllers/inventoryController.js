@@ -6,10 +6,17 @@
 const db = require('../config/db');
 
 /**
- * Obtiene la lista de productos con paginación.
- * @route GET /api/products
- * @param {number} [req.query.page=1] - Página actual.
- * @param {number} [req.query.limit=50] - Cantidad de productos por página.
+ * Obtiene la lista de productos del inventario con paginación.
+ *
+ * @async
+ * @function getProducts
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.query - Parámetros de consulta para paginación.
+ * @param {string|number} [req.query.page=1] - Página actual.
+ * @param {string|number} [req.query.limit=50] - Cantidad de productos por página.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para el manejo de errores.
+ * @returns {Promise<void>} Retorna un JSON con los datos paginados (`data`, `total`, `page`, `limit`, `totalPages`).
  */
 const getProducts = async (req, res, next) => {
     try {
@@ -32,7 +39,21 @@ const getProducts = async (req, res, next) => {
 
 /**
  * Crea un nuevo producto en el inventario.
- * @route POST /api/products
+ *
+ * @async
+ * @function createProduct
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.body - Cuerpo de la petición.
+ * @param {string} req.body.title - Título o nombre del producto.
+ * @param {number|string} req.body.price - Precio de venta al público.
+ * @param {number|string} [req.body.cost] - Costo de adquisición.
+ * @param {number|string} [req.body.stock] - Cantidad inicial en stock.
+ * @param {number|string} [req.body.min_stock] - Stock mínimo (alerta de reabastecimiento).
+ * @param {string} [req.body.category] - Categoría del producto.
+ * @param {number|string} [req.body.provider_id] - ID del proveedor asociado.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para el manejo de errores.
+ * @returns {Promise<void>} Retorna un JSON con los datos básicos del producto creado.
  */
 const createProduct = async (req, res, next) => {
     try {
@@ -60,8 +81,18 @@ const createProduct = async (req, res, next) => {
 };
 
 /**
- * Actualiza únicamente el stock de un producto.
- * @route PATCH /api/products/:id/stock
+ * Actualiza únicamente la cantidad de stock de un producto.
+ *
+ * @async
+ * @function updateProductStock
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.params - Parámetros de ruta.
+ * @param {string} req.params.id - Identificador del producto.
+ * @param {Object} req.body - Cuerpo de la petición.
+ * @param {number|string} req.body.stock - Nueva cantidad de stock.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para el manejo de errores.
+ * @returns {Promise<void>} Retorna un mensaje confirmando la actualización del stock.
  */
 const updateProductStock = async (req, res, next) => {
     try {
@@ -80,8 +111,16 @@ const updateProductStock = async (req, res, next) => {
 };
 
 /**
- * Elimina un producto de forma permanente.
- * @route DELETE /api/products/:id
+ * Elimina un producto del inventario de forma permanente.
+ *
+ * @async
+ * @function deleteProduct
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.params - Parámetros de ruta.
+ * @param {string} req.params.id - Identificador del producto a eliminar.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para el manejo de errores.
+ * @returns {Promise<void>} Retorna un mensaje confirmando la eliminación o error 404.
  */
 const deleteProduct = async (req, res, next) => {
     try {
@@ -92,8 +131,24 @@ const deleteProduct = async (req, res, next) => {
 };
 
 /**
- * Actualiza todos los datos de un producto.
- * @route PUT /api/products/:id
+ * Actualiza todos los datos de un producto existente.
+ *
+ * @async
+ * @function updateProduct
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.params - Parámetros de ruta.
+ * @param {string} req.params.id - Identificador del producto.
+ * @param {Object} req.body - Cuerpo de la petición con los nuevos datos.
+ * @param {string} req.body.title - Título o nombre actualizado.
+ * @param {number|string} req.body.price - Precio de venta actualizado.
+ * @param {number|string} [req.body.cost] - Costo actualizado.
+ * @param {number|string} [req.body.stock] - Stock actualizado.
+ * @param {number|string} [req.body.min_stock] - Stock mínimo actualizado.
+ * @param {string} [req.body.category] - Categoría actualizada.
+ * @param {number|string} [req.body.provider_id] - ID del proveedor asociado actualizado.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para el manejo de errores.
+ * @returns {Promise<void>} Retorna un mensaje confirmando la actualización del producto.
  */
 const updateProduct = async (req, res, next) => {
     try {

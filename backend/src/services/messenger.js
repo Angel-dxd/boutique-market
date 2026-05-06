@@ -20,10 +20,20 @@ try {
  */
 class MessengerService {
     /**
-     * Envía un mensaje según el tipo y los datos proporcionados.
-     * @param {string} type - El tipo de mensaje ('remind-appointment' | 'contact-provider').
-     * @param {Object} data - Datos necesarios para rellenar la plantilla.
-     * @returns {Promise<Object>} Resultado de la operación.
+     * Envía un mensaje a través de la API de WhatsApp (Simulada).
+     *
+     * Este método formatea el texto del mensaje dependiendo del `type`
+     * (e.g., 'remind-appointment' o 'contact-provider') y simula el
+     * consumo de la Cloud API usando la configuración aislada por tenant.
+     *
+     * @async
+     * @param {string} type - Identificador de la plantilla o tipo de mensaje ('remind-appointment' | 'contact-provider').
+     * @param {Object} data - Datos dinámicos para rellenar la plantilla.
+     * @param {string} [data.client] - Nombre del cliente (para recordatorios).
+     * @param {string} [data.date] - Fecha de la cita (para recordatorios).
+     * @param {string} [data.providerName] - Nombre del proveedor (para pedidos).
+     * @param {string} [data.productName] - Nombre del producto a pedir (para pedidos).
+     * @returns {Promise<{success: boolean, message?: string, error?: string}>} Resultado de la operación de envío.
      */
     async sendMessage(type, data) {
         // Enforce the tenant context correctly isolating the configuration

@@ -5,8 +5,14 @@
 const db = require('../config/db');
 
 /**
- * Obtiene el listado de todos los proveedores activos.
- * @route GET /api/providers
+ * Obtiene el listado de todos los proveedores activos ordenados alfabéticamente.
+ *
+ * @async
+ * @function getProviders
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para el manejo de errores.
+ * @returns {Promise<void>} Retorna un JSON con el listado de proveedores.
  */
 const getProviders = async (req, res, next) => {
     try {
@@ -16,8 +22,21 @@ const getProviders = async (req, res, next) => {
 };
 
 /**
- * Crea un nuevo proveedor.
- * @route POST /api/providers
+ * Crea un nuevo proveedor en el sistema.
+ *
+ * Valida que el nombre sea proporcionado.
+ *
+ * @async
+ * @function createProvider
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.body - Cuerpo de la petición.
+ * @param {string} req.body.name - Nombre del proveedor (Obligatorio).
+ * @param {string|number} [req.body.phone] - Teléfono del proveedor.
+ * @param {string} [req.body.company] - Empresa o razón social.
+ * @param {string} [req.body.category] - Categoría del proveedor.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para el manejo de errores.
+ * @returns {Promise<void>} Retorna un JSON con los datos del proveedor creado.
  */
 const createProvider = async (req, res, next) => {
     try {
@@ -34,6 +53,20 @@ const createProvider = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
+/**
+ * Crea múltiples proveedores desde un array de objetos (ej. importación CSV).
+ *
+ * Filtra proveedores inválidos (sin nombre).
+ *
+ * @async
+ * @function bulkCreateProviders
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.body - Cuerpo de la petición.
+ * @param {Array<Object>} req.body.providers - Arreglo de proveedores a importar.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para el manejo de errores.
+ * @returns {Promise<void>} Retorna un JSON confirmando la importación masiva y el número de registros afectados.
+ */
 const bulkCreateProviders = async (req, res, next) => {
     try {
         const { providers } = req.body;
@@ -57,6 +90,18 @@ const bulkCreateProviders = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
+/**
+ * Elimina un proveedor del sistema de forma permanente.
+ *
+ * @async
+ * @function deleteProvider
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.params - Parámetros de ruta.
+ * @param {string} req.params.id - Identificador del proveedor a eliminar.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para el manejo de errores.
+ * @returns {Promise<void>} Retorna un mensaje confirmando la eliminación o error 404.
+ */
 const deleteProvider = async (req, res, next) => {
     try {
         const [result] = await db.query(`DELETE FROM providers WHERE id = ?`, [req.params.id]);

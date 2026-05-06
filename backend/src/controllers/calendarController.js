@@ -6,8 +6,17 @@
 const db = require('../config/db');
 
 /**
- * Obtiene todas las citas activas y calcula las ganancias totales.
- * @route GET /api/calendar
+ * Obtiene todas las citas activas de la agenda y calcula las ganancias totales.
+ *
+ * Excluye las citas marcadas como eliminadas (soft delete). Si la tabla
+ * no existe, devuelve un arreglo vacío.
+ *
+ * @async
+ * @function getAppointments
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para pasar el error al middleware.
+ * @returns {Promise<void>} Retorna un JSON con los eventos del calendario (`calendarEvents`) y las ganancias totales del día (`totalEarningsPerDay`).
  */
 const getAppointments = async (req, res, next) => {
     try {
@@ -40,7 +49,18 @@ const getAppointments = async (req, res, next) => {
 
 /**
  * Crea una nueva cita en la agenda.
- * @route POST /api/calendar
+ *
+ * @async
+ * @function createAppointment
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.body - Cuerpo de la petición.
+ * @param {string} req.body.client - Nombre o identificador del cliente.
+ * @param {string} req.body.date - Fecha de la cita.
+ * @param {string} [req.body.description] - Descripción o servicios a realizar.
+ * @param {number|string} [req.body.profit] - Ganancia estimada de la cita.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para pasar el error al middleware.
+ * @returns {Promise<void>} Retorna un JSON con los datos de la cita creada.
  */
 const createAppointment = async (req, res, next) => {
     try {
@@ -68,7 +88,15 @@ const createAppointment = async (req, res, next) => {
 
 /**
  * Genera un reporte de ganancias para hoy, el mes y el año actual.
- * @route GET /api/calendar/earnings
+ *
+ * @async
+ * @function getEarningsReport
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.query - Parámetros de consulta (query params).
+ * @param {string} [req.query.date] - Fecha base para el reporte (por defecto usa la fecha actual).
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para pasar el error al middleware.
+ * @returns {Promise<void>} Retorna un JSON con los totales (`today`, `month`, `year`).
  */
 const getEarningsReport = async (req, res, next) => {
     try {
@@ -92,8 +120,20 @@ const getEarningsReport = async (req, res, next) => {
 };
 
 /**
- * Obtiene datos resumidos para el Dashboard (citas de hoy, mañana y clientes fieles).
- * @route GET /api/calendar/dashboard
+ * Obtiene datos resumidos para el Dashboard.
+ *
+ * Incluye las citas de hoy, las citas de mañana y una lista de los 5
+ * clientes más fieles basándose en la cantidad de visitas.
+ *
+ * @async
+ * @function getDashboardData
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.query - Parámetros de consulta.
+ * @param {string} req.query.today - Fecha de hoy.
+ * @param {string} req.query.tomorrow - Fecha de mañana.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para pasar el error al middleware.
+ * @returns {Promise<void>} Retorna un JSON con `today`, `tomorrow` y `topClients`.
  */
 const getDashboardData = async (req, res, next) => {
     try {
@@ -136,8 +176,19 @@ const getDashboardData = async (req, res, next) => {
 };
 
 /**
- * Importa múltiples citas desde un array (útil para migración de datos).
- * @route POST /api/calendar/import
+ * Importa múltiples citas desde un arreglo.
+ *
+ * Utilizado para migraciones masivas de datos o subidas desde CSV en el frontend.
+ *
+ * @async
+ * @function importAppointments
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.body - Cuerpo de la petición.
+ * @param {Array<Object>} [req.body.calendarEvents] - Arreglo de eventos a importar.
+ * @param {Array<Object>} [req.body.appointments] - (Alternativa) Arreglo de eventos a importar.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para pasar el error al middleware.
+ * @returns {Promise<void>} Retorna un JSON con el mensaje de éxito indicando la cantidad insertada.
  */
 const importAppointments = async (req, res, next) => {
     try {

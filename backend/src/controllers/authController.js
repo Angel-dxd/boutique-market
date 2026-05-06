@@ -11,8 +11,22 @@ const { encrypt } = require('../utils/crypto');
 const SALT_ROUNDS = 10;
 
 /**
- * Registra un nuevo usuario.
- * @route POST /api/auth/register
+ * Registra un nuevo usuario en el sistema.
+ * 
+ * Si `ALLOW_PUBLIC_REGISTER=true` en el entorno, se permite el registro abierto.
+ * De lo contrario, solo se permite registrar al primer usuario (bootstrap) o 
+ * si la solicitud proviene de un usuario autenticado del mismo tenant.
+ *
+ * @async
+ * @function register
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.body - Cuerpo de la petición.
+ * @param {string} req.body.username - Nombre de usuario.
+ * @param {string} req.body.password - Contraseña en texto plano.
+ * @param {string} req.body.email - Correo electrónico del usuario.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para pasar el error al middleware de errores.
+ * @returns {Promise<void>} Retorna un JSON con el estado de la operación y el ID del usuario creado.
  */
 const register = async (req, res, next) => {
     try {
@@ -56,8 +70,20 @@ const register = async (req, res, next) => {
 };
 
 /**
- * Inicia sesión y devuelve un token JWT.
- * @route POST /api/auth/login
+ * Inicia sesión y genera un token JWT para el usuario.
+ *
+ * Busca el usuario en la base de datos, verifica que la contraseña coincida con el hash,
+ * y genera un JSON Web Token (JWT) con una validez configurada (por defecto 12h).
+ *
+ * @async
+ * @function login
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.body - Cuerpo de la petición.
+ * @param {string} req.body.username - Nombre de usuario.
+ * @param {string} req.body.password - Contraseña en texto plano.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para pasar el error al middleware de errores.
+ * @returns {Promise<void>} Retorna un JSON con el token JWT y los datos básicos del usuario.
  */
 const login = async (req, res, next) => {
     try {

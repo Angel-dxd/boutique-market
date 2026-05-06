@@ -5,8 +5,18 @@
 const db = require('../config/db');
 
 /**
- * Calcula estadísticas agregadas para el dashboard.
- * @route GET /api/dashboard/stats
+ * Calcula estadísticas agregadas para el dashboard general.
+ *
+ * Consolida datos de finanzas, inventario y facturas para generar
+ * KPIs como ingresos totales, gastos totales, valor del inventario
+ * y salud financiera.
+ *
+ * @async
+ * @function getDashboardStats
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para el manejo de errores.
+ * @returns {Promise<void>} Retorna un JSON con todas las métricas calculadas.
  */
 const getDashboardStats = async (req, res, next) => {
     try {

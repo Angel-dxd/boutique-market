@@ -8,11 +8,47 @@ const { getProducts, createProduct, updateProductStock, updateProduct, deletePro
 const validate = require('../middlewares/validate');
 const { productSchema, stockUpdateSchema } = require('../utils/schemas');
 
-// Operaciones sobre productos
-router.get('/', getProducts);                                  // Listar productos
-router.post('/', validate(productSchema), createProduct);      // Crear producto
-router.put('/:id/stock', validate(stockUpdateSchema), updateProductStock); // Actualizar solo stock
-router.put('/:id', validate(productSchema), updateProduct);    // Actualizar producto completo
-router.delete('/:id', deleteProduct);                         // Eliminar producto
+/**
+ * @route GET /api/products
+ * @description Listado de productos (con paginación).
+ * @access Private
+ * @controller inventoryController.getProducts
+ */
+router.get('/', getProducts);
+
+/**
+ * @route POST /api/products
+ * @description Crea un nuevo producto.
+ * @access Private
+ * @middleware validate(productSchema) - Valida los datos del producto.
+ * @controller inventoryController.createProduct
+ */
+router.post('/', validate(productSchema), createProduct);
+
+/**
+ * @route PUT /api/products/:id/stock
+ * @description Actualiza únicamente el stock de un producto.
+ * @access Private
+ * @middleware validate(stockUpdateSchema) - Valida que el stock sea un número.
+ * @controller inventoryController.updateProductStock
+ */
+router.put('/:id/stock', validate(stockUpdateSchema), updateProductStock);
+
+/**
+ * @route PUT /api/products/:id
+ * @description Actualiza un producto completo.
+ * @access Private
+ * @middleware validate(productSchema) - Valida los datos del producto.
+ * @controller inventoryController.updateProduct
+ */
+router.put('/:id', validate(productSchema), updateProduct);
+
+/**
+ * @route DELETE /api/products/:id
+ * @description Elimina un producto.
+ * @access Private
+ * @controller inventoryController.deleteProduct
+ */
+router.delete('/:id', deleteProduct);
 
 module.exports = router;

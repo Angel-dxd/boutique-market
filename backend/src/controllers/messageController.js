@@ -5,8 +5,17 @@
 const messenger = require('../services/messenger');
 
 /**
- * Envía un recordatorio de cita a un cliente (vía WhatsApp/SMS).
- * @route POST /api/messages/remind
+ * Envía un recordatorio de cita a un cliente utilizando el servicio de mensajería (WhatsApp/SMS).
+ *
+ * @async
+ * @function remindAppointment
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.body - Cuerpo de la petición.
+ * @param {string} req.body.client - Nombre o identificador del cliente.
+ * @param {string} req.body.date - Fecha de la cita a recordar.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para pasar el error al middleware.
+ * @returns {Promise<void>} Retorna un JSON con el resultado del envío del mensaje.
  */
 const remindAppointment = async (req, res, next) => {
     try {
@@ -21,8 +30,17 @@ const remindAppointment = async (req, res, next) => {
 };
 
 /**
- * Envía un mensaje de contacto a un proveedor (p. ej. para pedido de stock).
- * @route POST /api/messages/contact-provider
+ * Envía un mensaje de contacto a un proveedor (por ejemplo, para pedir stock).
+ *
+ * @async
+ * @function contactProvider
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.body - Cuerpo de la petición.
+ * @param {string} req.body.providerName - Nombre del proveedor a contactar.
+ * @param {string} [req.body.productName] - Nombre del producto sobre el cual se consulta.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para pasar el error al middleware.
+ * @returns {Promise<void>} Retorna un JSON con el resultado del envío del mensaje.
  */
 const contactProvider = async (req, res, next) => {
     try {
