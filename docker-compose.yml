@@ -14,8 +14,10 @@ services:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
-      # Si quieres que se cree la estructura base automáticamente:
-      - ./backend/estructura_base.sql:/docker-entrypoint-initdb.d/estructura_base.sql
+      # Crear bases de datos adicionales (multitenant)
+      - ./backend/01-create-santi.sql:/docker-entrypoint-initdb.d/01-create-santi.sql
+      # Estructura base
+      - ./backend/estructura_base.sql:/docker-entrypoint-initdb.d/02-estructura_base.sql
     restart: always
 
   backend:
