@@ -4,6 +4,7 @@
  * Gestiona el acceso de usuarios (Arelys para Boutique, Santi para Market).
  */
 import { navigateTo } from '../core/app.js';
+import { api } from '../core/api.js';
 
 /**
  * Renderiza la pantalla de inicio de sesión con diseño adaptativo.
@@ -141,16 +142,40 @@ export const renderLogin = () => {
 
     lucide.createIcons();
 
-    const doLogin = (username, password, errorDiv) => {
+    const doLogin = async (username, password, errorDiv) => {
         const u = username.trim().toLowerCase();
-        if (u === 'arelys' && password === '123') {
-            localStorage.setItem('currentUser', 'arelys');
-            navigateTo('/boutique-welcome');
-        } else if (u === 'santi' && password === '123') {
+        
+        // 1. Configuramos temporalmente el tenant basado en el usuario para que la API sepa a dónde apuntar
+        if (u === 'santi') {
             localStorage.setItem('currentUser', 'santi');
-            navigateTo('/market');
         } else {
-            errorDiv.textContent = 'Credenciales incorrectas. Comprueba tu usuario y contraseña.';
+            localStorage.setItem('currentUser', 'arelys');
+        }
+
+        // 2. Ocultar errores previos
+        errorDiv.classList.add('hidden');
+
+        // 3. Petición POST al backend
+        const res = await api.post('/auth/login', { username: u, password });
+
+        // 4. Procesar respuesta
+        if (res && res.success) {
+            // Guardar el token devuelto
+            localStorage.setItem('authToken', res.token);
+            
+            // Redirigir según el tenant del usuario validado
+            if (res.user.tenant === 'santi') {
+                navigateTo('/market');
+            } else {
+                navigateTo('/boutique-welcome');
+            }
+        } else {
+            // Eliminar credenciales erróneas por seguridad
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('authToken');
+            
+            // Mostrar mensaje de error
+            errorDiv.textContent = res.error || 'Credenciales incorrectas. Comprueba tu usuario y contraseña.';
             errorDiv.classList.remove('hidden');
         }
     };
