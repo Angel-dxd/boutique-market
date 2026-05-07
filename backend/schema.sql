@@ -54,6 +54,9 @@ CREATE TABLE IF NOT EXISTS invoices (
     amount      DECIMAL(10,2)   NOT NULL,
     reference   VARCHAR(255)    DEFAULT NULL,
     date        DATE            NOT NULL DEFAULT (CURDATE()),
+    status      VARCHAR(50)     DEFAULT 'pending', -- 'pending' | 'paid'
+    tax_included BOOLEAN        DEFAULT TRUE,
+    tax_amount  DECIMAL(10,2)   DEFAULT 0.00,
     created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_invoices_provider

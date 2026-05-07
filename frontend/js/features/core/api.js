@@ -74,20 +74,23 @@ const showToast = (message, isError = false) => {
     const toast = document.createElement('div');
 
     const safeMessage = normalizeApiErrorMessage(message);
-    const bgColor = isError ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800';
-    const iconColor = isError ? 'text-red-600 bg-red-100' : 'text-emerald-600 bg-emerald-100';
+    const bgColor = isError ? 'bg-red-50 border-red-200 text-red-800' : 'bg-[#1e293b] border-gray-800 text-white';
+    const iconColor = isError ? 'text-red-600 bg-red-100' : 'text-emerald-400 bg-transparent';
     const svgIcon = isError 
-        ? `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
-        : `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+        ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
 
-    toast.className = `fixed bottom-6 right-6 border ${bgColor} px-4 py-3 rounded-2xl shadow-xl shadow-black/10 z-[9999] transform translate-y-12 opacity-0 transition-all duration-300 ease-out flex items-start gap-3 max-w-md w-[calc(100%-2rem)] sm:w-[420px]`;
+    // Diseño elegante: píldora pequeña en móvil (centrada arriba del menú), normal en desktop
+    toast.className = `fixed z-[9999] border ${bgColor} px-3 py-2 sm:px-4 sm:py-3 rounded-full sm:rounded-2xl shadow-xl transition-all duration-300 ease-out flex items-center gap-2 sm:gap-3 ` +
+                      `bottom-20 left-1/2 -translate-x-1/2 w-max max-w-[90vw] translate-y-8 opacity-0 ` +
+                      `sm:bottom-6 sm:right-6 sm:left-auto sm:translate-x-0 sm:w-auto sm:min-w-[300px]`;
 
     const iconWrapper = document.createElement('div');
-    iconWrapper.className = `flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${iconColor}`;
+    iconWrapper.className = `flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${iconColor}`;
     iconWrapper.innerHTML = svgIcon;
 
     const text = document.createElement('p');
-    text.className = 'text-sm leading-snug font-semibold pr-1 break-words';
+    text.className = 'text-xs sm:text-sm leading-snug font-medium pr-1 break-words';
     text.textContent = safeMessage;
 
     toast.appendChild(iconWrapper);
@@ -96,11 +99,11 @@ const showToast = (message, isError = false) => {
     document.body.appendChild(toast);
 
     requestAnimationFrame(() => {
-        toast.classList.remove('translate-y-12', 'opacity-0');
+        toast.classList.remove('translate-y-8', 'opacity-0');
     });
 
     setTimeout(() => {
-        toast.classList.add('translate-y-12', 'opacity-0');
+        toast.classList.add('translate-y-8', 'opacity-0');
         setTimeout(() => toast.remove(), 400);
     }, isError ? 5000 : 3200);
 };

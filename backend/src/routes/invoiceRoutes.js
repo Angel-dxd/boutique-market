@@ -15,6 +15,14 @@ const { getInvoices, createInvoice, updateInvoice, deleteInvoice } = require('..
 router.get('/', getInvoices);
 
 /**
+ * @route POST /api/invoices/scan
+ * @description Escanea una factura usando IA / OCR simulado y devuelve los datos extraídos.
+ * @access Private
+ * @controller invoiceController.scanInvoice
+ */
+router.post('/scan', require('../controllers/invoiceController').scanInvoice);
+
+/**
  * @route POST /api/invoices
  * @description Registra una nueva factura de proveedor.
  * @access Private
