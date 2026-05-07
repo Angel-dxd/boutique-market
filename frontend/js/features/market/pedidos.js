@@ -229,6 +229,15 @@ export const renderPedidos = async (container) => {
                     const file = e.target.files[0];
                     if (!file) return;
 
+                    // Limpiar el formulario justo antes de iniciar un nuevo escaneo
+                    document.getElementById('invoiceForm').reset();
+                    document.getElementById('invDate').value = new Date().toISOString().split('T')[0];
+                    document.getElementById('invProv').value = '';
+                    document.getElementById('invRef').value = '';
+                    document.getElementById('invMonto').value = '';
+                    document.getElementById('invTaxAmount').value = '';
+                    document.getElementById('invTax').checked = true;
+
                     const originalText = scanBtn.innerHTML;
                     scanBtn.innerHTML = '<i data-lucide="loader" width="14" class="animate-spin"></i> Analizando...';
                     scanBtn.disabled = true;
@@ -252,7 +261,24 @@ export const renderPedidos = async (container) => {
                                 const select = document.getElementById('invProv');
                                 const options = Array.from(select.options);
                                 const match = options.find(opt => opt.text.toLowerCase().includes(res.providerNameHint.toLowerCase()));
-                                if (match) select.value = match.value;
+                                
+                                if (match) {
+                                    select.value = match.value;
+                                } else {
+                                    // Proveedor no encontrado -> Crearlo automáticamente
+                                    api.showToast(`Detectado proveedor nuevo: ${res.providerNameHint}. Registrando...`, false);
+                                    const newProvRes = await api.post('/providers', { name: res.providerNameHint });
+                                    
+                                    if (!newProvRes.error && newProvRes.id) {
+                                        suppliers.push({ id: newProvRes.id, name: res.providerNameHint });
+                                        
+                                        const newOption = document.createElement('option');
+                                        newOption.value = newProvRes.id;
+                                        newOption.text = res.providerNameHint;
+                                        select.appendChild(newOption);
+                                        select.value = newProvRes.id;
+                                    }
+                                }
                             }
                         } else {
                             api.showToast(res.error || 'No se pudo leer la factura', true);
@@ -261,6 +287,9 @@ export const renderPedidos = async (container) => {
                         scanBtn.innerHTML = originalText;
                         scanBtn.disabled = false;
                         lucide.createIcons();
+                        
+                        // Vaciar el valor del input para permitir escanear el mismo archivo repetidas veces
+                        e.target.value = '';
                     };
                     reader.readAsDataURL(file);
                 });
