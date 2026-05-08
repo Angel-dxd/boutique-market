@@ -6,6 +6,7 @@
   "scripts": {
     "dev:css": "tailwindcss -i ./css/input.css -o ./css/output.css --watch",
     "build:css": "tailwindcss -i ./css/input.css -o ./css/output.css --minify",
+    "build": "npm run build:css",
     "dev:server": "serve -s . -p 4200",
     "dev": "npm-run-all --parallel dev:*"
   },
