@@ -25,6 +25,18 @@
         <!-- Views will be rendered here -->
     </div>
 
+    <!--
+        Configuración de URL de la API.
+        - En desarrollo local (hostname = localhost) → api.js cae a http://localhost:3000/api.
+        - En producción (Vercel) → se usa la URL pública del backend en Render.
+        Sustituye la URL siguiente por la de tu servicio de Render antes del primer deploy.
+    -->
+    <script>
+        window.__API_URL__ = window.location.hostname === 'localhost'
+            ? null
+            : 'https://boutique-market-api.onrender.com/api';
+    </script>
+
     <!-- Modules are loaded here. We use type="module" to use ES6 imports -->
     <script type="module" src="/js/features/core/app.js"></script>
 </body>

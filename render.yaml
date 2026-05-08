@@ -1,0 +1,37 @@
+# Blueprint de despliegue para Render (https://render.com).
+# Subiendo este archivo al repositorio, Render detectará automáticamente el
+# servicio al hacer "New from Blueprint".
+#
+# IMPORTANTE: las variables marcadas con `sync: false` deben configurarse
+# manualmente desde el dashboard (no se versionan).
+
+services:
+  - type: web
+    name: boutique-market-api
+    runtime: node
+    region: frankfurt
+    plan: free
+    branch: main
+    rootDir: backend
+    buildCommand: npm ci --only=production
+    startCommand: node server.js
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: JWT_EXPIRES_IN
+        value: 12h
+      - key: ALLOW_PUBLIC_REGISTER
+        value: "false"
+      - key: ALLOWED_ORIGINS
+        sync: false   # https://boutique-market.vercel.app,https://*.vercel.app
+      - key: JWT_SECRET
+        sync: false   # cadena aleatoria de 64+ caracteres
+      - key: DATABASE_URL_MARKET
+        sync: false   # connectionString Supabase del tenant 'market'
+      - key: DATABASE_URL_SANTI
+        sync: false   # connectionString Supabase del tenant 'santi'
+      - key: AES_SECRET_KEY
+        sync: false   # 32 bytes hex para cifrado de email (utils/crypto)

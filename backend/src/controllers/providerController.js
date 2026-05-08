@@ -83,10 +83,20 @@ const bulkCreateProviders = async (req, res, next) => {
 
         if (validProviders.length === 0) { const e = new Error("El CSV no contiene elementos válidos con la estructura apropiada (falta name)"); e.status = 400; throw e; }
 
-        const values = validProviders.map(p => [p.name, p.phone, p.company, p.category]);
-        const [result] = await db.query(`INSERT INTO providers (name, phone, company, category) VALUES ?`, [values]);
+        // Postgres no soporta el `VALUES ?` de mysql2 (array of arrays).
+        // Construimos placeholders dinámicos: ($1,$2,$3,$4),($5,$6,$7,$8),...
+        const cols = ['name', 'phone', 'company', 'category'];
+        const placeholders = validProviders
+            .map((_, i) => `(${cols.map((__, j) => `$${i * cols.length + j + 1}`).join(', ')})`)
+            .join(', ');
+        const flat = validProviders.flatMap(p => [p.name, p.phone, p.company, p.category]);
 
-        res.status(201).json({ message: 'Lote importado con éxito a MySQL Central', count: result.affectedRows });
+        const [rows] = await db.query(
+            `INSERT INTO providers (${cols.join(', ')}) VALUES ${placeholders}`,
+            flat
+        );
+
+        res.status(201).json({ message: 'Lote importado con éxito', count: rows.affectedRows });
     } catch (err) { next(err); }
 };
 

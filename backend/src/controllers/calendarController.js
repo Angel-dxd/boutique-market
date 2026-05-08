@@ -40,7 +40,7 @@ const getAppointments = async (req, res, next) => {
             totalEarningsPerDay: totalEarnings
         });
     } catch (err) {
-        if (err.code === 'ER_NO_SUCH_TABLE') {
+        if (err.code === '42P01') {
             return res.status(200).json({ calendarEvents: [], totalEarningsPerDay: 0 });
         }
         next(err);
@@ -79,7 +79,7 @@ const createAppointment = async (req, res, next) => {
             profit: parseFloat(profit || 0)
         });
     } catch (err) {
-        if (err.code === 'ER_NO_SUCH_TABLE') {
+        if (err.code === '42P01') {
             return res.status(200).json({ error: 'Operación ignorada: Este tenant no soporta agenda todavía.' });
         }
         next(err);
@@ -112,7 +112,7 @@ const getEarningsReport = async (req, res, next) => {
             year: parseFloat(yearResult[0].total || 0)
         });
     } catch (err) {
-        if (err.code === 'ER_NO_SUCH_TABLE') {
+        if (err.code === '42P01') {
             return res.status(200).json({ today: 0, month: 0, year: 0 });
         }
         next(err);
@@ -168,7 +168,7 @@ const getDashboardData = async (req, res, next) => {
         });
 
     } catch (err) {
-        if (err.code === 'ER_NO_SUCH_TABLE') {
+        if (err.code === '42P01') {
             return res.status(200).json({ today: [], tomorrow: [], topClients: [] });
         }
         next(err);
@@ -213,7 +213,7 @@ const importAppointments = async (req, res, next) => {
 
         res.status(201).json({ message: `Se importaron ${insertedCount} eventos exitosamente.` });
     } catch (err) {
-        if (err.code === 'ER_NO_SUCH_TABLE') {
+        if (err.code === '42P01') {
             return res.status(200).json({ error: 'Operación ignorada: Este tenant no soporta agenda todavía.' });
         }
         next(err);

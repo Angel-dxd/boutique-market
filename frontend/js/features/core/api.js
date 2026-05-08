@@ -4,8 +4,10 @@
  * Gestiona cabeceras multitenant, autenticación, notificaciones (toasts) y errores.
  */
 
-// Usa variable inyectada si existe, o asume que el backend corre en el mismo host que el frontend pero en el puerto 3000.
-const API_URL = window.REACT_APP_API_URL || `http://${window.location.hostname}:3000/api`;
+// URL base de la API. Prioridad: Inyección manual > Variable de entorno > Localhost (Desarrollo) > Fallback relativo.
+const API_URL = window.__API_URL__ 
+    || window.REACT_APP_API_URL 
+    || (window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : '/api');
 
 // --- SISTEMA GLOBAL DE CARGA Y NOTIFICACIONES (Vanilla JS) ---
 

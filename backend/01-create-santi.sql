@@ -1,3 +1,0 @@
-CREATE DATABASE IF NOT EXISTS boutique_santi;
-GRANT ALL PRIVILEGES ON boutique_santi.* TO 'user'@'%';
-FLUSH PRIVILEGES;
