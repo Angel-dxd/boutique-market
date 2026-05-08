@@ -33,5 +33,5 @@ services:
         sync: false   # connectionString Supabase del tenant 'market'
       - key: DATABASE_URL_SANTI
         sync: false   # connectionString Supabase del tenant 'santi'
-      - key: AES_SECRET_KEY
+      - key: ENCRYPTION_KEY
         sync: false   # 32 bytes hex para cifrado de email (utils/crypto)
