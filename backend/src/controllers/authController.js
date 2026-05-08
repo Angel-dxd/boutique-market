@@ -3,7 +3,7 @@
  * Sistema de Autenticación y Registro.
  * Implementa hashing de contraseñas con bcrypt y cifrado de datos sensibles con AES.
  */
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db'); // Ajusta la ruta según tu estructura [cite: 20]
 const { encrypt } = require('../utils/crypto');
