@@ -13,7 +13,7 @@ services:
     plan: free
     branch: main
     rootDir: backend
-    buildCommand: npm ci --only=production
+    buildCommand: npm install
     startCommand: node server.js
     healthCheckPath: /
     envVars:
