@@ -24,19 +24,30 @@ const tenants = ['market', 'santi'];
 const pools = {};
 
 for (const tenant of tenants) {
-    const connStr = process.env[`DATABASE_URL_${tenant.toUpperCase()}`];
+    const envVar = `DATABASE_URL_${tenant.toUpperCase()}`;
+    const connStr = process.env[envVar];
     
     if (connStr) {
+        console.log(`📡 Inicializando pool para tenant '${tenant}' usando ${envVar}...`);
         pools[tenant] = new Pool({
             connectionString: connStr,
             ssl: { rejectUnauthorized: false }
         });
 
+        // Test de conexión inmediato para logs de arranque
         pools[tenant].connect()
-            .then(c => { console.log(`✅ Pool conectado: tenant '${tenant}'`); c.release(); })
-            .catch(err => console.error(`❌ Error tenant '${tenant}':`, err.message));
+            .then(c => { 
+                console.log(`✅ ¡ÉXITO! Pool conectado a Supabase para tenant '${tenant}'`); 
+                c.release(); 
+            })
+            .catch(err => {
+                console.error(`❌ ERROR de conexión en tenant '${tenant}':`);
+                console.error(`   Detalle: ${err.message}`);
+                console.error(`   ¿Están bien las credenciales en ${envVar}?`);
+            });
     } else {
-        console.warn(`⚠️ Advertencia: Variable de entorno DATABASE_URL_${tenant.toUpperCase()} no definida.`);
+        console.warn(`⚠️ ADVERTENCIA: La variable ${envVar} no está definida.`);
+        console.warn(`   El backend intentará arrancar, pero las consultas a '${tenant}' fallarán.`);
     }
 }
 

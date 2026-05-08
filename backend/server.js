@@ -12,6 +12,10 @@ const dotenv = require('dotenv');
 // Carga de variables de entorno
 dotenv.config();
 
+console.log('--- BACKEND STARTING ---');
+console.log(`🕒 Hora: ${new Date().toISOString()}`);
+console.log(`🆔 Proceso: ${process.pid}`);
+
 /**
  * Contexto de Tenant: Permite el aislamiento de datos por base de datos
  * dependiendo del identificador enviado en la cabecera 'x-tenant-id'.
@@ -144,9 +148,11 @@ app.use((err, req, res, next) => {
 
 // ─── Arranque ─────────────────────────────────────────────────────────────────
 if (require.main === module) {
-    app.listen(port, () => {
-        console.log(`\n🚀 Backend corriendo en http://localhost:${port}`);
-        console.log(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}\n`);
+    console.log(`🔧 Intentando arrancar servidor en puerto ${port}...`);
+    app.listen(port, '0.0.0.0', () => {
+        console.log(`\n🚀 Backend corriendo en http://0.0.0.0:${port}`);
+        console.log(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`📡 Orígenes permitidos: ${process.env.ALLOWED_ORIGINS || 'TODOS (Cuidado)'}\n`);
     });
 }
 
