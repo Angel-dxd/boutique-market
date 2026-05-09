@@ -54,34 +54,32 @@ for (const tenant of tenants) {
     }
 }
 
+// Caché para traducciones SQL (Turbo Translator)
+const sqlCache = new Map();
+
 /**
- * Traduce sintaxis MySQL → PostgreSQL.
+ * Traduce sintaxis MySQL → PostgreSQL con caché.
  * @param {string} sql
  * @returns {string} SQL adaptado a Postgres.
  */
 function adaptSql(sql) {
-    let out = sql;
+    if (sqlCache.has(sql)) return sqlCache.get(sql);
 
-    // Funciones de fecha MySQL → Postgres.
-    // Se añade siempre un cast `::date` interno: si el argumento ya es un campo
-    // tipo date el cast es no-op; si es un placeholder con string ('YYYY-MM-DD')
-    // el cast lo convierte correctamente y evita el error
-    // "function pg_catalog.extract(unknown, unknown) is not unique".
+    let out = sql;
     out = out.replace(/\bCURDATE\(\)/gi, 'CURRENT_DATE');
     out = out.replace(/\bDATEDIFF\s*\(\s*([^,]+?)\s*,\s*([^)]+?)\s*\)/gi, '(($1)::date - ($2)::date)');
     out = out.replace(/\bMONTH\s*\(\s*([^)]+?)\s*\)/gi, 'EXTRACT(MONTH FROM ($1)::date)');
     out = out.replace(/\bYEAR\s*\(\s*([^)]+?)\s*\)/gi, 'EXTRACT(YEAR FROM ($1)::date)');
     out = out.replace(/\bDATE\s*\(\s*([^)]+?)\s*\)/gi, '($1)::date');
 
-    // Placeholders ? → $1, $2, ...
     let n = 0;
     out = out.replace(/\?/g, () => `$${++n}`);
 
-    // INSERT sin RETURNING → añadir RETURNING id (idempotente)
     if (/^\s*INSERT\s+INTO/i.test(out) && !/\bRETURNING\b/i.test(out)) {
         out = out.trim().replace(/;?\s*$/, '') + ' RETURNING id';
     }
 
+    sqlCache.set(sql, out);
     return out;
 }
 

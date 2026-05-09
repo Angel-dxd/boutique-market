@@ -11,12 +11,36 @@ const API_URL = window.__API_URL__
         ? 'http://localhost:3000/api' 
         : 'https://boutique-market.onrender.com/api');
 
-// --- SISTEMA GLOBAL DE CARGA Y NOTIFICACIONES (Vanilla JS) ---
+// --- SISTEMA DE CACHÉ Y CARGA ---
+const cache = new Map();
+const CACHE_TTL = 30000; // 30 segundos de vida para los datos
 
-// Spinner global desactivado — cada módulo gestiona su propio estado de carga
-// para no bloquear la navegación entre apartados
-const showLoading = () => {};
-const hideLoading = () => {};
+const showLoading = () => {
+    let bar = document.getElementById('global-loader');
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'global-loader';
+        bar.className = 'fixed top-0 left-0 h-[3px] bg-emerald-500 z-[10000] transition-all duration-300 ease-out';
+        bar.style.width = '0%';
+        document.body.appendChild(bar);
+    }
+    bar.style.opacity = '1';
+    bar.style.width = '30%';
+    setTimeout(() => { if (bar) bar.style.width = '70%'; }, 200);
+};
+
+const hideLoading = () => {
+    const bar = document.getElementById('global-loader');
+    if (bar) {
+        bar.style.width = '100%';
+        setTimeout(() => {
+            bar.style.opacity = '0';
+            setTimeout(() => { bar.style.width = '0%'; }, 300);
+        }, 200);
+    }
+};
+
+const clearCache = () => cache.clear();
 
 /**
  * Normaliza los mensajes de error de la API (incluyendo errores de validación de Zod).
@@ -150,12 +174,22 @@ export const api = {
     hideLoading,
     showToast,
     get: async (endpoint) => {
+        // Consultar caché primero
+        const cached = cache.get(endpoint);
+        if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+            return cached.data;
+        }
+
         showLoading();
         try {
             const res = await fetch(`${API_URL}${endpoint}`, {
                 headers: getHeaders()
             });
             const data = await processResponse(res);
+            
+            // Guardar en caché
+            cache.set(endpoint, { data, timestamp: Date.now() });
+            
             hideLoading();
             return data;
         } catch (e) {
@@ -170,6 +204,7 @@ export const api = {
         }
     },
     post: async (endpoint, payloadData) => {
+        clearCache(); // Limpiar caché al escribir
         showLoading();
         try {
             const res = await fetch(`${API_URL}${endpoint}`, {
@@ -194,6 +229,7 @@ export const api = {
         }
     },
     put: async (endpoint, payloadData) => {
+        clearCache(); // Limpiar caché al escribir
         showLoading();
         try {
             const res = await fetch(`${API_URL}${endpoint}`, {
@@ -218,6 +254,7 @@ export const api = {
         }
     },
     delete: async (endpoint) => {
+        clearCache(); // Limpiar caché al escribir
         showLoading();
         try {
             const res = await fetch(`${API_URL}${endpoint}`, {

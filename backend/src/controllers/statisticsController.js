@@ -20,28 +20,32 @@ const db = require('../config/db');
  */
 const getDashboardStats = async (req, res, next) => {
     try {
-        const [financeRows] = await db.query('SELECT * FROM finance');
-        const [inventoryRows] = await db.query('SELECT * FROM inventory');
-        const [invoicesRows] = await db.query('SELECT * FROM invoices');
+        // Ejecutamos las sumas directamente en la base de datos (mucho más rápido)
+        const [[financeStats]] = await db.query(`
+            SELECT 
+                SUM(CASE WHEN LOWER(type) IN ('income', 'entrada') THEN amount ELSE 0 END) as total_income,
+                SUM(CASE WHEN LOWER(type) IN ('expense', 'salida') AND LOWER(category) NOT LIKE '%factura%' THEN amount ELSE 0 END) as total_expenses
+            FROM finance
+        `);
 
-        const expenses = (invoicesRows || []).reduce((sum, f) => sum + parseFloat(f.amount || 0), 0);
-        let totalIncome = 0;
-        let totalExpenses = expenses;
+        const [[inventoryStats]] = await db.query(`
+            SELECT 
+                SUM(stock * price) as inventory_value,
+                COUNT(*) FILTER (WHERE stock <= min_stock) as low_stock_count
+            FROM inventory
+        `);
 
-        (financeRows || []).forEach(t => {
-            const amount = parseFloat(t.amount || 0);
-            const type = (t.type || '').toLowerCase();
-            const category = (t.category || '').toLowerCase();
+        const [[invoiceStats]] = await db.query(`
+            SELECT SUM(amount) as invoice_total FROM invoices
+        `);
 
-            if (['income', 'entrada'].includes(type)) {
-                totalIncome += amount;
-            } else if (['expense', 'salida'].includes(type) && !category.includes('factura')) {
-                totalExpenses += amount;
-            }
-        });
-
-        const inventoryValue = (inventoryRows || []).reduce((sum, p) => sum + (p.stock * p.price), 0);
-        const lowStockCount = (inventoryRows || []).filter(p => p.stock <= p.min_stock).length;
+        const totalIncome = parseFloat(financeStats?.total_income || 0);
+        const invoiceExpenses = parseFloat(invoiceStats?.invoice_total || 0);
+        const otherExpenses = parseFloat(financeStats?.total_expenses || 0);
+        const totalExpenses = invoiceExpenses + otherExpenses;
+        
+        const inventoryValue = parseFloat(inventoryStats?.inventory_value || 0);
+        const lowStockCount = parseInt(inventoryStats?.low_stock_count || 0);
 
         const storedRatio = totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 100;
 
