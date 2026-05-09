@@ -32,21 +32,25 @@ for (const tenant of tenants) {
         pools[tenant] = new Pool({
             connectionString: connStr,
             ssl: { rejectUnauthorized: false },
-            max: 10, // Máximo de conexiones por pool
-            idleTimeoutMillis: 30000, // Tiempo antes de cerrar una conexión inactiva
-            connectionTimeoutMillis: 5000, // Tiempo máximo para establecer conexión
+            max: 20,
+            min: 2, // Mantenemos siempre 2 conexiones abiertas por negocio
+            idleTimeoutMillis: 30000, 
+            connectionTimeoutMillis: 2000,
         });
 
-        // Test de conexión inmediato para logs de arranque
+        // Test y Keep-Alive (mantenemos la conexión caliente cada 30s)
+        const keepAlive = () => {
+            pools[tenant].query('SELECT 1').catch(err => console.error(`Keep-alive failed for ${tenant}`));
+        };
+        setInterval(keepAlive, 30000); 
+
         pools[tenant].connect()
             .then(c => { 
-                console.log(`✅ ¡ÉXITO! Pool conectado a Supabase para tenant '${tenant}'`); 
+                console.log(`✅ ¡TURBO! Pool listo y caliente para '${tenant}'`); 
                 c.release(); 
             })
             .catch(err => {
-                console.error(`❌ ERROR de conexión en tenant '${tenant}':`);
-                console.error(`   Detalle: ${err.message}`);
-                console.error(`   ¿Están bien las credenciales en ${envVar}?`);
+                console.error(`❌ ERROR de conexión en tenant '${tenant}': ${err.message}`);
             });
     } else {
         console.warn(`⚠️ ADVERTENCIA: La variable ${envVar} no está definida.`);

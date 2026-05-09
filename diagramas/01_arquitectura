@@ -1,0 +1,38 @@
+digraph arquitectura {
+	bgcolor=white dpi=150 fontname=Arial fontsize=16 label="Figura 4.1 — Arquitectura cloud Boutique & Market" labelloc=t rankdir=LR
+	node [fontname=Arial fontsize=11 style="rounded,filled"]
+	subgraph cluster_client {
+		color="#475569" fontcolor="#475569" label=Cliente style="rounded,dashed"
+		browser [label="Navegador
+(Chrome / Safari / Firefox)
+Vanilla JS + Tailwind" color="#3B82F6" fillcolor="#DBEAFE" shape=box]
+	}
+	subgraph cluster_vercel {
+		color="#000000" fillcolor="#F1F5F9" fontcolor="#000000" label="Vercel (Edge CDN global)" style="rounded,filled"
+		vercel [label="boutique-market.vercel.app
+HTML estático + JS
+Despliegue automático" color="#000000" fillcolor="#FFFFFF" shape=box]
+	}
+	subgraph cluster_render {
+		color="#46E3B7" fillcolor="#ECFDF5" fontcolor="#0F766E" label="Render (Frankfurt EU)" style="rounded,filled"
+		render [label="boutique-market-api.onrender.com
+Node.js + Express
+JWT · Helmet · CORS · Zod" color="#10B981" fillcolor="#FFFFFF" shape=box]
+	}
+	subgraph cluster_supabase {
+		color="#3ECF8E" fillcolor="#F0FDF4" fontcolor="#15803D" label="Supabase (PostgreSQL multi-tenant físico)" style="rounded,filled"
+		db_market [label="DB tenant 'market'
+(Oh-Nails)
+9 tablas" color="#15803D" fillcolor="#BBF7D0" shape=cylinder]
+		db_santi [label="DB tenant 'santi'
+(El Gallo Azul)
+9 tablas" color="#15803D" fillcolor="#BBF7D0" shape=cylinder]
+	}
+	browser -> vercel [label=HTTPS]
+	vercel -> render [label="fetch /api/*
+x-tenant-id"]
+	render -> db_market [label="pg Pool
+SSL"]
+	render -> db_santi [label="pg Pool
+SSL"]
+}

@@ -1,0 +1,19 @@
+%% Figura 4.3 — Flujo de petición autenticada
+sequenceDiagram
+  autonumber
+  participant C as Cliente (Navegador)
+  participant V as Vercel
+  participant R as Render (requireAuth)
+  participant A as AsyncLocalStorage
+  participant S as Supabase (tenant)
+
+  C->>V: GET / (HTML+JS)
+  V-->>C: Bundle estático
+  C->>R: POST /api/auth/login<br/>{username, password}<br/>x-tenant-id: market
+  R->>S: SELECT * FROM users WHERE username=$1
+  S-->>R: row + bcrypt hash
+  R-->>C: JWT { sub, role, tenant }<br/>exp 12h
+  C->>R: GET /api/clients<br/>Authorization: Bearer JWT<br/>x-tenant-id: market
+  R->>A: verify(JWT) → tenant=market<br/>run(callback)
+  A->>S: pool[market].query(...)<br/>SSL
+  S-->>C: JSON respuesta

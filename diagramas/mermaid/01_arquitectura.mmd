@@ -1,0 +1,19 @@
+%% Figura 4.1 — Arquitectura cloud Boutique & Market
+graph LR
+  subgraph Cliente
+    B[Navegador<br/>Vanilla JS + Tailwind]
+  end
+  subgraph Vercel["Vercel (Edge CDN global)"]
+    V[boutique-market.vercel.app<br/>HTML estático + JS]
+  end
+  subgraph Render["Render (Frankfurt EU)"]
+    R[boutique-market-api.onrender.com<br/>Node.js + Express<br/>JWT · Helmet · CORS · Zod]
+  end
+  subgraph Supabase["Supabase PostgreSQL (multi-tenant físico)"]
+    DBM[(DB tenant 'market'<br/>Oh-Nails · 9 tablas)]
+    DBS[(DB tenant 'santi'<br/>El Gallo Azul · 9 tablas)]
+  end
+  B -- HTTPS --> V
+  V -- "fetch /api/* + x-tenant-id" --> R
+  R -- "pg Pool / SSL" --> DBM
+  R -- "pg Pool / SSL" --> DBS

@@ -1,0 +1,9 @@
+%% Figura 6.1 — Pipeline CI/CD
+graph LR
+  D[Desarrollador<br/>git push origin main] --> G[GitHub<br/>repo: boutique-market]
+  G --> WV[Webhook → Vercel]
+  G --> WR[Webhook → Render]
+  WV --> VB[Vercel build<br/>Edge CDN<br/>Atomic deploy]
+  WR --> RB[Render build (Blueprint)<br/>render.yaml<br/>npm install + npm start]
+  VB --> PF[boutique-market.vercel.app]
+  RB --> PA[boutique-market-api.onrender.com]
