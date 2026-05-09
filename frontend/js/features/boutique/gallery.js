@@ -20,17 +20,28 @@ export const renderInstagramGallery = (container) => {
     let searchQuery = '';
     let activeCategory = 'all';
 
-    // 1. OBTENER DISEÑOS
-    const fetchAndRender = async () => {
-        isLoading = true;
-        render();
+    let currentOffset = 0;
+    const LIMIT = 12;
 
-        const data = await api.get('/gallery');
+    // 1. OBTENER DISEÑOS (PAGINADOS)
+    const fetchAndRender = async (append = false) => {
+        if (!append) {
+            isLoading = true;
+            currentOffset = 0;
+            works = [];
+            render();
+        }
+
+        const data = await api.get(`/gallery?limit=${LIMIT}&offset=${currentOffset}`);
         
-        if (!data.error && Array.isArray(data) && data.length > 0) {
-            works = data;
-        } else {
-            // MOCK STATE
+        if (!data.error && Array.isArray(data)) {
+            if (append) {
+                works = [...works, ...data];
+            } else {
+                works = data;
+            }
+        } else if (!append) {
+            // MOCK STATE (Solo si es carga inicial y falla la API)
             works = [
                 { id: 'ej1', image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80', title: 'Acrílicas Cereza', category: 'Acrílicas', source: 'mock' },
                 { id: 'ej2', image: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80', title: 'Francesa Premium', category: 'Francesa', source: 'mock' },
@@ -376,8 +387,8 @@ export const renderInstagramGallery = (container) => {
                 </div>
                 
                 <!-- GRID: Tarjetas Claras con Funciones Visibles -->
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
-                    ${isLoading ? getSkeletons() : visibleWorks.map(w => `
+                <div id="galleryGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
+                    ${isLoading && works.length === 0 ? getSkeletons() : visibleWorks.map(w => `
                         <!-- Tarjeta de Contenido -->
                         <div class="gallery-card bg-white rounded-[2rem] shadow-md border border-gray-100 overflow-hidden group transition-all duration-300 flex flex-col hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-100" data-title="${w.title}">
                             
@@ -414,20 +425,24 @@ export const renderInstagramGallery = (container) => {
                             </div>
                         </div>
                     `).join('')}
-                    ${!isLoading && visibleWorks.length === 0 ? `
-                        <div id="noResultsMsg" class="col-span-full bg-white border border-dashed border-gray-300 rounded-3xl p-10 text-center">
-                            <i data-lucide="search-x" class="w-10 h-10 mx-auto text-gray-300 mb-3"></i>
-                            <h3 class="text-lg font-bold text-gray-700">No hay resultados</h3>
-                            <p class="text-sm text-gray-500 mt-1">Prueba con otra búsqueda.</p>
-                        </div>
-                    ` : `
-                        <div id="noResultsMsg" class="col-span-full bg-white border border-dashed border-gray-300 rounded-3xl p-10 text-center" style="display: none;">
-                            <i data-lucide="search-x" class="w-10 h-10 mx-auto text-gray-300 mb-3"></i>
-                            <h3 class="text-lg font-bold text-gray-700">No hay resultados</h3>
-                            <p class="text-sm text-gray-500 mt-1">Prueba con otra búsqueda.</p>
-                        </div>
-                    `}
                 </div>
+
+                <!-- Botón Cargar Más -->
+                ${!isLoading && works.length >= 12 && works.length % 12 === 0 ? `
+                    <div class="flex justify-center pt-4">
+                        <button id="loadMoreBtn" class="px-8 py-3 bg-white border-2 border-emerald-500 text-emerald-600 font-bold rounded-2xl hover:bg-emerald-50 transition-all flex items-center gap-2 shadow-sm">
+                            <i data-lucide="refresh-cw" class="w-5 h-5"></i> Cargar más trabajos
+                        </button>
+                    </div>
+                ` : ''}
+
+                ${!isLoading && visibleWorks.length === 0 ? `
+                    <div id="noResultsMsg" class="col-span-full bg-white border border-dashed border-gray-300 rounded-3xl p-10 text-center">
+                        <i data-lucide="search-x" class="w-10 h-10 mx-auto text-gray-300 mb-3"></i>
+                        <h3 class="text-lg font-bold text-gray-700">No hay resultados</h3>
+                        <p class="text-sm text-gray-500 mt-1">Prueba con otra búsqueda.</p>
+                    </div>
+                ` : ''}
             </div>
 
 
@@ -599,7 +614,16 @@ export const renderInstagramGallery = (container) => {
         // Limpiezas y Enlaces de Eventos
         document.getElementById('addLocalBtn')?.addEventListener('click', () => openModal(null, '', ''));
         
-        document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
+        document.getElementById('loadMoreBtn')?.addEventListener('click', async () => {
+            const btn = document.getElementById('loadMoreBtn');
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-5 h-5"></i> Cargando...';
+            btn.disabled = true;
+            lucide.createIcons();
+            
+            currentOffset += LIMIT;
+            await fetchAndRender(true);
+        });
         document.getElementById('cancelModalBtn')?.addEventListener('click', closeModal);
         const overlay = document.getElementById('nailModalOverlay');
         if (overlay) overlay.addEventListener('click', (e) => {

@@ -16,7 +16,13 @@ const db = require('../config/db');
  */
 const getWorks = async (req, res, next) => {
     try {
-        const [rows] = await db.query('SELECT * FROM gallery ORDER BY created_at DESC');
+        const limit = parseInt(req.query.limit) || 12; // Por defecto 12 para carga rápida
+        const offset = parseInt(req.query.offset) || 0;
+        
+        const [rows] = await db.query(
+            'SELECT * FROM gallery ORDER BY created_at DESC LIMIT ? OFFSET ?', 
+            [limit, offset]
+        );
         res.json(rows);
     } catch (err) {
         next(err);
