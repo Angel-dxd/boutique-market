@@ -47,8 +47,11 @@ export const renderLogin = () => {
                         <div class="relative">
                             <i data-lucide="lock" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5"></i>
                             <input type="password" id="password-mobile"
-                                class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all text-gray-800 font-medium text-base"
+                                class="w-full pl-12 pr-12 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all text-gray-800 font-medium text-base"
                                 placeholder="••••••" required autocomplete="current-password" />
+                            <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-emerald-500 transition-colors toggle-password" data-target="password-mobile">
+                                <i data-lucide="eye" class="w-5 h-5"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -125,8 +128,11 @@ export const renderLogin = () => {
                             <div class="relative">
                                 <i data-lucide="lock" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" width="20"></i>
                                 <input type="password" id="password"
-                                    class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all"
+                                    class="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all"
                                     placeholder="••••••" required />
+                                <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors toggle-password" data-target="password">
+                                    <i data-lucide="eye" class="w-5 h-5"></i>
+                                </button>
                             </div>
                         </div>
                         <div id="error-message" class="hidden text-red-500 text-sm bg-red-50 p-3 rounded-lg text-center"></div>
@@ -141,6 +147,24 @@ export const renderLogin = () => {
     `;
 
     lucide.createIcons();
+
+    // Toggle password visibility logic
+    document.querySelectorAll('.toggle-password').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = btn.querySelector('i');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons(); // Re-render icon
+        });
+    });
 
     const doLogin = async (username, password, errorDiv) => {
         const u = username.trim().toLowerCase();
