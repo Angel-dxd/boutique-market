@@ -68,8 +68,24 @@ const router = async () => {
         }
     }
 
+    // Aplicar animación de transición
+    const appContainer = document.getElementById('app');
+    appContainer.classList.remove('view-transition');
+    void appContainer.offsetWidth; // Trigger reflow
+    appContainer.classList.add('view-transition');
+
     // Ejecuta el render de la ruta encontrada
     route.render();
+
+    // --- TURBO PREFETCH ---
+    // Si entramos en una sección protegida, cargamos datos de otras secciones en segundo plano
+    if (route.type === 'protected') {
+        const { api } = await import('./api.js');
+        // Cargamos Dashboard e Inventario por adelantado (sin esperar)
+        api.get('/dashboard/stats').catch(() => {});
+        api.get('/products').catch(() => {});
+        api.get('/providers').catch(() => {});
+    }
 };
 
 // Handle Browser History (hashchange instead of popstate)
