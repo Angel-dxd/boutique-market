@@ -31,7 +31,10 @@ for (const tenant of tenants) {
         console.log(`📡 Inicializando pool para tenant '${tenant}' usando ${envVar}...`);
         pools[tenant] = new Pool({
             connectionString: connStr,
-            ssl: { rejectUnauthorized: false }
+            ssl: { rejectUnauthorized: false },
+            max: 10, // Máximo de conexiones por pool
+            idleTimeoutMillis: 30000, // Tiempo antes de cerrar una conexión inactiva
+            connectionTimeoutMillis: 5000, // Tiempo máximo para establecer conexión
         });
 
         // Test de conexión inmediato para logs de arranque
