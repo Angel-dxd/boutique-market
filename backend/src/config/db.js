@@ -32,17 +32,18 @@ for (const tenant of tenants) {
         pools[tenant] = new Pool({
             connectionString: connStr,
             ssl: { rejectUnauthorized: false },
-            max: 20,
-            min: 2, // Mantenemos siempre 2 conexiones abiertas por negocio
-            idleTimeoutMillis: 30000, 
-            connectionTimeoutMillis: 2000,
+            max: 30, // Más capacidad para picos de uso
+            min: 5,  // 5 conexiones siempre "calientes" para respuesta inmediata
+            idleTimeoutMillis: 60000, 
+            connectionTimeoutMillis: 5000,
+            keepAlive: true, // Evita que el túnel se cierre en móviles
         });
 
-        // Test y Keep-Alive (mantenemos la conexión caliente cada 30s)
+        // Test y Keep-Alive (mantenemos la conexión caliente cada 15s - más agresivo)
         const keepAlive = () => {
-            pools[tenant].query('SELECT 1').catch(err => console.error(`Keep-alive failed for ${tenant}`));
+            pools[tenant].query('SELECT 1').catch(() => {});
         };
-        setInterval(keepAlive, 30000); 
+        setInterval(keepAlive, 15000); 
 
         pools[tenant].connect()
             .then(c => { 

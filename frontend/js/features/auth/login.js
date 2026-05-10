@@ -166,41 +166,48 @@ export const renderLogin = () => {
         });
     });
 
-    const doLogin = async (username, password, errorDiv) => {
+    const doLogin = async (username, password, errorDiv, submitBtn) => {
         const u = username.trim().toLowerCase();
+        const originalBtnText = submitBtn.innerHTML;
         
-        // 1. Configuramos temporalmente el tenant basado en el usuario para que la API sepa a dónde apuntar
+        // 1. Feedback visual inmediato (Turbo feel)
+        submitBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-5 h-5 mx-auto"></i>';
+        submitBtn.disabled = true;
+        lucide.createIcons();
+        
+        // 2. Configuramos temporalmente el tenant basado en el usuario
         if (u === 'santi') {
             localStorage.setItem('currentUser', 'santi');
         } else {
             localStorage.setItem('currentUser', 'arelys');
         }
 
-        // 2. Ocultar errores previos
         errorDiv.classList.add('hidden');
 
-        // 3. Petición POST al backend
-        const res = await api.post('/auth/login', { username: u, password });
+        try {
+            const res = await api.post('/auth/login', { username: u, password });
 
-        // 4. Procesar respuesta
-        if (res && res.success) {
-            // Guardar el token devuelto
-            localStorage.setItem('authToken', res.token);
-            
-            // Redirigir según el tenant del usuario validado
-            if (res.user.tenant === 'santi') {
-                navigateTo('/market');
+            if (res && res.success) {
+                localStorage.setItem('authToken', res.token);
+                
+                if (res.user.tenant === 'santi') {
+                    navigateTo('/market');
+                } else {
+                    navigateTo('/boutique-welcome');
+                }
             } else {
-                navigateTo('/boutique-welcome');
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('authToken');
+                errorDiv.textContent = res.error || 'Credenciales incorrectas.';
+                errorDiv.classList.remove('hidden');
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+                lucide.createIcons();
             }
-        } else {
-            // Eliminar credenciales erróneas por seguridad
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('authToken');
-            
-            // Mostrar mensaje de error
-            errorDiv.textContent = res.error || 'Credenciales incorrectas. Comprueba tu usuario y contraseña.';
-            errorDiv.classList.remove('hidden');
+        } catch (err) {
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
+            lucide.createIcons();
         }
     };
 
@@ -210,7 +217,8 @@ export const renderLogin = () => {
         doLogin(
             document.getElementById('username').value,
             document.getElementById('password-mobile').value,
-            document.getElementById('error-message-mobile')
+            document.getElementById('error-message-mobile'),
+            e.target.querySelector('button[type="submit"]')
         );
     });
 
@@ -220,7 +228,8 @@ export const renderLogin = () => {
         doLogin(
             document.getElementById('username-desktop').value,
             document.getElementById('password').value,
-            document.getElementById('error-message')
+            document.getElementById('error-message'),
+            e.target.querySelector('button[type="submit"]')
         );
     });
 };
