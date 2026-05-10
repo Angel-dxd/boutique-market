@@ -29,7 +29,9 @@ const getAppointments = async (req, res, next) => {
             return {
                 id: r.id,
                 client: r.client,
-                date: r.date instanceof Date ? r.date.toISOString().split('T')[0] : r.date,
+                date: r.date instanceof Date 
+                    ? `${r.date.getFullYear()}-${String(r.date.getMonth() + 1).padStart(2, '0')}-${String(r.date.getDate()).padStart(2, '0')}`
+                    : r.date,
                 description: r.description,
                 profit: amount
             };
@@ -100,7 +102,9 @@ const createAppointment = async (req, res, next) => {
  */
 const getEarningsReport = async (req, res, next) => {
     try {
-        const dateStr = req.query.date || new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const dateStr = req.query.date || todayStr;
 
         const [dayResult] = await db.query(`SELECT SUM(profit) as total FROM calendar WHERE DATE(date) = ? AND deleted_at IS NULL`, [dateStr]);
         const [monthResult] = await db.query(`SELECT SUM(profit) as total FROM calendar WHERE MONTH(date) = MONTH(?) AND YEAR(date) = YEAR(?) AND deleted_at IS NULL`, [dateStr, dateStr]);

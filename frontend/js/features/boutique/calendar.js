@@ -48,7 +48,12 @@ export const renderCalendar = async (container) => {
         }
     };
 
-    const formatDate = (date) => date.toISOString().split('T')[0];
+    const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
     const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 
     const safeRender = () => {
