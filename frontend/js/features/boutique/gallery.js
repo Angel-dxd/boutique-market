@@ -130,9 +130,9 @@ export const renderInstagramGallery = (container) => {
                 const ctx = filteredCanvas.getContext('2d');
                 ctx.filter = currentFilter;
                 ctx.drawImage(croppedCanvas, 0, 0);
-                base64Image = filteredCanvas.toDataURL('image/jpeg', 0.85);
+                base64Image = filteredCanvas.toDataURL('image/jpeg', 0.7);
             } else {
-                base64Image = croppedCanvas.toDataURL('image/jpeg', 0.85);
+                base64Image = croppedCanvas.toDataURL('image/jpeg', 0.7);
             }
         }
 
@@ -386,15 +386,21 @@ export const renderInstagramGallery = (container) => {
                     </div>
                 </div>
                 
-                <!-- GRID: Tarjetas Claras con Funciones Visibles -->
+                <!-- GRID: Tarjetas con Efecto Turbo -->
                 <div id="galleryGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
-                    ${isLoading && works.length === 0 ? getSkeletons() : visibleWorks.map(w => `
-                        <!-- Tarjeta de Contenido -->
-                        <div class="gallery-card bg-white rounded-[2rem] shadow-md border border-gray-100 overflow-hidden group transition-all duration-300 flex flex-col hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-100" data-title="${w.title}">
+                    ${isLoading && works.length === 0 ? getSkeletons() : visibleWorks.map((w, index) => `
+                        <!-- Tarjeta de Contenido con Animación Escalonada -->
+                        <div class="gallery-card bg-white rounded-[2rem] shadow-md border border-gray-100 overflow-hidden group flex flex-col hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-100 animate-in fade-in slide-in-from-bottom-4 duration-500" 
+                             style="animation-delay: ${index * 50}ms; backface-visibility: hidden;">
                             
-                            <!-- Foto Cuadrada Estricta -->
-                            <div class="relative w-full aspect-square bg-gray-50 shrink-0 border-b border-gray-50 cursor-pointer view-btn" data-id="${w.id}">
-                                <img src="${w.image}" alt="${w.title}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" loading="lazy" />
+                            <!-- Foto Cuadrada con Skeleton Placeholder -->
+                            <div class="relative w-full aspect-square bg-gray-100 shrink-0 border-b border-gray-50 cursor-pointer view-btn overflow-hidden" data-id="${w.id}">
+                                <div class="absolute inset-0 bg-gray-200 animate-pulse"></div> <!-- Placeholder de fondo -->
+                                <img src="${w.image}" alt="${w.title}" 
+                                     class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out opacity-0" 
+                                     onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+                                     loading="lazy" />
+                                
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3 px-2">
                                     <div class="flex gap-2">
                                         <button class="view-btn text-xs font-bold bg-white/95 text-gray-800 px-3 py-1.5 rounded-full" data-id="${w.id}">Ver</button>
@@ -403,7 +409,7 @@ export const renderInstagramGallery = (container) => {
                                 </div>
                             </div>
                             
-                            <!-- Pie Fijo con Botones Visibles -->
+                            <!-- Pie Fijo -->
                             <div class="p-3 md:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-3 bg-white grow">
                                 <div class="flex-1 min-w-0">
                                     <h4 class="font-bold text-gray-800 text-xs md:text-base line-clamp-2 leading-tight">
