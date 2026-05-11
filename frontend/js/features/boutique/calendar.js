@@ -110,7 +110,10 @@ export const renderCalendar = async (container) => {
                         </button>
                     </div>
                 <!-- Calendar Grid (Standard España: Lunes a Domingo) -->
-                <div class="flex-1 overflow-y-auto">
+                <div class="flex-1 overflow-y-auto relative">
+                    <!-- Sello de Versión para verificar despliegue -->
+                    <div class="absolute top-0 right-0 p-1 text-[8px] text-gray-300 pointer-events-none z-50">v1.1.0-fixed</div>
+                    
                     <div class="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
                         ${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => `<div class="py-2 text-center text-xs font-bold text-gray-500">${d}</div>`).join('')}
                     </div>
