@@ -109,34 +109,40 @@ export const renderCalendar = async (container) => {
                             <i data-lucide="calendar-plus" width="16"></i> Nueva 
                         </button>
                     </div>
-                </div>
-
-                <!-- Calendar Grid -->
+                            <!-- Calendar Grid -->
                 <div class="flex-1 overflow-y-auto">
                     <div class="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
                         ${['D', 'L', 'M', 'X', 'J', 'V', 'S'].map(d => `<div class="py-2 text-center text-xs font-bold text-gray-500">${d}</div>`).join('')}
                     </div>
                     <div class="grid grid-cols-7 auto-rows-fr">
-                         ${daysArray.map(day => {
-            const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-            const dateStr = formatDate(date);
-            const metrics = getMetrics(dateStr);
-            const isSelected = selectedDateStr === dateStr;
+                        <!-- Celdas vacías para cuadrar el inicio del mes -->
+                        ${Array.from({ length: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay() }).map(() => `
+                            <div class="border-b border-r border-gray-50 bg-gray-50/30"></div>
+                        `).join('')}
 
-            return `
-                                <div class="day-cell border-b border-r border-gray-100 min-h-[80px] p-2 relative cursor-pointer ${isSelected ? 'bg-orange-50' : 'bg-white'} hover:bg-gray-50 transition-colors" data-date="${dateStr}">
+                         ${daysArray.map(day => {
+                            const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+                            const dateStr = formatDate(date);
+                            const metrics = getMetrics(dateStr);
+                            const isSelected = selectedDateStr === dateStr;
+                            const isToday = formatDate(new Date()) === dateStr;
+                
+                            return `
+                                <div class="day-cell border-b border-r border-gray-100 min-h-[80px] p-2 relative cursor-pointer ${isSelected ? 'bg-emerald-50 ring-2 ring-inset ring-emerald-200' : 'bg-white'} hover:bg-gray-50 transition-colors" data-date="${dateStr}">
                                     <div class="flex justify-between items-start">
-                                        <span class="text-xs font-bold ${isSelected ? 'text-orange-600' : 'text-gray-700'}">${day}</span>
-                                        ${metrics.revenue > 0 ? `<span class="text-[10px] bg-emerald-50 text-emerald-600 px-1 rounded font-bold">${metrics.revenue}€</span>` : ''}
+                                        <span class="text-xs font-bold ${isToday ? 'bg-emerald-600 text-white w-5 h-5 flex items-center justify-center rounded-full' : (isSelected ? 'text-emerald-600' : 'text-gray-700')}">${day}</span>
+                                        ${metrics.revenue > 0 ? `<span class="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-lg font-black">${metrics.revenue}€</span>` : ''}
                                     </div>
-                                    <div class="mt-1 flex flex-wrap gap-1">
-                                         ${Array.from({ length: Math.min(metrics.count, 5) }).map(() => `<div class="w-1.5 h-1.5 rounded-full bg-blue-400"></div>`).join('')}
+                                    <div class="mt-2 flex flex-wrap gap-1">
+                                         ${Array.from({ length: Math.min(metrics.count, 4) }).map(() => `<div class="w-2 h-2 rounded-full bg-emerald-400/60"></div>`).join('')}
+                                         ${metrics.count > 4 ? `<span class="text-[8px] text-gray-400 font-bold">+${metrics.count - 4}</span>` : ''}
                                     </div>
                                 </div>
                              `;
-        }).join('')}
+                        }).join('')}
                     </div>
                 </div>
+       </div>
 
                 <!-- Sidebar Details -->
                 ${selectedDate ? `
