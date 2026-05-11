@@ -455,7 +455,7 @@ export const renderInstagramGallery = (container) => {
 
             <!-- MODAL DE SUBIDA/EDICIÓN -->
             <!-- z-[200] > z-50 de la bottom nav, así nunca queda tapado -->
-            <div id="nailModalOverlay" class="fixed inset-0 z-[200] bg-slate-900/50 backdrop-blur-sm hidden items-end md:items-center justify-center md:p-4">
+            <div id="nailModalOverlay" class="fixed inset-0 z-[200] bg-slate-900/50 backdrop-blur-sm hidden items-start justify-center p-4 md:pt-16">
                 <div class="bg-white
                             w-full rounded-t-3xl
                             md:max-w-md md:rounded-3xl
