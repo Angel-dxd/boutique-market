@@ -68,14 +68,18 @@ const router = async () => {
         }
     }
 
-    // Aplicar animación de transición
+    // Aplicar animación de transición (Turbo Feel)
     const appContainer = document.getElementById('app');
     appContainer.classList.remove('view-transition');
-    void appContainer.offsetWidth; // Trigger reflow
+    void appContainer.offsetWidth; 
     appContainer.classList.add('view-transition');
 
-    // Ejecuta el render de la ruta encontrada
-    route.render();
+    // Ejecuta el render con suavizado nativo si está disponible
+    if (document.startViewTransition) {
+        document.startViewTransition(() => route.render());
+    } else {
+        route.render();
+    }
 
     // --- TURBO PREFETCH ---
     // Si entramos en una sección protegida, cargamos datos de otras secciones en segundo plano
