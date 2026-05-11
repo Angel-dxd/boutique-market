@@ -109,16 +109,18 @@ export const renderCalendar = async (container) => {
                             <i data-lucide="calendar-plus" width="16"></i> Nueva 
                         </button>
                     </div>
-                            <!-- Calendar Grid -->
+                <!-- Calendar Grid (Standard España: Lunes a Domingo) -->
                 <div class="flex-1 overflow-y-auto">
                     <div class="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
-                        ${['D', 'L', 'M', 'X', 'J', 'V', 'S'].map(d => `<div class="py-2 text-center text-xs font-bold text-gray-500">${d}</div>`).join('')}
+                        ${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => `<div class="py-2 text-center text-xs font-bold text-gray-500">${d}</div>`).join('')}
                     </div>
                     <div class="grid grid-cols-7 auto-rows-fr">
-                        <!-- Celdas vacías para cuadrar el inicio del mes (CORREGIDO) -->
+                        <!-- Celdas vacías (Ajustadas a Lunes como día 1) -->
                         ${(() => {
-                            const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
-                            return Array.from({ length: firstDay }).map(() => `
+                            let firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+                            // Ajustar de Domingo=0 a Lunes=0 (Estándar España)
+                            const offset = firstDay === 0 ? 6 : firstDay - 1;
+                            return Array.from({ length: offset }).map(() => `
                                 <div class="border-b border-r border-gray-50 bg-gray-50/30"></div>
                             `).join('');
                         })()}
