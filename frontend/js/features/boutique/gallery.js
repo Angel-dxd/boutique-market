@@ -631,6 +631,7 @@ export const renderInstagramGallery = (container) => {
             await fetchAndRender(true);
         });
         document.getElementById('cancelModalBtn')?.addEventListener('click', closeModal);
+        document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
         const overlay = document.getElementById('nailModalOverlay');
         if (overlay) overlay.addEventListener('click', (e) => {
             if (e.target === overlay) closeModal();
