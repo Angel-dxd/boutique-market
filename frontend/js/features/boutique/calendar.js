@@ -87,15 +87,15 @@ export const renderCalendar = async (container) => {
                     <div class="hidden lg:flex gap-6 mx-auto items-center bg-gray-50 px-6 py-2 rounded-xl">
                         <div class="text-center pr-6 border-r border-gray-200">
                             <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Día Hoy</p>
-                            <p class="text-sm font-bold text-emerald-600">${earningsReport.hoy}€</p>
+                            <p class="text-sm font-bold text-emerald-600">${earningsReport.today || 0}€</p>
                         </div>
                         <div class="text-center pr-6 border-r border-gray-200">
                             <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Este Mes</p>
-                            <p class="text-sm font-bold text-blue-600">${earningsReport.mes}€</p>
+                            <p class="text-sm font-bold text-blue-600">${earningsReport.month || 0}€</p>
                         </div>
                         <div class="text-center">
                             <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Este Año</p>
-                            <p class="text-sm font-bold text-purple-600">${earningsReport.ano}€</p>
+                            <p class="text-sm font-bold text-purple-600">${earningsReport.year || 0}€</p>
                         </div>
                     </div>
 
@@ -115,12 +115,15 @@ export const renderCalendar = async (container) => {
                         ${['D', 'L', 'M', 'X', 'J', 'V', 'S'].map(d => `<div class="py-2 text-center text-xs font-bold text-gray-500">${d}</div>`).join('')}
                     </div>
                     <div class="grid grid-cols-7 auto-rows-fr">
-                        <!-- Celdas vacías para cuadrar el inicio del mes -->
-                        ${Array.from({ length: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay() }).map(() => `
-                            <div class="border-b border-r border-gray-50 bg-gray-50/30"></div>
-                        `).join('')}
+                        <!-- Celdas vacías para cuadrar el inicio del mes (CORREGIDO) -->
+                        ${(() => {
+                            const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+                            return Array.from({ length: firstDay }).map(() => `
+                                <div class="border-b border-r border-gray-50 bg-gray-50/30"></div>
+                            `).join('');
+                        })()}
 
-                         ${daysArray.map(day => {
+                        ${daysArray.map(day => {
                             const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
                             const dateStr = formatDate(date);
                             const metrics = getMetrics(dateStr);
@@ -135,7 +138,6 @@ export const renderCalendar = async (container) => {
                                     </div>
                                     <div class="mt-2 flex flex-wrap gap-1">
                                          ${Array.from({ length: Math.min(metrics.count, 4) }).map(() => `<div class="w-2 h-2 rounded-full bg-emerald-400/60"></div>`).join('')}
-                                         ${metrics.count > 4 ? `<span class="text-[8px] text-gray-400 font-bold">+${metrics.count - 4}</span>` : ''}
                                     </div>
                                 </div>
                              `;
