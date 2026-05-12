@@ -72,9 +72,9 @@ export const renderCalendar = async (container) => {
         const detailMetrics = selectedDateStr ? getMetrics(selectedDateStr) : { revenue: 0, count: 0, apts: [] };
 
         container.innerHTML = `
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 h-[calc(100vh-140px)] flex flex-col relative overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            <div style="display: flex !important; flex-direction: column !important; width: 100% !important;" class="bg-white rounded-2xl shadow-sm border border-gray-100 h-[calc(100vh-140px)] relative overflow-hidden animate-in fade-in zoom-in-95 duration-300">
                 <!-- Header -->
-                <div class="p-4 border-b border-gray-100 flex flex-wrap justify-between items-center bg-white gap-4 z-10">
+                <div class="p-4 border-b border-gray-100 flex flex-wrap justify-between items-center bg-white gap-4 z-10 w-full">
                     <div class="flex items-center gap-4">
                         <h2 class="text-xl font-bold text-gray-800 capitalize">${monthName}</h2>
                         <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
