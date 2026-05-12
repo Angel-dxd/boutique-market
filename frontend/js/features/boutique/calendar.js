@@ -74,17 +74,17 @@ export const renderCalendar = async (container) => {
         container.innerHTML = `
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 h-[calc(100vh-140px)] flex flex-col relative overflow-hidden animate-in fade-in zoom-in-95 duration-300">
                 <!-- Header -->
-                <div class="p-4 border-b border-gray-100 flex flex-wrap justify-between items-center bg-white gap-4">
+                <div class="p-4 border-b border-gray-100 flex flex-wrap justify-between items-center bg-white gap-4 z-10">
                     <div class="flex items-center gap-4">
                         <h2 class="text-xl font-bold text-gray-800 capitalize">${monthName}</h2>
                         <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
-                            <button id="prevMonth" class="p-1 hover:bg-white rounded shadow-sm"><i data-lucide="chevron-left" width="20"></i></button>
-                            <button id="nextMonth" class="p-1 hover:bg-white rounded shadow-sm"><i data-lucide="chevron-right" width="20"></i></button>
+                            <button id="prevMonth" class="p-1 hover:bg-white rounded shadow-sm transition-colors"><i data-lucide="chevron-left" width="20"></i></button>
+                            <button id="nextMonth" class="p-1 hover:bg-white rounded shadow-sm transition-colors"><i data-lucide="chevron-right" width="20"></i></button>
                         </div>
                     </div>
 
-                    <!-- Módulo de Informes de Ganancias Diarias/Mensuales/Anuales -->
-                    <div class="hidden lg:flex gap-6 mx-auto items-center bg-gray-50 px-6 py-2 rounded-xl">
+                    <!-- Reporte de Ganancias (Centrado) -->
+                    <div class="hidden lg:flex gap-6 items-center bg-gray-50 px-6 py-2 rounded-xl border border-gray-100">
                         <div class="text-center pr-6 border-r border-gray-200">
                             <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">Día Hoy</p>
                             <p class="text-sm font-bold text-emerald-600">${earningsReport.today || 0}€</p>
@@ -99,32 +99,33 @@ export const renderCalendar = async (container) => {
                         </div>
                     </div>
 
-                    <div class="flex gap-2 ml-auto">
+                    <div class="flex gap-2">
                         <button id="importCalendarBtn" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 flex items-center gap-2 text-sm font-bold border border-blue-200 transition-colors">
                             <i data-lucide="upload" width="16"></i> <span class="hidden md:inline">Importar CSV</span>
                         </button>
                         <input type="file" id="importCalendarInput" accept=".csv" class="hidden" />
 
-                        <button id="newAptBtn" class="px-4 py-2 bg-[#059669] text-white rounded-lg hover:opacity-90 flex items-center gap-2 text-sm font-bold transition-opacity shadow-md">
+                        <button id="newAptBtn" class="px-4 py-2 bg-[#059669] text-white rounded-lg hover:opacity-90 flex items-center gap-2 text-sm font-bold transition-all shadow-md active:scale-95">
                             <i data-lucide="calendar-plus" width="16"></i> Nueva 
                         </button>
                     </div>
-                <!-- Calendar Grid (Standard España: Lunes a Domingo) -->
-                <div class="flex-1 overflow-y-auto relative">
-                    <!-- Sello de Versión para verificar despliegue -->
-                    <div class="absolute top-0 right-0 p-1 text-[8px] text-gray-300 pointer-events-none z-50">v1.1.0-fixed</div>
+                </div>
+
+                <!-- Calendar Grid (Full Width) -->
+                <div class="flex-1 overflow-y-auto relative w-full">
+                    <!-- Sello de Versión -->
+                    <div class="absolute top-0 right-0 p-1 text-[8px] text-gray-300 pointer-events-none z-50">v1.1.1-layout-fixed</div>
                     
-                    <div class="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
+                    <div class="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50 w-full">
                         ${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => `<div class="py-2 text-center text-xs font-bold text-gray-500">${d}</div>`).join('')}
                     </div>
-                    <div class="grid grid-cols-7 auto-rows-fr">
-                        <!-- Celdas vacías (Ajustadas a Lunes como día 1) -->
+                    <div class="grid grid-cols-7 auto-rows-fr w-full">
+                        <!-- Celdas vacías -->
                         ${(() => {
                             let firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
-                            // Ajustar de Domingo=0 a Lunes=0 (Estándar España)
                             const offset = firstDay === 0 ? 6 : firstDay - 1;
                             return Array.from({ length: offset }).map(() => `
-                                <div class="border-b border-r border-gray-50 bg-gray-50/30"></div>
+                                <div class="border-b border-r border-gray-50 bg-gray-50/10"></div>
                             `).join('');
                         })()}
 
@@ -149,7 +150,6 @@ export const renderCalendar = async (container) => {
                         }).join('')}
                     </div>
                 </div>
-       </div>
 
                 <!-- Sidebar Details -->
                 ${selectedDate ? `
