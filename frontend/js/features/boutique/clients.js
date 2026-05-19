@@ -418,7 +418,7 @@ export const renderClients = async (container) => {
         document.getElementById('closeHistoryModal')?.addEventListener('click', closeHistoryModal);
         document.getElementById('btnVerGaleria')?.addEventListener('click', () => {
             closeHistoryModal();
-            window.navigateTo('/boutique/galeria');
+            window.navigateTo('/boutique-welcome/mis-unas');
         });
 
         // Submit formulario
