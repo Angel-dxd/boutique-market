@@ -6,11 +6,66 @@
 import { navigateTo } from '../core/app.js';
 import { api } from '../core/api.js';
 
+// ─── URL base (mismo origen que api.js) ──────────────────────────────────────
+const _BACKEND_ROOT = window.__API_URL__
+    ? window.__API_URL__.replace(/\/api$/, '')
+    : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000'
+        : 'https://boutique-market-api.onrender.com');
+
+/**
+ * Warm-up ping: lanza una petición ligera al backend en cuanto carga la pantalla
+ * de login para despertar el servidor de Render (free tier se duerme tras ~15min
+ * de inactividad y tarda 30-60s en arrancar).
+ *
+ * Si el servidor tarda más de 3 segundos, muestra un aviso sutil al usuario.
+ * Fire-and-forget: no bloquea el renderizado del formulario.
+ */
+const warmupBackend = () => {
+    const SLOW_THRESHOLD_MS = 3000;
+    const startTime = Date.now();
+    let bannerShown = false;
+
+    // Timer para mostrar el aviso si el servidor está dormido
+    const slowTimer = setTimeout(() => {
+        bannerShown = true;
+        const existing = document.getElementById('server-warmup-banner');
+        if (existing) return;
+        const banner = document.createElement('div');
+        banner.id = 'server-warmup-banner';
+        banner.className = 'fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 py-2 px-4 text-xs font-medium text-amber-800 bg-amber-50 border-b border-amber-200';
+        banner.innerHTML = `
+            <svg class="animate-spin w-3.5 h-3.5 text-amber-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+            <span>Conectando con el servidor... (primer arranque puede tardar hasta 60 seg)</span>`;
+        document.body.prepend(banner);
+    }, SLOW_THRESHOLD_MS);
+
+    fetch(`${_BACKEND_ROOT}/`, { method: 'GET', cache: 'no-store' })
+        .then(() => {
+            clearTimeout(slowTimer);
+            if (bannerShown) {
+                const banner = document.getElementById('server-warmup-banner');
+                if (banner) {
+                    banner.innerHTML = `<span>✓ Servidor listo (${((Date.now() - startTime) / 1000).toFixed(1)}s)</span>`;
+                    banner.className = 'fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 py-1.5 px-4 text-xs font-medium text-emerald-800 bg-emerald-50 border-b border-emerald-200 transition-opacity';
+                    setTimeout(() => { banner.style.opacity = '0'; setTimeout(() => banner.remove(), 400); }, 1500);
+                }
+            }
+        })
+        .catch(() => clearTimeout(slowTimer)); // Silencioso si falla (CORS, offline, etc.)
+};
+
 /**
  * Renderiza la pantalla de inicio de sesión con diseño adaptativo.
  */
 export const renderLogin = () => {
     const app = document.getElementById('app');
+
+    // Despertar el backend inmediatamente — sin bloquear el render del formulario
+    warmupBackend();
 
     // We can just set innerHTML since we are building a SPA and this is a root view
     app.innerHTML = `

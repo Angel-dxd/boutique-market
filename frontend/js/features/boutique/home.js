@@ -12,10 +12,6 @@ import { api } from '../core/api.js';
 export const renderBoutiqueHome = async (container) => {
     const userName = 'Arelys';
 
-    // Obtención dinámica del contador de clientes del tenant
-    const clientsRes = await api.get('/clients');
-    const realClientCount = Array.isArray(clientsRes) ? clientsRes.length : 0;
-
     // Calcular las fechas para enviar al backend
     const today = new Date();
     const tomorrow = new Date(today);
@@ -25,8 +21,14 @@ export const renderBoutiqueHome = async (container) => {
     const todayStr = formatDate(today);
     const tomorrowStr = formatDate(tomorrow);
 
-    // Consultar el nuevo endpoint sincronizado
-    const dashRes = await api.get(`/calendar/dashboard?today=${todayStr}&tomorrow=${tomorrowStr}`);
+    // Lanzar ambas peticiones EN PARALELO — reducen el tiempo de carga a la más lenta
+    // (antes era secuencial: esperaba /clients, luego /calendar/dashboard — 2x latencia)
+    const [clientsRes, dashRes] = await Promise.all([
+        api.get('/clients'),
+        api.get(`/calendar/dashboard?today=${todayStr}&tomorrow=${tomorrowStr}`)
+    ]);
+
+    const realClientCount = Array.isArray(clientsRes) ? clientsRes.length : 0;
 
     // Si error o falla la BD, defaults seguros
     const todayList = dashRes.error ? [] : (dashRes.today || []);
