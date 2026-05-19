@@ -177,11 +177,19 @@ app.use((err, req, res, next) => {
 
 // ─── Arranque ─────────────────────────────────────────────────────────────────
 if (require.main === module) {
-    app.listen(port, '0.0.0.0', () => {
-        logger.info(`🚀 Backend corriendo en http://0.0.0.0:${port}`);
-        logger.info(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}`);
-        logger.info(`📡 Orígenes permitidos: ${process.env.ALLOWED_ORIGINS || 'TODOS (desarrollo)'}`);
-        logger.info(`📖 Documentación API: http://0.0.0.0:${port}/api/docs`);
+    const runMigrations = require('./scripts/run_migrations');
+    runMigrations().then(() => {
+        app.listen(port, '0.0.0.0', () => {
+            logger.info(`🚀 Backend corriendo en http://0.0.0.0:${port}`);
+            logger.info(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}`);
+            logger.info(`📡 Orígenes permitidos: ${process.env.ALLOWED_ORIGINS || 'TODOS (desarrollo)'}`);
+            logger.info(`📖 Documentación API: http://0.0.0.0:${port}/api/docs`);
+        });
+    }).catch(err => {
+        logger.error('❌ Error crítico al ejecutar migraciones en el arranque:', err);
+        app.listen(port, '0.0.0.0', () => {
+            logger.info(`🚀 Backend corriendo en http://0.0.0.0:${port}`);
+        });
     });
 }
 

@@ -78,3 +78,5 @@ async function execute() {
 if (require.main === module) {
     execute();
 }
+
+module.exports = execute;
