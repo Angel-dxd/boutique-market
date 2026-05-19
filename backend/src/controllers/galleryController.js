@@ -51,7 +51,7 @@ const getWorks = async (req, res, next) => {
 const getWorkById = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const [rows] = await db.query('SELECT * FROM gallery WHERE id = ?', [id]);
+        const [rows] = await db.query('SELECT * FROM gallery WHERE id = ?', [parseInt(id)]);
         if (rows.length === 0) return res.status(404).json({ error: 'Trabajo no encontrado' });
         res.json(rows[0]);
     } catch (err) {
@@ -117,7 +117,7 @@ const updateWork = async (req, res, next) => {
 
         const [result] = await db.query(
             'UPDATE gallery SET title = ?, category = ?, image = ?, client_id = ? WHERE id = ?',
-            [title, category, image, client_id ? parseInt(client_id) : null, id]
+            [title, category, image, client_id ? parseInt(client_id) : null, parseInt(id)]
         );
         
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Trabajo no encontrado' });
@@ -142,7 +142,7 @@ const updateWork = async (req, res, next) => {
 const deleteWork = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const [result] = await db.query('DELETE FROM gallery WHERE id = ?', [id]);
+        const [result] = await db.query('DELETE FROM gallery WHERE id = ?', [parseInt(id)]);
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Trabajo no encontrado' });
         res.json({ message: 'Trabajo eliminado correctamente' });
     } catch (err) {

@@ -24,7 +24,19 @@ const migrations = {
         `
     ],
     santi: [
-        `ALTER TABLE inventory ADD COLUMN IF NOT EXISTS expiration_date DATE DEFAULT NULL;`
+        `ALTER TABLE inventory ADD COLUMN IF NOT EXISTS expiration_date DATE DEFAULT NULL;`,
+        `ALTER TABLE gallery ADD COLUMN IF NOT EXISTS client_id INT DEFAULT NULL;`,
+        `
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.table_constraints 
+                WHERE constraint_name = 'fk_gallery_client'
+            ) THEN
+                ALTER TABLE gallery ADD CONSTRAINT fk_gallery_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL;
+            END IF;
+        END $$;
+        `
     ]
 };
 
