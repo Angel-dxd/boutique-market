@@ -639,49 +639,66 @@ export const renderInstagramGallery = (container) => {
                 </div>
             </div>
 
-            <div id="detailModalOverlay" class="fixed inset-0 z-[1000] bg-slate-900/70 backdrop-blur-md ${detailWork ? 'flex' : 'hidden'} items-center justify-center p-4">
-                <div class="bg-white rounded-[2.5rem] w-full max-w-sm overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] transform transition-all">
-                    ${detailWork ? `
-                        <div class="relative w-full" style="padding-top: 100%;">
-                            <img src="${detailWork.image}" alt="${detailWork.title}" class="absolute inset-0 w-full h-full object-cover" />
-                            <!-- Gradient overlay for top -->
-                            <div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 via-black/20 to-transparent pointer-events-none"></div>
-                            
-                            <button id="closeDetailBtn" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all z-10 shadow-sm hover:scale-105 active:scale-95">
-                                <i data-lucide="x" class="w-5 h-5"></i>
-                            </button>
-                            
-                            ${detailWork.source === 'mock' ? `
-                                <div class="absolute bottom-4 left-4 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-white/20 flex items-center gap-1.5 z-10 shadow-sm">
-                                    <div class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
-                                    <span class="text-[10px] font-black text-white uppercase tracking-widest">Demo</span>
-                                </div>
-                            ` : ''}
-                        </div>
-                        
-                        <div class="p-6 md:p-8">
-                            <div class="text-center mb-6">
-                                <h3 class="text-2xl font-black text-gray-800 tracking-tight leading-tight">${detailWork.title}</h3>
-                                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Portfolio Oh-Nails</p>
-                            </div>
-                            
-                            <div class="flex gap-3">
-                                ${detailWork.source !== 'mock' ? `
-                                    <button id="detailEditBtn" data-id="${detailWork.id}" data-title="${detailWork.title}" data-image="${detailWork.image}" class="flex-1 py-3.5 rounded-2xl bg-gray-50 text-gray-700 font-bold border border-gray-200 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95">
-                                        <i data-lucide="pencil" class="w-4 h-4"></i> Editar
-                                    </button>
-                                    <button id="detailDeleteBtn" data-id="${detailWork.id}" class="flex-1 py-3.5 rounded-2xl bg-red-50 text-red-600 font-bold border border-red-100 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95">
-                                        <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar
-                                    </button>
-                                ` : `
-                                    <button id="detailCloseBtn" class="w-full py-4 rounded-2xl bg-gray-900 text-white font-bold hover:bg-gray-800 transition-all shadow-lg shadow-gray-900/20 active:scale-95">
-                                        Cerrar Vista
-                                    </button>
-                                `}
-                            </div>
+            <!-- ─── LIGHTBOX — imagen a pantalla completa, sin scroll ────────────────
+                 La imagen llena el card. Título y botones se superponen en la parte
+                 inferior mediante un gradiente. El usuario ve TODO sin desplazarse.
+            ──────────────────────────────────────────────────────────────────────── -->
+            <div id="detailModalOverlay" class="fixed inset-0 z-[1000] bg-black/85 backdrop-blur-md ${detailWork ? 'flex' : 'hidden'} items-center justify-center p-4">
+                ${detailWork ? `
+                <div class="relative w-full max-w-sm rounded-[2rem] overflow-hidden shadow-[0_30px_80px_-10px_rgba(0,0,0,0.8)]"
+                     style="max-height: 92dvh;">
+
+                    <!-- Imagen: ocupa todo el card, recortada, centrada -->
+                    <img src="${detailWork.image}"
+                         alt="${detailWork.title}"
+                         class="w-full object-cover block"
+                         style="max-height: 92dvh; min-height: 260px;" />
+
+                    <!-- Gradiente superior + botón cerrar (siempre visible arriba) -->
+                    <div class="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/75 to-transparent pointer-events-none"></div>
+                    <button id="closeDetailBtn"
+                        class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/30 hover:bg-black/55 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all z-10 active:scale-90">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+
+                    ${detailWork.source === 'mock' ? `
+                        <div class="absolute top-4 left-4 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-white/20 flex items-center gap-1.5 z-10">
+                            <div class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
+                            <span class="text-[10px] font-black text-white uppercase tracking-widest">Demo</span>
                         </div>
                     ` : ''}
+
+                    <!-- Gradiente inferior + título + botones (siempre visibles abajo, SIN scroll) -->
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent pt-20 pb-5 px-5">
+                        <p class="text-[10px] font-black text-white/50 uppercase tracking-widest mb-1">Portfolio Oh-Nails</p>
+                        <h3 class="text-xl font-black text-white tracking-tight leading-tight mb-4 drop-shadow-lg">
+                            ${detailWork.title}
+                        </h3>
+
+                        <div class="flex gap-2.5">
+                            ${detailWork.source !== 'mock' ? `
+                                <button id="detailEditBtn"
+                                    data-id="${detailWork.id}"
+                                    data-title="${detailWork.title}"
+                                    data-image="${detailWork.image}"
+                                    class="flex-1 py-3 rounded-2xl bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/25 text-white font-bold transition-all flex items-center justify-center gap-2 active:scale-95 text-sm">
+                                    <i data-lucide="pencil" class="w-4 h-4"></i> Editar
+                                </button>
+                                <button id="detailDeleteBtn"
+                                    data-id="${detailWork.id}"
+                                    class="flex-1 py-3 rounded-2xl bg-red-500/80 hover:bg-red-600 backdrop-blur-md text-white font-bold transition-all flex items-center justify-center gap-2 active:scale-95 text-sm shadow-lg">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar
+                                </button>
+                            ` : `
+                                <button id="detailCloseBtn"
+                                    class="w-full py-3.5 rounded-2xl bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/25 text-white font-bold transition-all active:scale-95">
+                                    Cerrar Vista
+                                </button>
+                            `}
+                        </div>
+                    </div>
                 </div>
+                ` : '<div></div>'}
             </div>
         `;
         lucide.createIcons();

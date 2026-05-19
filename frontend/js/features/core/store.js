@@ -1,8 +1,8 @@
 /**
  * core/store.js
- * Almacén central (Store) para la persistencia de datos y lógica de negocio en el frontend.
- * Originalmente imitaba el comportamiento de BoutiqueContext usando LocalStorage.
- * Actualmente se usa principalmente para persistencia temporal y mocks.
+ * Almacén central (Store) para caché de sesión y operaciones offline-first.
+ * Todos los datos reales provienen de la API REST (PostgreSQL / Supabase).
+ * Este store NO contiene datos mock — el estado inicial es siempre vacío.
  */
 
 /**
@@ -21,35 +21,27 @@ class BoutiqueStore {
     // --- Core State Management ---
 
     /**
-     * Carga el estado inicial desde LocalStorage o usa datos por defecto (Mock).
-     * @returns {Object} El estado cargado.
+     * Carga el estado desde localStorage o retorna el estado vacío por defecto.
+     * Los datos reales son gestionados exclusivamente por la API.
+     * @returns {Object} El estado de sesión.
      */
     loadState() {
         const defaultState = {
-            clients: [
-                { id: 1, name: 'Lucía Méndez', phone: '600123456', email: 'lucia@example.com', notes: 'Prefiere tonos pastel' },
-                { id: 2, name: 'Carmen Rojas', phone: '600654321', email: 'carmen@example.com', notes: 'Alergia a cierto acrílico' }
-            ],
-            transactions: [
-                { id: 1, type: 'income', category: 'Cobros Booksy', amount: 150.00, date: new Date().toISOString().split('T')[0], description: 'Cierre de caja ayer' },
-                { id: 2, type: 'expense', category: 'Compra Productos', amount: 45.50, date: new Date().toISOString().split('T')[0], description: 'Reposición Esmaltes' }
-            ],
-            appointments: [
-                { client: 'Lucía Méndez', type: 'Corte', time: '10:00', price: 25, date: new Date().toISOString().split('T')[0] }
-            ],
+            clients: [],
+            transactions: [],
+            appointments: [],
             dailyNotes: {},
-            products: [
-                { id: 1, title: 'Pollo Entero', stock: 15, price: 4.50, min_stock: 5, bg: 'bg-orange-100', icon: 'drumstick' },
-                { id: 2, title: 'Chuletas Cerdo', stock: 3, price: 6.90, min_stock: 5, bg: 'bg-pink-100', icon: 'beef' },
-            ],
-            suppliers: [
-                { id: 1, name: 'Avícola del Sur', phone: '954000111', company: 'Avícola Sur S.L.', category: 'Producto' },
-            ],
+            products: [],
+            suppliers: [],
             invoices: []
         };
 
-        const saved = localStorage.getItem('boutique_state');
-        return saved ? { ...defaultState, ...JSON.parse(saved) } : defaultState;
+        try {
+            const saved = localStorage.getItem('boutique_state');
+            return saved ? { ...defaultState, ...JSON.parse(saved) } : defaultState;
+        } catch {
+            return defaultState;
+        }
     }
 
     // --- NUEVA FUNCIÓN PARA SQLITE (AÑADIDA) ---
