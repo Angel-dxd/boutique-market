@@ -40,13 +40,21 @@ const authLoginSchema = z.object({
 
 const authRegisterSchema = z.object({
     username: z.string({ required_error: 'El nombre de usuario es obligatorio' }).trim().min(3).max(50),
-    password: z.string({ required_error: 'La contraseña es obligatoria' }).min(3).max(100),
+    password: z.string({ required_error: 'La contraseña es obligatoria' })
+        .min(8, 'La contraseña debe tener al menos 8 caracteres')
+        .max(100)
+        .regex(/[A-Z]/, 'La contraseña debe contener al menos una letra mayúscula')
+        .regex(/[0-9]/, 'La contraseña debe contener al menos un número'),
     email: z.string().trim().email('El email no tiene un formato válido').optional().nullable()
 });
 
 const changePasswordSchema = z.object({
     currentPassword: z.string({ required_error: 'La contraseña actual es obligatoria' }),
-    newPassword: z.string({ required_error: 'La nueva contraseña es obligatoria' }).min(3, 'La nueva contraseña debe tener al menos 3 caracteres').max(100)
+    newPassword: z.string({ required_error: 'La nueva contraseña es obligatoria' })
+        .min(8, 'La nueva contraseña debe tener al menos 8 caracteres')
+        .max(100)
+        .regex(/[A-Z]/, 'La contraseña debe contener al menos una letra mayúscula')
+        .regex(/[0-9]/, 'La nueva contraseña debe contener al menos un número')
 });
 
 /**

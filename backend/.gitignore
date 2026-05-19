@@ -12,3 +12,15 @@ lightgoldenrodyellow.py
 
 # MultiTenant Configuration
 config.json
+
+# Bases de datos locales (legacy / desarrollo)
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs generados por Winston
+logs/
+*.log
+
+# Cobertura de tests
+coverage/

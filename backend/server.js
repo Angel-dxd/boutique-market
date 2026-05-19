@@ -8,14 +8,17 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
+const morgan = require('morgan');
 const dotenv = require('dotenv');
 
 // Carga de variables de entorno
 dotenv.config();
 
-console.log('--- BACKEND STARTING ---');
-console.log(`🕒 Hora: ${new Date().toISOString()}`);
-console.log(`🆔 Proceso: ${process.pid}`);
+const logger = require('./src/utils/logger');
+const { authLimiter, generalLimiter } = require('./src/middlewares/rateLimiter');
+
+logger.info('--- BACKEND STARTING ---');
+logger.info(`Hora: ${new Date().toISOString()} | PID: ${process.pid}`);
 
 /**
  * Contexto de Tenant: Permite el aislamiento de datos por base de datos
@@ -27,7 +30,13 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // ─── Middlewares de seguridad y parseo ───────────────────────────────────────
-app.use(helmet()); // cabeceras de seguridad HTTP con una línea
+app.use(helmet()); // Cabeceras de seguridad HTTP
+
+// HTTP request logger — usa 'combined' en producción (formato Apache estándar), 'dev' en desarrollo
+const morganFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
+app.use(morgan(morganFormat, {
+    stream: { write: (msg) => logger.http(msg.trim()) }
+}));
 
 // CORS: en producción se restringe a los orígenes permitidos vía env;
 // en desarrollo se acepta cualquier origen (útil para móviles en LAN).
@@ -39,16 +48,22 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
 app.use(cors({
     origin: (origin, cb) => {
         if (process.env.NODE_ENV !== 'production') return cb(null, true);
-        if (!origin) return cb(null, true); // peticiones server-to-server / curl
-        if (allowedOrigins.length === 0) return cb(null, true); // fallback abierto si no hay config
+        if (!origin) return cb(null, true); // Peticiones server-to-server / curl
+        if (allowedOrigins.length === 0) return cb(null, true); // Fallback abierto si no hay config
         if (allowedOrigins.includes(origin)) return cb(null, true);
         return cb(new Error(`CORS bloqueado para origen: ${origin}`));
     },
     credentials: true
 }));
 
-app.use(express.json({ limit: '10mb' })); // 50mb es excesivo — reduce la superficie de ataque
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(compression());
+
+// ─── Rate Limiting ────────────────────────────────────────────────────────────
+// Se aplica el limitador general a toda la API y uno específico más estricto
+// en las rutas de autenticación para prevenir ataques de fuerza bruta.
+app.use('/api/', generalLimiter);
 
 // ─── Middleware Multitenant ───────────────────────────────────────────────────
 app.use((req, res, next) => {
@@ -69,7 +84,8 @@ const calendarRoutes = require('./src/routes/calendarRoutes');
 const messageRoutes = require('./src/routes/messageRoutes');
 const galleryRoutes = require('./src/routes/galleryRoutes');
 
-app.use('/api/auth', authRoutes);
+// authLimiter se aplica exclusivamente a las rutas de autenticación
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/products', requireAuth, inventoryRoutes);
 app.use('/api/providers', requireAuth, providerRoutes);
 app.use('/api/dashboard', requireAuth, statisticsRoutes);
@@ -81,11 +97,21 @@ app.use('/api/messages', requireAuth, messageRoutes);
 app.use('/api/gallery', requireAuth, galleryRoutes);
 app.use('/api/nails', requireAuth, require('./src/routes/nailsRoutes'));
 
+// ─── Swagger UI (Documentación de la API) ────────────────────────────────────
+// Disponible en /api/docs — accesible en cualquier entorno.
+const swaggerUi = require('swagger-ui-express');
+const openApiSpec = require('./src/config/swagger');
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec, {
+    customSiteTitle: 'Boutique Market API Docs',
+    customCss: '.swagger-ui .topbar { background-color: #1e293b; }'
+}));
+
 app.get('/', (req, res) => {
     res.json({
         message: 'Boutique & Market API Running',
         status: 'Online',
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
+        docs: '/api/docs'
     });
 });
 
@@ -109,14 +135,15 @@ app.use((req, res) => {
 //   42P01  →  undefined_table
 //
 // Documentación oficial: https://www.postgresql.org/docs/current/errcodes-appendix.html
+// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-    console.error(`[ERROR] ${req.method} ${req.originalUrl}`, err);
+    logger.error(`${req.method} ${req.originalUrl} — ${err.message}`, { stack: err.stack });
 
     // Clave duplicada en BD
     if (err.code === '23505') {
         return res.status(409).json({
             success: false,
-            errors: ["Ya existe un registro con esos datos (valor duplicado)."]
+            errors: ['Ya existe un registro con esos datos (valor duplicado).']
         });
     }
 
@@ -124,7 +151,7 @@ app.use((err, req, res, next) => {
     if (err.code === '23503') {
         return res.status(409).json({
             success: false,
-            errors: ["No se puede completar: existen registros relacionados."]
+            errors: ['No se puede completar: existen registros relacionados.']
         });
     }
 
@@ -132,15 +159,15 @@ app.use((err, req, res, next) => {
     if (err.code === '42703' || err.code === '42P01') {
         return res.status(500).json({
             success: false,
-            errors: ["Error interno en la consulta a la base de datos."]
+            errors: ['Error interno en la consulta a la base de datos.']
         });
     }
 
     // Resto de errores
     const statusCode = err.status || err.statusCode || 500;
     const message = process.env.NODE_ENV === 'production'
-        ? "Error interno del servidor."
-        : err.message || "Error interno del servidor.";
+        ? 'Error interno del servidor.'
+        : err.message || 'Error interno del servidor.';
 
     res.status(statusCode).json({
         success: false,
@@ -150,11 +177,11 @@ app.use((err, req, res, next) => {
 
 // ─── Arranque ─────────────────────────────────────────────────────────────────
 if (require.main === module) {
-    console.log(`🔧 Intentando arrancar servidor en puerto ${port}...`);
     app.listen(port, '0.0.0.0', () => {
-        console.log(`\n🚀 Backend corriendo en http://0.0.0.0:${port}`);
-        console.log(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`📡 Orígenes permitidos: ${process.env.ALLOWED_ORIGINS || 'TODOS (Cuidado)'}\n`);
+        logger.info(`🚀 Backend corriendo en http://0.0.0.0:${port}`);
+        logger.info(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}`);
+        logger.info(`📡 Orígenes permitidos: ${process.env.ALLOWED_ORIGINS || 'TODOS (desarrollo)'}`);
+        logger.info(`📖 Documentación API: http://0.0.0.0:${port}/api/docs`);
     });
 }
 
