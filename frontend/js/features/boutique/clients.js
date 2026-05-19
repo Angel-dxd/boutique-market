@@ -18,6 +18,25 @@ export const renderClients = async (container) => {
     let editingId = null;
     let activeTab = 'all'; // 'all' | 'at-risk'
 
+    let isHistoryModalOpen = false;
+    let selectedClientForHistory = null;
+    let clientDesigns = [];
+
+    const openHistoryModal = async (client) => {
+        selectedClientForHistory = client;
+        const res = await api.get(`/gallery?client_id=${client.id}&limit=100`);
+        clientDesigns = res.error ? [] : (res || []);
+        isHistoryModalOpen = true;
+        safeRender();
+    };
+
+    const closeHistoryModal = () => {
+        isHistoryModalOpen = false;
+        selectedClientForHistory = null;
+        clientDesigns = [];
+        safeRender();
+    };
+
     const loadData = async () => {
         const [clientsRes, atRiskRes] = await Promise.all([
             api.get('/clients'),
@@ -175,6 +194,10 @@ export const renderClients = async (container) => {
                                         <td class="px-6 py-4 text-gray-400 max-w-xs truncate">${c.notes || '—'}</td>
                                         <td class="px-6 py-4">
                                             <div class="flex items-center justify-center gap-2">
+                                                <button data-history="${c.id}"
+                                                    class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors" title="Historial de Diseños">
+                                                    <i data-lucide="image" width="16"></i>
+                                                </button>
                                                 <button data-edit="${c.id}"
                                                     class="p-2 text-emerald-500 hover:bg-emerald-50 rounded-xl transition-colors" title="Editar">
                                                     <i data-lucide="pencil" width="16"></i>
@@ -190,7 +213,7 @@ export const renderClients = async (container) => {
                         </table>
                     </div>
                 </div>
-
+ 
                 <!-- Modal crear / editar -->
                 ${isModalOpen ? `
                 <div class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[200] p-4">
@@ -237,6 +260,54 @@ export const renderClients = async (container) => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>` : ''}
+
+                <!-- Modal Historial de Diseños -->
+                ${isHistoryModalOpen && selectedClientForHistory ? `
+                <div class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[200] p-4">
+                    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div class="p-6 md:p-8 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10 flex-shrink-0">
+                            <div>
+                                <h2 class="text-xl md:text-2xl font-black text-gray-800 flex items-center gap-2">
+                                    <i data-lucide="image" class="text-emerald-500 w-6 h-6"></i>
+                                    Diseños de ${selectedClientForHistory.name}
+                                </h2>
+                                <p class="text-xs text-gray-400 mt-1 font-medium">Historial fotográfico de manicuras</p>
+                            </div>
+                            <button id="closeHistoryModal" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                                <i data-lucide="x" width="20"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="p-6 md:p-8 overflow-y-auto flex-1 space-y-6">
+                            ${clientDesigns.length === 0 ? `
+                                <div class="text-center py-12 text-gray-400">
+                                    <div class="w-16 h-16 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <i data-lucide="image-off" class="w-8 h-8"></i>
+                                    </div>
+                                    <p class="font-bold text-gray-600">No hay diseños registrados aún</p>
+                                    <p class="text-xs text-gray-400 mt-1">Puedes vincular fotos a esta clienta desde el catálogo de "Mis Uñas".</p>
+                                </div>
+                            ` : `
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                    ${clientDesigns.map(design => `
+                                        <div class="group relative aspect-square bg-gray-100 rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all">
+                                            <img src="${design.image}" alt="${design.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                                                <span class="text-xs font-bold text-white line-clamp-1">${design.title}</span>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `}
+                        </div>
+                        
+                        <div class="p-6 border-t border-gray-100 bg-gray-50 flex justify-end flex-shrink-0">
+                            <button id="btnVerGaleria" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition-colors shadow-md shadow-emerald-100">
+                                Ir a Galería de Uñas
+                            </button>
+                        </div>
                     </div>
                 </div>` : ''}
             </div>
@@ -302,14 +373,31 @@ export const renderClients = async (container) => {
                 );
                 if (!confirmed) return;
 
-                const res = await api.delete(`/clients/${id}`);
-                if (!res.error) {
-                    await loadData();
-                    safeRender();
-                } else {
-                    api.showToast('Error al eliminar la clienta.', true);
+                 const res = await api.delete(`/clients/${id}`);
+                 if (!res.error) {
+                     await loadData();
+                     safeRender();
+                 } else {
+                     api.showToast('Error al eliminar la clienta.', true);
+                 }
+             });
+         });
+        // Historial
+        document.querySelectorAll('[data-history]').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const id = parseInt(btn.getAttribute('data-history'));
+                const client = clients.find(c => c.id === id);
+                if (client) {
+                    await openHistoryModal(client);
                 }
             });
+        });
+
+        document.getElementById('closeHistoryModal')?.addEventListener('click', closeHistoryModal);
+        document.getElementById('btnVerGaleria')?.addEventListener('click', () => {
+            closeHistoryModal();
+            window.navigateTo('/boutique/galeria');
         });
 
         // Submit formulario

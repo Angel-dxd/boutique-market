@@ -37,6 +37,27 @@ export const renderInventario = async (container) => {
         return { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700', label: 'Disponible' };
     };
 
+    const getExpirationWarning = (expiryDateStr) => {
+        if (!expiryDateStr) return { badge: 'text-gray-400', label: 'Sin fecha', isAlert: false };
+        const expiry = new Date(expiryDateStr);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        expiry.setHours(0, 0, 0, 0);
+        
+        const diffTime = expiry.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        const formattedDate = expiry.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+        
+        if (diffDays < 0) {
+            return { badge: 'bg-red-50 text-red-600 font-bold px-2.5 py-1 rounded-full text-xs animate-pulse', label: `Caducado (${formattedDate})`, isAlert: true };
+        }
+        if (diffDays <= 30) {
+            return { badge: 'bg-amber-50 text-amber-600 font-bold px-2.5 py-1 rounded-full text-xs', label: `Caduca en ${diffDays}d (${formattedDate})`, isAlert: true };
+        }
+        return { badge: 'bg-emerald-50 text-emerald-600 font-bold px-2.5 py-1 rounded-full text-xs', label: formattedDate, isAlert: false };
+    };
+
     const renderProviderOptions = (selectedId = null) =>
         providers.map(p =>
             `<option value="${p.id}" ${selectedId && p.id == selectedId ? 'selected' : ''}>${p.name} — ${p.company || 'Sin empresa'}</option>`
@@ -95,6 +116,7 @@ export const renderInventario = async (container) => {
                                     <th class="px-6 py-4 text-right font-bold">Coste</th>
                                     <th class="px-6 py-4 text-right font-bold">Precio venta</th>
                                     <th class="px-6 py-4 text-right font-bold">Margen</th>
+                                    <th class="px-6 py-4 text-center font-bold">Vencimiento</th>
                                     <th class="px-6 py-4 text-center font-bold">Stock</th>
                                     <th class="px-6 py-4 text-center font-bold">Estado</th>
                                     <th class="px-6 py-4 text-center font-bold">Acciones</th>
@@ -102,13 +124,14 @@ export const renderInventario = async (container) => {
                             </thead>
                             <tbody class="divide-y divide-gray-50">
                                 ${products.length === 0
-                ? `<tr><td colspan="8" class="text-center py-16 text-gray-400 font-medium">No hay productos registrados.</td></tr>`
+                ? `<tr><td colspan="9" class="text-center py-16 text-gray-400 font-medium">No hay productos registrados.</td></tr>`
                 : products.map(p => {
                     const status = getStatusStyle(p);
                     const cost = parseFloat(p.cost || 0);
                     const price = parseFloat(p.price || 0);
                     const margin = price > 0 ? (((price - cost) / price) * 100).toFixed(1) : '—';
                     const marginColor = parseFloat(margin) > 30 ? 'text-emerald-600' : parseFloat(margin) > 10 ? 'text-amber-600' : 'text-red-500';
+                    const expiration = getExpirationWarning(p.expiration_date);
                     return `
                                         <tr class="hover:bg-gray-50 transition-colors group">
                                             <td class="px-6 py-4 font-semibold text-gray-800">${p.title}</td>
@@ -116,6 +139,11 @@ export const renderInventario = async (container) => {
                                             <td class="px-6 py-4 text-right text-gray-500">${cost.toFixed(2)}€</td>
                                             <td class="px-6 py-4 text-right font-bold text-gray-800">${price.toFixed(2)}€</td>
                                             <td class="px-6 py-4 text-right font-bold ${marginColor}">${margin !== '—' ? margin + '%' : '—'}</td>
+                                            <td class="px-6 py-4 text-center">
+                                                <span class="inline-flex items-center gap-1 ${expiration.badge}">
+                                                    ${expiration.label}
+                                                </span>
+                                            </td>
                                             <td class="px-6 py-4 text-center">
                                                 <span class="font-bold text-gray-800">${p.stock}</span>
                                                 <span class="text-gray-400 text-xs"> / mín ${p.min_stock}</span>
@@ -214,6 +242,11 @@ export const renderInventario = async (container) => {
                                     ${renderProviderOptions(editing?.provider_id)}
                                 </select>
                             </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de Vencimiento (Opcional)</label>
+                                <input name="expiration_date" type="date" value="${editing?.expiration_date ? editing.expiration_date.split('T')[0] : ''}"
+                                    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+                            </div>
                             <div class="pt-4 flex gap-3">
                                 <button type="button" id="cancelBtn"
                                     class="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors">
@@ -293,6 +326,7 @@ export const renderInventario = async (container) => {
         document.getElementById('prodForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
+            const expiry = formData.get('expiration_date');
             const payload = {
                 title: formData.get('title'),
                 price: parseFloat(formData.get('price')),
@@ -300,7 +334,8 @@ export const renderInventario = async (container) => {
                 stock: parseInt(formData.get('stock') || 0),
                 min_stock: parseInt(formData.get('min_stock') || 5),
                 category: formData.get('category') || 'General',
-                provider_id: formData.get('provider_id') ? parseInt(formData.get('provider_id')) : null
+                provider_id: formData.get('provider_id') ? parseInt(formData.get('provider_id')) : null,
+                expiration_date: expiry ? expiry : null
             };
 
             const res = editingId

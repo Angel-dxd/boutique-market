@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS inventory (
     min_stock   INT             DEFAULT 5,
     category    VARCHAR(255)    DEFAULT 'General',
     provider_id INT             DEFAULT NULL,
+    expiration_date DATE        DEFAULT NULL,
     created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_inventory_provider
@@ -110,7 +111,11 @@ CREATE TABLE IF NOT EXISTS gallery (
     title       VARCHAR(255)    NOT NULL,
     category    VARCHAR(255)    DEFAULT NULL,
     image       TEXT            DEFAULT NULL,
-    created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
+    client_id   INT             DEFAULT NULL,
+    created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_gallery_client
+        FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL
 );
 
 -- ------------------------------------------------------------

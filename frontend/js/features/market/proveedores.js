@@ -42,7 +42,7 @@ export const renderProveedores = async (container) => {
                     ${suppliers.map(s => `
                         <div class="bg-white p-5 md:p-8 rounded-[32px] shadow-sm border border-gray-100 hover:shadow-xl transition-all group relative">
                              <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <div class="text-green-500 hover:text-green-600 cursor-pointer wapp-provider-btn" title="Contactar por WhatsApp" data-provider="${s.name}">
+                                <div class="text-green-500 hover:text-green-600 cursor-pointer wapp-provider-btn" title="Contactar por WhatsApp" data-provider="${s.name}" data-id="${s.id}">
                                     <i data-lucide="message-circle" width="16"></i>
                                 </div>
                                 <div class="text-gray-300 hover:text-blue-500 cursor-pointer edit-supplier" data-id="${s.id}">
@@ -196,12 +196,30 @@ export const renderProveedores = async (container) => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 const providerName = btn.getAttribute('data-provider');
-
+                const providerId = parseInt(btn.getAttribute('data-id'));
+ 
                 btn.innerHTML = '<i data-lucide="loader" width="16" class="animate-spin"></i>';
                 lucide.createIcons();
-
-                const response = await api.post('/messages/contact-provider', { providerName, productName: 'suministros generales' });
-
+ 
+                // Fetch products and identify low stock products for this provider
+                const prodRes = await api.get('/products');
+                const productsList = prodRes.error ? [] : (prodRes.data || prodRes || []);
+                const lowStockItems = productsList.filter(p => 
+                    p.provider_id === providerId && p.stock <= p.min_stock
+                );
+ 
+                let message = 'suministros generales';
+                if (lowStockItems.length > 0) {
+                    message = lowStockItems.map(p => `${p.title} (Stock: ${p.stock}/${p.min_stock})`).join(', ');
+                } else {
+                    message = 'suministros varios (sin alertas de stock bajo)';
+                }
+ 
+                const response = await api.post('/messages/contact-provider', { 
+                    providerName, 
+                    productName: message 
+                });
+ 
                 if (!response.error) {
                     btn.classList.replace('text-green-500', 'text-blue-500');
                     btn.innerHTML = '<i data-lucide="check" width="16"></i>';

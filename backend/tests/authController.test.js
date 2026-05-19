@@ -5,17 +5,18 @@
  */
 const db = require('../src/config/db');
 
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { encrypt } = require('../src/utils/crypto');
-const { register } = require('../src/controllers/authController');
+const { register, changePassword } = require('../src/controllers/authController');
 
 jest.mock('../src/config/db', () => ({
     query: jest.fn(),
     execute: jest.fn()
 }));
 
-jest.mock('bcrypt', () => ({
-    hash: jest.fn()
+jest.mock('bcryptjs', () => ({
+    hash: jest.fn(),
+    compare: jest.fn()
 }));
 
 jest.mock('../src/utils/crypto', () => ({
@@ -99,3 +100,81 @@ describe('authController.register policy (Política de Registro)', () => {
         expect(next).not.toHaveBeenCalled();
     });
 });
+
+describe('authController.changePassword policy (Cambio de Contraseña)', () => {
+    const createRes = () => {
+        const res = {};
+        res.status = jest.fn().mockReturnValue(res);
+        res.json = jest.fn().mockReturnValue(res);
+        return res;
+    };
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('cambia la contraseña con éxito si la contraseña actual es válida', async () => {
+        db.execute.mockResolvedValueOnce([[{ id: 1, username: 'santi', password: 'old_hashed_password' }]]); // select
+        db.execute.mockResolvedValueOnce([{ affectedRows: 1 }]); // update
+        bcrypt.compare.mockResolvedValue(true);
+        bcrypt.hash.mockResolvedValue('new_hashed_password');
+
+        const req = {
+            body: { currentPassword: 'password123', newPassword: 'newpassword456' },
+            user: { id: 1, username: 'santi', tenant: 'santi' }
+        };
+        const res = createRes();
+        const next = jest.fn();
+
+        await changePassword(req, res, next);
+
+        expect(db.execute).toHaveBeenNthCalledWith(1, 'SELECT * FROM users WHERE id = ?', [1]);
+        expect(bcrypt.compare).toHaveBeenCalledWith('password123', 'old_hashed_password');
+        expect(bcrypt.hash).toHaveBeenCalledWith('newpassword456', 10);
+        expect(db.execute).toHaveBeenNthCalledWith(2, 'UPDATE users SET password = ? WHERE id = ?', ['new_hashed_password', 1]);
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith({ success: true, message: 'Contraseña actualizada con éxito' });
+        expect(next).not.toHaveBeenCalled();
+    });
+
+    it('falla si la contraseña actual es incorrecta', async () => {
+        db.execute.mockResolvedValueOnce([[{ id: 1, username: 'santi', password: 'old_hashed_password' }]]); // select
+        bcrypt.compare.mockResolvedValue(false);
+
+        const req = {
+            body: { currentPassword: 'wrongpassword', newPassword: 'newpassword456' },
+            user: { id: 1, username: 'santi', tenant: 'santi' }
+        };
+        const res = createRes();
+        const next = jest.fn();
+
+        await changePassword(req, res, next);
+
+        expect(db.execute).toHaveBeenCalledWith('SELECT * FROM users WHERE id = ?', [1]);
+        expect(bcrypt.compare).toHaveBeenCalledWith('wrongpassword', 'old_hashed_password');
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith({ success: false, errors: ['La contraseña actual es incorrecta.'] });
+        expect(db.execute).toHaveBeenCalledTimes(1); // No update executed
+        expect(next).not.toHaveBeenCalled();
+    });
+
+    it('falla si el usuario no es encontrado', async () => {
+        db.execute.mockResolvedValueOnce([[]]); // empty select
+
+        const req = {
+            body: { currentPassword: 'password123', newPassword: 'newpassword456' },
+            user: { id: 999, username: 'ghost', tenant: 'santi' }
+        };
+        const res = createRes();
+        const next = jest.fn();
+
+        await changePassword(req, res, next);
+
+        expect(db.execute).toHaveBeenCalledWith('SELECT * FROM users WHERE id = ?', [999]);
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.json).toHaveBeenCalledWith({ success: false, errors: ['Usuario no encontrado'] });
+        expect(bcrypt.compare).not.toHaveBeenCalled();
+        expect(next).not.toHaveBeenCalled();
+    });
+});
+

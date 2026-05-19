@@ -5,6 +5,8 @@
  */
 import { navigateTo } from '../core/app.js';
 import { renderBoutiqueHome } from './home.js';
+import { showChangePasswordModal } from '../shared/modal.js';
+
 
 // Módulos precargados para navegación instantánea
 const moduleCache = {};
@@ -66,7 +68,12 @@ export const renderBoutiqueLayout = () => {
                 </div>
                 <nav id="sidebar-nav" class="flex-1 mt-4 md:mt-6 px-2 md:px-4 space-y-2">
                     ${renderSidebar(path)}
-                    <div class="pt-4 mt-4 border-t border-slate-700">
+                    <div class="pt-4 mt-4 border-t border-slate-700 space-y-1">
+                        <button id="changePwdBtn"
+                            class="w-full nav-item flex items-center justify-center lg:justify-start gap-3 p-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+                            <i data-lucide="key-round" class="w-5 h-5 md:w-6 md:h-6"></i>
+                            <span class="hidden lg:block font-bold">Seguridad</span>
+                        </button>
                         <button id="logoutBtn"
                             class="w-full nav-item flex items-center justify-center lg:justify-start gap-3 p-3 rounded-xl hover:bg-red-900/50 text-red-400 hover:text-red-200 transition-colors">
                             <i data-lucide="log-out" class="w-5 h-5 md:w-6 md:h-6"></i>
@@ -115,6 +122,9 @@ export const renderBoutiqueLayout = () => {
             tabContainers = {};
             navigateTo('/logout-confirmation', { from: 'boutique' });
         });
+        document.getElementById('changePwdBtn')?.addEventListener('click', () => {
+            showChangePasswordModal();
+        });
 
         layoutMounted = true;
 
@@ -129,7 +139,12 @@ export const renderBoutiqueLayout = () => {
         // Solo actualizar el estado activo del sidebar (sin reconstruir nada más)
         document.getElementById('sidebar-nav').innerHTML = `
             ${renderSidebar(path)}
-            <div class="pt-4 mt-4 border-t border-slate-700">
+            <div class="pt-4 mt-4 border-t border-slate-700 space-y-1">
+                <button id="changePwdBtn"
+                    class="w-full nav-item flex items-center justify-center lg:justify-start gap-3 p-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="key-round" class="w-5 h-5 md:w-6 md:h-6"></i>
+                    <span class="hidden lg:block font-bold">Seguridad</span>
+                </button>
                 <button id="logoutBtn"
                     class="w-full nav-item flex items-center justify-center lg:justify-start gap-3 p-3 rounded-xl hover:bg-red-900/50 text-red-400 hover:text-red-200 transition-colors">
                     <i data-lucide="log-out" class="w-5 h-5 md:w-6 md:h-6"></i>
@@ -152,6 +167,9 @@ export const renderBoutiqueLayout = () => {
             layoutMounted = false;
             tabContainers = {};
             navigateTo('/logout-confirmation', { from: 'boutique' });
+        });
+        document.getElementById('changePwdBtn')?.addEventListener('click', () => {
+            showChangePasswordModal();
         });
     }
 

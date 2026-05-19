@@ -13,13 +13,17 @@ import { navigateTo } from '../core/app.js';
 export const renderMarketHome = async (container) => {
     const render = async () => {
         // Fetch real data from MySQL API directly instead of local store to persist on F5
-        const productsResponse = await api.get('/products');
-        const invoicesResponse = await api.get('/invoices');
-        const suppliersResponse = await api.get('/providers');
+        const [productsResponse, invoicesResponse, suppliersResponse, alertsResponse] = await Promise.all([
+            api.get('/products'),
+            api.get('/invoices'),
+            api.get('/providers'),
+            api.get('/products/alerts')
+        ]);
 
         const products = productsResponse.error ? [] : (productsResponse.data || productsResponse);
         const invoices = invoicesResponse.error ? [] : (invoicesResponse.data || invoicesResponse);
         const suppliers = suppliersResponse.error ? [] : (suppliersResponse.data || suppliersResponse);
+        const alerts = alertsResponse.error ? [] : (alertsResponse.data || alertsResponse || []);
 
         // KPIs
         const criticalStock = products.filter(p => parseInt(p.stock) <= parseInt(p.min_stock)).length;
@@ -72,6 +76,44 @@ export const renderMarketHome = async (container) => {
                         </div>
                     </div>
                 </div>
+
+                <!-- Alertas de Caducidad -->
+                ${alerts.length > 0 ? `
+                <div class="bg-red-50/50 border border-red-100 rounded-[2rem] p-5 md:p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+                            <h3 class="text-base md:text-lg font-black text-red-700">Productos Próximos a Vencer</h3>
+                        </div>
+                        <span class="bg-red-100 text-red-700 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                            ${alerts.length} ${alerts.length === 1 ? 'Alerta' : 'Alertas'}
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+                        ${alerts.map(p => {
+                            const expiry = new Date(p.expiration_date);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            expiry.setHours(0, 0, 0, 0);
+                            const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                            const formattedDate = expiry.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                            const badgeColor = diffDays < 0 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700';
+                            const label = diffDays < 0 ? 'Caducado' : `Caduca en ${diffDays} días`;
+                            return `
+                                <div class="bg-white border border-red-100 rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:border-red-300 transition-colors" onclick="window.navigateTo('/market/inventario')">
+                                    <div class="min-w-0 flex-1">
+                                        <h4 class="font-bold text-gray-800 text-sm truncate">${p.title}</h4>
+                                        <p class="text-xs text-gray-400 mt-0.5">Stock: ${p.stock} uds</p>
+                                    </div>
+                                    <span class="shrink-0 text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${badgeColor}">
+                                        ${label}
+                                    </span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+                ` : ''}
 
                 <!-- Quick Actions -->
                 <div>

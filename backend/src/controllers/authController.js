@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db'); // Ajusta la ruta según tu estructura [cite: 20]
 const { encrypt } = require('../utils/crypto');
-
+//el salt es para hashear la contraseña y que sea mas seguro.
 const SALT_ROUNDS = 10;
 
 /**
@@ -129,4 +129,48 @@ const login = async (req, res, next) => {
     }
 };
 
-module.exports = { register, login };
+/**
+ * Cambia la contraseña del usuario autenticado.
+ *
+ * @async
+ * @function changePassword
+ * @param {import('express').Request} req - Objeto de petición de Express.
+ * @param {Object} req.body - Cuerpo de la petición.
+ * @param {string} req.body.currentPassword - Contraseña actual.
+ * @param {string} req.body.newPassword - Nueva contraseña.
+ * @param {import('express').Response} res - Objeto de respuesta de Express.
+ * @param {import('express').NextFunction} next - Función para pasar el error al middleware de errores.
+ * @returns {Promise<void>} Retorna un JSON indicando el éxito de la operación.
+ */
+const changePassword = async (req, res, next) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const userId = req.user.id; // Asignado por requireAuth
+
+        // 1. Obtener usuario actual
+        const [users] = await db.execute('SELECT * FROM users WHERE id = ?', [userId]);
+        if (users.length === 0) {
+            return res.status(404).json({ success: false, errors: ['Usuario no encontrado'] });
+        }
+
+        const user = users[0];
+
+        // 2. Verificar contraseña actual
+        const match = await bcrypt.compare(currentPassword, user.password);
+        if (!match) {
+            return res.status(401).json({ success: false, errors: ['La contraseña actual es incorrecta.'] });
+        }
+
+        // 3. Hashear la nueva contraseña
+        const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+        // 4. Actualizar en base de datos
+        await db.execute('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId]);
+
+        res.status(200).json({ success: true, message: 'Contraseña actualizada con éxito' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+module.exports = { register, login, changePassword };

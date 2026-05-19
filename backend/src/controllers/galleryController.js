@@ -18,11 +18,18 @@ const getWorks = async (req, res, next) => {
     try {
         const limit = parseInt(req.query.limit) || 12; // Por defecto 12 para carga rápida
         const offset = parseInt(req.query.offset) || 0;
+        const clientId = req.query.client_id ? parseInt(req.query.client_id) : null;
         
-        const [rows] = await db.query(
-            'SELECT * FROM gallery ORDER BY created_at DESC LIMIT ? OFFSET ?', 
-            [limit, offset]
-        );
+        let queryStr = 'SELECT * FROM gallery';
+        let queryParams = [];
+        if (clientId) {
+            queryStr += ' WHERE client_id = ?';
+            queryParams.push(clientId);
+        }
+        queryStr += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+        queryParams.push(limit, offset);
+        
+        const [rows] = await db.query(queryStr, queryParams);
         res.json(rows);
     } catch (err) {
         next(err);
@@ -68,14 +75,14 @@ const getWorkById = async (req, res, next) => {
  */
 const createWork = async (req, res, next) => {
     try {
-        const { title, category, image } = req.body;
+        const { title, category, image, client_id } = req.body;
         if (!title || !image) {
             return res.status(400).json({ error: 'Faltan datos obligatorios (título, imagen)' });
         }
         
         const [result] = await db.query(
-            'INSERT INTO gallery (title, category, image) VALUES (?, ?, ?)',
-            [title, category, image]
+            'INSERT INTO gallery (title, category, image, client_id) VALUES (?, ?, ?, ?)',
+            [title, category, image, client_id ? parseInt(client_id) : null]
         );
         res.status(201).json({ message: 'Trabajo subido con éxito', id: result.insertId });
     } catch (err) {
@@ -102,15 +109,15 @@ const createWork = async (req, res, next) => {
 const updateWork = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { title, category, image } = req.body;
+        const { title, category, image, client_id } = req.body;
         
         if (!title || !image) {
             return res.status(400).json({ error: 'Faltan datos obligatorios para actualizar' });
         }
 
         const [result] = await db.query(
-            'UPDATE gallery SET title = ?, category = ?, image = ? WHERE id = ?',
-            [title, category, image, id]
+            'UPDATE gallery SET title = ?, category = ?, image = ?, client_id = ? WHERE id = ?',
+            [title, category, image, client_id ? parseInt(client_id) : null, id]
         );
         
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Trabajo no encontrado' });

@@ -57,6 +57,7 @@ app.use((req, res, next) => {
 });
 
 // ─── Rutas ────────────────────────────────────────────────────────────────────
+const { requireAuth } = require('./src/middlewares/auth');
 const authRoutes = require('./src/routes/authRoutes');
 const inventoryRoutes = require('./src/routes/inventoryRoutes');
 const providerRoutes = require('./src/routes/providerRoutes');
@@ -69,16 +70,16 @@ const messageRoutes = require('./src/routes/messageRoutes');
 const galleryRoutes = require('./src/routes/galleryRoutes');
 
 app.use('/api/auth', authRoutes);
-app.use('/api/products', inventoryRoutes);
-app.use('/api/providers', providerRoutes);
-app.use('/api/dashboard', statisticsRoutes);
-app.use('/api/clients', clientRoutes);
-app.use('/api/invoices', invoiceRoutes);
-app.use('/api/finance', financeRoutes);
-app.use('/api/calendar', calendarRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/gallery', galleryRoutes);
-app.use('/api/nails', require('./src/routes/nailsRoutes'));
+app.use('/api/products', requireAuth, inventoryRoutes);
+app.use('/api/providers', requireAuth, providerRoutes);
+app.use('/api/dashboard', requireAuth, statisticsRoutes);
+app.use('/api/clients', requireAuth, clientRoutes);
+app.use('/api/invoices', requireAuth, invoiceRoutes);
+app.use('/api/finance', requireAuth, financeRoutes);
+app.use('/api/calendar', requireAuth, calendarRoutes);
+app.use('/api/messages', requireAuth, messageRoutes);
+app.use('/api/gallery', requireAuth, galleryRoutes);
+app.use('/api/nails', requireAuth, require('./src/routes/nailsRoutes'));
 
 app.get('/', (req, res) => {
     res.json({

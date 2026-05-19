@@ -4,6 +4,8 @@
  * Gestiona la barra lateral (sidebar), navegación móvil y carga de vistas.
  */
 import { navigateTo } from '../core/app.js';
+import { showChangePasswordModal } from '../shared/modal.js';
+
 
 const NAV_ITEMS = [
     { href: '/market',              icon: 'layout-dashboard', label: 'Inicio',       mobileLabel: 'Inicio' },
@@ -33,7 +35,12 @@ export const renderMarketLayout = () => {
                     </div>
                     <nav id="market-sidebar-nav" class="flex-1 mt-4 md:mt-6 px-2 md:px-4 space-y-2">
                         ${renderSidebar(path)}
-                        <div class="pt-4 mt-4 border-t border-slate-700">
+                        <div class="pt-4 mt-4 border-t border-slate-700 space-y-1">
+                            <button id="changePwdBtn"
+                                class="w-full nav-item flex items-center justify-center lg:justify-start gap-3 p-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+                                <i data-lucide="key-round" class="w-5 h-5 md:w-6 md:h-6"></i>
+                                <span class="hidden lg:block font-bold">Seguridad</span>
+                            </button>
                             <button id="logoutBtn"
                                 class="w-full nav-item flex items-center justify-center lg:justify-start gap-3 p-3 rounded-xl hover:bg-red-900/50 text-red-400 hover:text-red-200 transition-colors">
                                 <i data-lucide="log-out" class="w-5 h-5 md:w-6 md:h-6"></i>
@@ -80,13 +87,21 @@ export const renderMarketLayout = () => {
             marketLayoutMounted = false;
             navigateTo('/logout-confirmation', { from: 'market' });
         });
+        document.getElementById('changePwdBtn')?.addEventListener('click', () => {
+            showChangePasswordModal();
+        });
 
         marketLayoutMounted = true;
     } else {
         // Actualizar sidebar activo
         document.getElementById('market-sidebar-nav').innerHTML = `
             ${renderSidebar(path)}
-            <div class="pt-4 mt-4 border-t border-slate-700">
+            <div class="pt-4 mt-4 border-t border-slate-700 space-y-1">
+                <button id="changePwdBtn"
+                    class="w-full nav-item flex items-center justify-center lg:justify-start gap-3 p-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="key-round" class="w-5 h-5 md:w-6 md:h-6"></i>
+                    <span class="hidden lg:block font-bold">Seguridad</span>
+                </button>
                 <button id="logoutBtn"
                     class="w-full nav-item flex items-center justify-center lg:justify-start gap-3 p-3 rounded-xl hover:bg-red-900/50 text-red-400 hover:text-red-200 transition-colors">
                     <i data-lucide="log-out" class="w-5 h-5 md:w-6 md:h-6"></i>
@@ -115,6 +130,9 @@ export const renderMarketLayout = () => {
         document.getElementById('logoutBtn')?.addEventListener('click', () => {
             marketLayoutMounted = false;
             navigateTo('/logout-confirmation', { from: 'market' });
+        });
+        document.getElementById('changePwdBtn')?.addEventListener('click', () => {
+            showChangePasswordModal();
         });
     }
 

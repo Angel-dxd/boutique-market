@@ -11,6 +11,7 @@ import { api } from '../core/api.js';
  */
 export const renderInstagramGallery = (container) => {
     let works = [];
+    let clients = [];
     let isLoading = true;
     let editingId = null;
     let deletingId = null;
@@ -19,10 +20,10 @@ export const renderInstagramGallery = (container) => {
     let currentFilter = 'none';
     let searchQuery = '';
     let activeCategory = 'all';
-
+ 
     let currentOffset = 0;
     const LIMIT = 12;
-
+ 
     // 1. OBTENER DISEÑOS (PAGINADOS)
     const fetchAndRender = async (append = false) => {
         if (!append) {
@@ -31,8 +32,15 @@ export const renderInstagramGallery = (container) => {
             works = [];
             render();
         }
-
-        const data = await api.get(`/gallery?limit=${LIMIT}&offset=${currentOffset}`);
+ 
+        const [data, clientsRes] = await Promise.all([
+            api.get(`/gallery?limit=${LIMIT}&offset=${currentOffset}`),
+            api.get('/clients')
+        ]);
+        
+        if (!clientsRes.error) {
+            clients = clientsRes.data || clientsRes || [];
+        }
         
         if (!data.error && Array.isArray(data)) {
             if (append) {
@@ -52,35 +60,37 @@ export const renderInstagramGallery = (container) => {
         isLoading = false;
         render();
     };
-
+ 
     const toBase64 = file => new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = () => resolve(reader.result);
         reader.onerror = error => reject(error);
     });
-
+ 
     // 2. CREAR O ACTUALIZAR
     const handleSave = async (e) => {
         e.preventDefault();
         const title = document.getElementById('nailTitle').value;
         const fileInput = document.getElementById('nailFile');
+        const clientIdSelect = document.getElementById('nailClient');
+        const client_id = clientIdSelect ? clientIdSelect.value : null;
         const btn = document.getElementById('saveNailBtn');
         const originalText = btn.innerHTML;
-
+ 
         let base64Image = null;
-
+ 
         const files = fileInput.files ? Array.from(fileInput.files) : [];
-
+ 
         // Validar si es nuevo y no hay cropper ni archivos múltiples
         if (!editingId && !cropper && files.length <= 1) {
             return api.showToast('Debes seleccionar una imagen local', true);
         }
-
+ 
         btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-5 h-5"></i> Guardando...';
         btn.disabled = true;
         lucide.createIcons();
-
+ 
         // CASO: Múltiples fotos
         if (!editingId && !cropper && files.length > 1) {
             let successCount = 0;
@@ -94,7 +104,12 @@ export const renderInstagramGallery = (container) => {
                     if (title) {
                         tempTitle = `${title} #${index}`;
                     }
-                    const res = await api.post('/gallery', { title: tempTitle, category: 'Unas', image: base64 });
+                    const res = await api.post('/gallery', { 
+                        title: tempTitle, 
+                        category: 'Unas', 
+                        image: base64,
+                        client_id: client_id ? parseInt(client_id) : null
+                    });
                     if (!res.error) {
                         successCount++;
                         index++;
@@ -112,7 +127,7 @@ export const renderInstagramGallery = (container) => {
             lucide.createIcons();
             return;
         }
-
+ 
         if (cropper) {
             // Generar el canvas recortado
             const croppedCanvas = cropper.getCroppedCanvas({
@@ -130,22 +145,30 @@ export const renderInstagramGallery = (container) => {
                 const ctx = filteredCanvas.getContext('2d');
                 ctx.filter = currentFilter;
                 ctx.drawImage(croppedCanvas, 0, 0);
+                //esto comprime la imagen un 7% para que no sea tan pesada
                 base64Image = filteredCanvas.toDataURL('image/jpeg', 0.7);
             } else {
+                //si no hay filtro, comprime la imagen un 7%
                 base64Image = croppedCanvas.toDataURL('image/jpeg', 0.7);
             }
         }
-
+ 
         let response;
         if (editingId) {
             const currentWork = works.find(w => String(w.id) === String(editingId));
             response = await api.put(`/gallery/${editingId}`, { 
                 title, 
                 category: 'Unas', 
-                image: base64Image || currentWork.image 
+                image: base64Image || currentWork.image,
+                client_id: client_id ? parseInt(client_id) : null
             });
         } else {
-            response = await api.post('/gallery', { title, category: 'Unas', image: base64Image });
+            response = await api.post('/gallery', { 
+                title, 
+                category: 'Unas', 
+                image: base64Image,
+                client_id: client_id ? parseInt(client_id) : null
+            });
         }
         
         if (!response.error) {
@@ -155,7 +178,7 @@ export const renderInstagramGallery = (container) => {
         } else {
             api.showToast(response.error, true);
         }
-
+ 
         btn.innerHTML = originalText;
         btn.disabled = false;
         lucide.createIcons();
@@ -186,6 +209,11 @@ export const renderInstagramGallery = (container) => {
         editingId = id;
         document.getElementById('nailTitle').value = title;
         document.getElementById('nailFile').value = '';
+        
+        const currentWork = id ? works.find(w => String(w.id) === String(id)) : null;
+        const clientVal = currentWork ? (currentWork.client_id || '') : '';
+        const nailClientSelect = document.getElementById('nailClient');
+        if (nailClientSelect) nailClientSelect.value = clientVal;
         
         if (cropper) {
             cropper.destroy();
@@ -483,6 +511,16 @@ export const renderInstagramGallery = (container) => {
                                 <input type="text" id="nailTitle" required
                                     class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all font-semibold text-gray-800 text-base"
                                     placeholder="Ej. Efecto Espejo Rosa..." />
+                            </div>
+
+                            <!-- Vincular a Clienta -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Vincular a Clienta (Opcional)</label>
+                                <select id="nailClient"
+                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all font-semibold text-gray-800 text-base">
+                                    <option value="">No vincular</option>
+                                    ${clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                                </select>
                             </div>
 
                             <!-- Foto -->

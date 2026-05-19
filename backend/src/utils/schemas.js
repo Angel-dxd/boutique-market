@@ -17,7 +17,8 @@ const productSchema = z.object({
     stock: z.number({ invalid_type_error: 'El stock debe ser un número entero' }).int().min(0).optional().default(0),
     min_stock: z.number({ invalid_type_error: 'El stock mínimo debe ser entero' }).int().min(0).optional().default(5),
     category: z.string().optional().default('General'),
-    provider_id: z.number().int().positive().nullable().optional()
+    provider_id: z.number().int().positive().nullable().optional(),
+    expiration_date: z.string().nullable().optional().transform(val => (val === '' ? null : val))
 });
 
 /**
@@ -41,6 +42,11 @@ const authRegisterSchema = z.object({
     username: z.string({ required_error: 'El nombre de usuario es obligatorio' }).trim().min(3).max(50),
     password: z.string({ required_error: 'La contraseña es obligatoria' }).min(3).max(100),
     email: z.string().trim().email('El email no tiene un formato válido').optional().nullable()
+});
+
+const changePasswordSchema = z.object({
+    currentPassword: z.string({ required_error: 'La contraseña actual es obligatoria' }),
+    newPassword: z.string({ required_error: 'La nueva contraseña es obligatoria' }).min(3, 'La nueva contraseña debe tener al menos 3 caracteres').max(100)
 });
 
 /**
@@ -77,5 +83,7 @@ module.exports = {
     stockUpdateSchema,
     authRegisterSchema,
     authLoginSchema,
+    changePasswordSchema,
     clientSchema
 };
+

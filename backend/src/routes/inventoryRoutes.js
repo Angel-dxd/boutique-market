@@ -4,9 +4,17 @@
  */
 const express = require('express');
 const router = express.Router();
-const { getProducts, createProduct, updateProductStock, updateProduct, deleteProduct } = require('../controllers/inventoryController');
+const { getProducts, createProduct, updateProductStock, updateProduct, deleteProduct, getCaducityAlerts } = require('../controllers/inventoryController');
 const validate = require('../middlewares/validate');
 const { productSchema, stockUpdateSchema } = require('../utils/schemas');
+
+/**
+ * @route GET /api/products/alerts
+ * @description Listado de productos próximos a vencer.
+ * @access Private
+ * @controller inventoryController.getCaducityAlerts
+ */
+router.get('/alerts', getCaducityAlerts);
 
 /**
  * @route GET /api/products
