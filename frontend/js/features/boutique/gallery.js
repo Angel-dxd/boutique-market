@@ -216,14 +216,14 @@ export const renderInstagramGallery = (container) => {
     };
 
     // CONTROLES DE MODALES
-    const openModal = (id = null, title = '', imageUrl = '') => {
+    const openModal = (id = null, title = '', imageUrl = '', preselectedClientId = null) => {
         editingId = id;
         document.getElementById('nailTitle').value = title;
         document.getElementById('nailFile').value = '';
         
         const nailClientSelect = document.getElementById('nailClient');
         const currentWork = id ? works.find(w => String(w.id) === String(id)) : null;
-        const clientVal = currentWork ? (currentWork.client_id || '') : '';
+        const clientVal = id ? (currentWork ? (currentWork.client_id || '') : '') : (preselectedClientId || '');
         
         // Cargar clientas bajo demanda si aún no se han obtenido
         if (clients.length === 0) {
@@ -856,5 +856,23 @@ export const renderInstagramGallery = (container) => {
         });
     };
 
-    fetchAndRender();
+    // Escuchar eventos para abrir el modal desde otras vistas (como Clientes)
+    container.addEventListener('openAddModal', (e) => {
+        const preselected = e.detail?.clientId;
+        openModal(null, '', '', preselected);
+    });
+
+    const checkInitialQuery = () => {
+        const hash = window.location.hash;
+        if (hash.includes('openAdd=true')) {
+            const urlParams = new URLSearchParams(hash.split('?')[1] || '');
+            const preselected = urlParams.get('client_id');
+            window.history.replaceState(null, '', window.location.pathname + window.location.search + '#/boutique-welcome/mis-unas');
+            openModal(null, '', '', preselected);
+        }
+    };
+
+    fetchAndRender().then(() => {
+        checkInitialQuery();
+    });
 };

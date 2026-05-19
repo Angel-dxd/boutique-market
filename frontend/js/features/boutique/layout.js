@@ -182,6 +182,17 @@ export const renderBoutiqueLayout = () => {
     if (tabContainers[path]) {
         // Just show the cached tab instantly
         tabContainers[path].classList.remove('hidden');
+
+        if (path === '/boutique-welcome/mis-unas' && window.location.hash.includes('openAdd=true')) {
+            const hash = window.location.hash;
+            const urlParams = new URLSearchParams(hash.split('?')[1] || '');
+            const preselected = urlParams.get('client_id');
+            
+            window.history.replaceState(null, '', window.location.pathname + window.location.search + '#/boutique-welcome/mis-unas');
+            
+            const event = new CustomEvent('openAddModal', { detail: { clientId: preselected } });
+            tabContainers[path].dispatchEvent(event);
+        }
         return;
     }
 
