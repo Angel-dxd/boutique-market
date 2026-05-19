@@ -446,47 +446,81 @@ export const renderInstagramGallery = (container) => {
                 </div>
                 
                 <!-- GRID: Tarjetas con Efecto Turbo -->
-                <div id="galleryGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
+                <div id="galleryGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                     ${isLoading && works.length === 0 ? getSkeletons() : visibleWorks.map((w, index) => `
-                        <!-- Tarjeta de Contenido con Animación Escalonada -->
-                        <div class="gallery-card bg-white rounded-[2rem] shadow-md border border-gray-100 overflow-hidden group flex flex-col hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-100 animate-in fade-in slide-in-from-bottom-4 duration-500" 
-                             style="animation-delay: ${index * 50}ms; backface-visibility: hidden;">
-                            
-                            <!-- Foto Cuadrada con Skeleton Placeholder -->
-                            <div class="relative w-full aspect-square bg-gray-100 shrink-0 border-b border-gray-50 cursor-pointer view-btn overflow-hidden" data-id="${w.id}">
-                                <div class="absolute inset-0 bg-gray-200 animate-pulse"></div> <!-- Placeholder de fondo -->
-                                <img src="${w.image}" alt="${w.title}" 
-                                     class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out opacity-0" 
-                                     onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
-                                     loading="lazy" />
-                                
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3 px-2">
-                                    <div class="flex gap-2">
-                                        <button class="view-btn text-xs font-bold bg-white/95 text-gray-800 px-3 py-1.5 rounded-full" data-id="${w.id}">Ver</button>
-                                        ${w.source !== 'mock' ? `<button class="edit-btn text-xs font-bold bg-blue-500 text-white px-3 py-1.5 rounded-full" data-id="${w.id}" data-title="${w.title}" data-image="${w.image}">Editar</button>` : ''}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Pie Fijo -->
-                            <div class="p-3 md:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-3 bg-white grow">
-                                <div class="flex-1 min-w-0">
-                                    <h4 class="font-bold text-gray-800 text-xs md:text-base line-clamp-2 leading-tight">
-                                        ${w.title}
-                                    </h4>
-                                </div>
-                                
+                        <!-- Tarjeta Portfolio — imagen ocupa todo, título y acciones superpuestos -->
+                        <div class="gallery-card relative rounded-[1.5rem] overflow-hidden group cursor-pointer
+                                    shadow-lg hover:shadow-2xl hover:shadow-black/25 hover:-translate-y-1
+                                    transition-all duration-300 ease-out
+                                    animate-in fade-in slide-in-from-bottom-4 duration-500"
+                             data-title="${w.title}"
+                             style="animation-delay: ${index * 50}ms; aspect-ratio: 3/4; backface-visibility: hidden;">
+
+                            <!-- Skeleton mientras carga -->
+                            <div class="absolute inset-0 bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200 animate-pulse"></div>
+
+                            <!-- Foto — rellena todo el card -->
+                            <img src="${w.image}" alt="${w.title}"
+                                 class="absolute inset-0 w-full h-full object-cover
+                                        group-hover:scale-105 transition-transform duration-700 ease-out opacity-0"
+                                 onload="this.style.opacity='1'; this.previousElementSibling.style.display='none';"
+                                 loading="lazy" />
+
+                            <!-- Gradiente permanente inferior (siempre visible para el título) -->
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none"></div>
+
+                            <!-- Gradiente superior (solo en hover, para los badges) -->
+                            <div class="absolute inset-x-0 top-0 h-16
+                                        bg-gradient-to-b from-black/50 to-transparent
+                                        opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+
+                            <!-- Badge: Demo -->
+                            ${w.source === 'mock' ? `
+                            <div class="absolute top-2.5 right-2.5 bg-emerald-500 text-white
+                                        text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide shadow-md">
+                                Demo
+                            </div>` : ''}
+
+                            <!-- Badge: vinculada a clienta -->
+                            ${w.client_id && w.source !== 'mock' ? `
+                            <div class="absolute top-2.5 left-2.5
+                                        opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                                        bg-black/40 backdrop-blur-sm text-white/90
+                                        text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                                </svg>
+                                Cliente
+                            </div>` : ''}
+
+                            <!-- Zona clickable "ver" (cubre toda la imagen) -->
+                            <div class="view-btn absolute inset-0 z-10" data-id="${w.id}"></div>
+
+                            <!-- Bloque inferior: título siempre + botones en hover -->
+                            <div class="absolute inset-x-0 bottom-0 z-20 p-3 pointer-events-none">
+                                <h4 class="font-bold text-white text-xs md:text-sm line-clamp-2 leading-snug drop-shadow-sm mb-1.5">
+                                    ${w.title}
+                                </h4>
                                 ${w.source !== 'mock' ? `
-                                <div class="flex gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity shrink-0">
-                                    <button class="edit-btn p-2 md:p-3 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors cursor-pointer" title="Modificar" data-id="${w.id}" data-title="${w.title}" data-image="${w.image}">
-                                        <i data-lucide="pencil" class="w-3.5 h-3.5 md:w-4 md:h-4"></i>
+                                <div class="flex gap-1.5 pointer-events-auto
+                                            opacity-0 group-hover:opacity-100
+                                            translate-y-2 group-hover:translate-y-0
+                                            transition-all duration-200 ease-out">
+                                    <button class="edit-btn flex items-center gap-1 text-[10px] font-bold
+                                                   bg-white/20 backdrop-blur-sm text-white
+                                                   border border-white/30 px-2.5 py-1 rounded-full
+                                                   hover:bg-blue-500 hover:border-blue-400 transition-colors"
+                                            data-id="${w.id}" data-title="${w.title}" data-image="${w.image}">
+                                        <i data-lucide="pencil" class="w-2.5 h-2.5"></i> Editar
                                     </button>
-                                    <button class="delete-btn p-2 md:p-3 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors cursor-pointer" title="Borrar" data-id="${w.id}">
-                                        <i data-lucide="trash-2" class="w-3.5 h-3.5 md:w-4 md:h-4"></i>
+                                    <button class="delete-btn flex items-center gap-1 text-[10px] font-bold
+                                                   bg-white/20 backdrop-blur-sm text-white
+                                                   border border-white/30 px-2 py-1 rounded-full
+                                                   hover:bg-red-500 hover:border-red-400 transition-colors"
+                                            data-id="${w.id}">
+                                        <i data-lucide="trash-2" class="w-2.5 h-2.5"></i>
                                     </button>
-                                </div>` : `
-                                <span class="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase">Demo</span>
-                                `}
+                                </div>` : ''}
                             </div>
                         </div>
                     `).join('')}

@@ -418,7 +418,9 @@ export const renderClients = async (container) => {
         document.getElementById('closeHistoryModal')?.addEventListener('click', closeHistoryModal);
         document.getElementById('btnVerGaleria')?.addEventListener('click', () => {
             closeHistoryModal();
-            window.navigateTo('/boutique-welcome/mis-unas');
+            // navigateTo es un ES Module export, no existe en window.
+            // Usamos directamente window.location.hash que es lo que hace internamente.
+            window.location.hash = '/boutique-welcome/mis-unas';
         });
 
         // Submit formulario
