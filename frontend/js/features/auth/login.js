@@ -222,7 +222,10 @@ export const renderLogin = () => {
     });
 
     const doLogin = async (username, password, errorDiv, submitBtn) => {
-        const u = username.trim().toLowerCase();
+        let u = username.trim().toLowerCase();
+        if (u === 'areli') {
+            u = 'arelys';
+        }
         const originalBtnText = submitBtn.innerHTML;
         
         // 1. Feedback visual inmediato (Turbo feel)
@@ -239,8 +242,58 @@ export const renderLogin = () => {
 
         errorDiv.classList.add('hidden');
 
+        // Timer para mostrar el overlay premium de despertar servidor si tarda más de 1.5 segundos
+        let loadingOverlay = null;
+        const slowTimer = setTimeout(() => {
+            loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'fixed inset-0 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center z-[999] text-white p-6 animate-in fade-in duration-300';
+            loadingOverlay.innerHTML = `
+                <div class="bg-gray-950/80 border border-white/10 p-8 rounded-3xl max-w-sm w-full text-center space-y-6 shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full bg-emerald-500 blur-3xl opacity-20 -translate-y-1/2 pointer-events-none"></div>
+                    
+                    <div class="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto animate-pulse">
+                        <i data-lucide="zap" class="w-8 h-8"></i>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <h3 class="text-xl font-black tracking-tight">⚡ Despertando Servidor...</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">El servidor gratuito de Render se suspende tras inactividad. Esto tomará entre 30 y 60 segundos solo para la primera entrada del día.</p>
+                    </div>
+
+                    <div class="w-full bg-white/10 h-1.5 rounded-full overflow-hidden relative">
+                        <div class="bg-emerald-400 absolute inset-y-0 left-0 rounded-full animate-infinite-loading w-1/3"></div>
+                    </div>
+
+                    <div class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Estableciendo conexión segura con la base de datos</div>
+                </div>
+            `;
+            document.body.appendChild(loadingOverlay);
+            lucide.createIcons({ root: loadingOverlay });
+
+            if (!document.getElementById('infinite-loading-style')) {
+                const style = document.createElement('style');
+                style.id = 'infinite-loading-style';
+                style.textContent = `
+                    @keyframes infinite-loading {
+                        0% { left: -30%; width: 30%; }
+                        50% { width: 40%; }
+                        100% { left: 110%; width: 30%; }
+                    }
+                    .animate-infinite-loading {
+                        animation: infinite-loading 1.8s infinite linear;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }, 1.5 * 1000);
+
         try {
             const res = await api.post('/auth/login', { username: u, password });
+
+            clearTimeout(slowTimer);
+            if (loadingOverlay) {
+                loadingOverlay.remove();
+            }
 
             if (res && res.success) {
                 localStorage.setItem('authToken', res.token);
@@ -260,6 +313,10 @@ export const renderLogin = () => {
                 lucide.createIcons();
             }
         } catch (err) {
+            clearTimeout(slowTimer);
+            if (loadingOverlay) {
+                loadingOverlay.remove();
+            }
             submitBtn.innerHTML = originalBtnText;
             submitBtn.disabled = false;
             lucide.createIcons();

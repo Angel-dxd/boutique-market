@@ -22,6 +22,19 @@ export const renderClients = async (container) => {
     let selectedClientForHistory = null;
     let clientDesigns = [];
 
+    const cachedClientsKey = `cached_clients_${localStorage.getItem('currentUser') || 'default'}`;
+    const cachedAtRiskKey = `cached_atrisk_${localStorage.getItem('currentUser') || 'default'}`;
+
+    // Cargar datos cacheados primero (SWR)
+    try {
+        const cachedClients = localStorage.getItem(cachedClientsKey);
+        const cachedAtRisk = localStorage.getItem(cachedAtRiskKey);
+        if (cachedClients) clients = JSON.parse(cachedClients);
+        if (cachedAtRisk) atRiskClients = JSON.parse(cachedAtRisk);
+    } catch (e) {
+        console.error("Error al leer caché de clientas", e);
+    }
+
     const openHistoryModal = async (client) => {
         selectedClientForHistory = client;
         const res = await api.get(`/gallery?client_id=${client.id}&limit=100`);
@@ -44,6 +57,14 @@ export const renderClients = async (container) => {
         ]);
         clients = clientsRes.error ? [] : (clientsRes.data || []);
         atRiskClients = atRiskRes.error ? [] : (atRiskRes.data || []);
+        
+        // Guardar en caché
+        try {
+            localStorage.setItem(cachedClientsKey, JSON.stringify(clients));
+            localStorage.setItem(cachedAtRiskKey, JSON.stringify(atRiskClients));
+        } catch (e) {
+            console.error("Error al guardar caché de clientas", e);
+        }
     };
 
     const getEditingClient = () => clients.find(c => c.id === editingId) || null;
@@ -449,13 +470,17 @@ export const renderClients = async (container) => {
         });
     };
 
-    container.innerHTML = `
-        <div class="p-4 md:p-8 w-full max-w-7xl mx-auto">
-            <h1 class="text-2xl md:text-3xl font-black text-gray-800 dark:text-gray-100 mb-8">Clientas</h1>
-            ${renderSkeleton('cards')}
-            ${renderSkeleton('table')}
-        </div>
-    `;
+    if (clients.length === 0) {
+        container.innerHTML = `
+            <div class="p-4 md:p-8 w-full max-w-7xl mx-auto">
+                <h1 class="text-2xl md:text-3xl font-black text-gray-800 dark:text-gray-100 mb-8">Clientas</h1>
+                ${renderSkeleton('cards')}
+                ${renderSkeleton('table')}
+            </div>
+        `;
+    } else {
+        safeRender();
+    }
 
     await loadData();
     safeRender();

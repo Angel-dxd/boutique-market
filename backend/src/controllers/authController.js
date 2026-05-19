@@ -87,7 +87,15 @@ const register = async (req, res, next) => {
  */
 const login = async (req, res, next) => {
     try {
-        const { username, password } = req.body;
+        let { username, password } = req.body;
+
+        // Normalizar nombre de usuario (mapear areli coloquial a arelys oficial)
+        if (username) {
+            username = username.trim().toLowerCase();
+            if (username === 'areli') {
+                username = 'arelys';
+            }
+        }
 
         // Buscar usuario
         const [users] = await db.execute('SELECT * FROM users WHERE username = ?', [username]);

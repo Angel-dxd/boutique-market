@@ -24,32 +24,43 @@ export const renderInstagramGallery = (container) => {
     let currentOffset = 0;
     const LIMIT = 12;
  
-    // 1. OBTENER DISEÑOS (PAGINADOS)
+    // 1. OBTENER DISEÑOS (PAGINADOS CON SWR)
     const fetchAndRender = async (append = false) => {
+        const cachedWorksKey = `cached_works_${localStorage.getItem('currentUser') || 'default'}`;
+
         if (!append) {
             isLoading = true;
             currentOffset = 0;
-            works = [];
+            
+            // Cargar datos cacheados primero (SWR)
+            try {
+                const cached = localStorage.getItem(cachedWorksKey);
+                if (cached) {
+                    works = JSON.parse(cached);
+                    isLoading = false; // Desactivar loading temporalmente para renderizado instantáneo
+                }
+            } catch (e) {
+                console.error("Error al leer caché de galería", e);
+            }
             render();
         }
  
-        const [data, clientsRes] = await Promise.all([
-            api.get(`/gallery?limit=${LIMIT}&offset=${currentOffset}`),
-            api.get('/clients')
-        ]);
-        
-        if (!clientsRes.error) {
-            clients = clientsRes.data || clientsRes || [];
-        }
+        const data = await api.get(`/gallery?limit=${LIMIT}&offset=${currentOffset}`);
         
         if (!data.error && Array.isArray(data)) {
             if (append) {
                 works = [...works, ...data];
             } else {
                 works = data;
+                // Guardar en caché
+                try {
+                    localStorage.setItem(cachedWorksKey, JSON.stringify(works));
+                } catch (e) {
+                    console.error("Error al guardar caché de galería", e);
+                }
             }
-        } else if (!append) {
-            // MOCK STATE (Solo si es carga inicial y falla la API)
+        } else if (!append && works.length === 0) {
+            // MOCK STATE (Solo si es carga inicial y falla la API y no hay caché)
             works = [
                 { id: 'ej1', image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80', title: 'Acrílicas Cereza', category: 'Acrílicas', source: 'mock' },
                 { id: 'ej2', image: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80', title: 'Francesa Premium', category: 'Francesa', source: 'mock' },
@@ -210,10 +221,30 @@ export const renderInstagramGallery = (container) => {
         document.getElementById('nailTitle').value = title;
         document.getElementById('nailFile').value = '';
         
+        const nailClientSelect = document.getElementById('nailClient');
         const currentWork = id ? works.find(w => String(w.id) === String(id)) : null;
         const clientVal = currentWork ? (currentWork.client_id || '') : '';
-        const nailClientSelect = document.getElementById('nailClient');
-        if (nailClientSelect) nailClientSelect.value = clientVal;
+        
+        // Cargar clientas bajo demanda si aún no se han obtenido
+        if (clients.length === 0) {
+            if (nailClientSelect) {
+                nailClientSelect.innerHTML = '<option value="">Cargando clientas...</option>';
+            }
+            api.get('/clients').then(clientsRes => {
+                if (!clientsRes.error) {
+                    clients = clientsRes.data || clientsRes || [];
+                    if (nailClientSelect) {
+                        nailClientSelect.innerHTML = `
+                            <option value="">No vincular</option>
+                            ${clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                        `;
+                        nailClientSelect.value = clientVal;
+                    }
+                }
+            });
+        } else {
+            if (nailClientSelect) nailClientSelect.value = clientVal;
+        }
         
         if (cropper) {
             cropper.destroy();

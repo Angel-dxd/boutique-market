@@ -19,6 +19,19 @@ export const renderCalendar = async (container) => {
     let globalClients = [];
     let earningsReport = { hoy: 0, mes: 0, ano: 0 };
 
+    const cachedAppointmentsKey = `cached_appointments_${localStorage.getItem('currentUser') || 'default'}`;
+    const cachedEarningsKey = `cached_earnings_${localStorage.getItem('currentUser') || 'default'}`;
+
+    // Cargar datos cacheados primero (SWR)
+    try {
+        const cachedApts = localStorage.getItem(cachedAppointmentsKey);
+        const cachedEarn = localStorage.getItem(cachedEarningsKey);
+        if (cachedApts) appointments = JSON.parse(cachedApts);
+        if (cachedEarn) earningsReport = JSON.parse(cachedEarn);
+    } catch (e) {
+        console.error("Error al leer caché del calendario", e);
+    }
+
     const loadData = async () => {
         // Cargar calendarEvents
         const resAppointments = await api.get('/calendar/appointments');
@@ -41,10 +54,12 @@ export const renderCalendar = async (container) => {
             earningsReport = resEarnings;
         }
 
-        // Cargar todos los clientes para el Autocompletado del Input
-        const resClients = await api.get('/clients');
-        if (!resClients.error && Array.isArray(resClients.data)) {
-            globalClients = resClients.data;
+        // Guardar en caché
+        try {
+            localStorage.setItem(cachedAppointmentsKey, JSON.stringify(appointments));
+            localStorage.setItem(cachedEarningsKey, JSON.stringify(earningsReport));
+        } catch (e) {
+            console.error("Error al guardar caché del calendario", e);
         }
     };
 
@@ -301,6 +316,15 @@ export const renderCalendar = async (container) => {
         });
 
         if (appointmentModalOpen) {
+            // Cargar clientes de forma diferida para alimentar el autocompletado
+            if (globalClients.length === 0) {
+                api.get('/clients').then(resClients => {
+                    if (!resClients.error && Array.isArray(resClients.data)) {
+                        globalClients = resClients.data;
+                    }
+                });
+            }
+
             document.getElementById('closeAptModal').addEventListener('click', () => {
                 appointmentModalOpen = false;
                 safeRender();
@@ -466,12 +490,16 @@ export const renderCalendar = async (container) => {
         }
     };
 
-    container.innerHTML = `
-        <div class="p-4 md:p-8 w-full max-w-7xl mx-auto">
-            <h1 class="text-2xl md:text-3xl font-black text-gray-800 dark:text-gray-100 mb-8">Agenda</h1>
-            ${renderSkeleton('calendar')}
-        </div>
-    `;
+    if (appointments.length === 0) {
+        container.innerHTML = `
+            <div class="p-4 md:p-8 w-full max-w-7xl mx-auto">
+                <h1 class="text-2xl md:text-3xl font-black text-gray-800 dark:text-gray-100 mb-8">Agenda</h1>
+                ${renderSkeleton('calendar')}
+            </div>
+        `;
+    } else {
+        safeRender();
+    }
 
     await loadData();
     safeRender();

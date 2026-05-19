@@ -19,9 +19,28 @@ export const renderFinance = async (container) => {
 
     const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
+    const cachedFinanceKey = `cached_finance_${localStorage.getItem('currentUser') || 'default'}`;
+
+    // Cargar datos cacheados primero (SWR)
+    try {
+        const cached = localStorage.getItem(cachedFinanceKey);
+        if (cached) {
+            transactions = JSON.parse(cached);
+        }
+    } catch (e) {
+        console.error("Error al leer caché financiero", e);
+    }
+
     const loadData = async () => {
         const res = await api.get('/finance');
         transactions = res.error ? [] : res;
+        
+        // Guardar en caché
+        try {
+            localStorage.setItem(cachedFinanceKey, JSON.stringify(transactions));
+        } catch (e) {
+            console.error("Error al guardar caché financiero", e);
+        }
     };
 
     // Calcula resumen para un mes/año dado
@@ -393,6 +412,25 @@ export const renderFinance = async (container) => {
             }
         });
     };
+
+    if (transactions.length === 0) {
+        container.innerHTML = `
+            <div class="p-8 w-full max-w-7xl mx-auto space-y-8 animate-pulse">
+                <div class="flex items-center justify-between">
+                    <div class="h-8 bg-gray-250 rounded-xl w-48"></div>
+                    <div class="h-10 bg-gray-250 rounded-xl w-36"></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white h-28 rounded-3xl border border-gray-100"></div>
+                    <div class="bg-white h-28 rounded-3xl border border-gray-100"></div>
+                    <div class="bg-white h-28 rounded-3xl border border-gray-100"></div>
+                </div>
+                <div class="bg-white h-96 rounded-3xl border border-gray-100"></div>
+            </div>
+        `;
+    } else {
+        safeRender();
+    }
 
     await loadData();
     safeRender();
