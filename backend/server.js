@@ -29,6 +29,9 @@ const { tenantContext } = require('./src/config/db');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Habilitar trust proxy para identificar la IP real del cliente detrás del proxy de Render/Vercel
+app.set('trust proxy', 1);
+
 // ─── Middlewares de seguridad y parseo ───────────────────────────────────────
 app.use(helmet()); // Cabeceras de seguridad HTTP
 
