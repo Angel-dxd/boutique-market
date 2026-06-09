@@ -116,6 +116,10 @@ export const renderLogin = () => {
                         class="w-full bg-gray-900 text-white py-4 rounded-2xl font-black text-base hover:bg-gray-800 active:scale-95 transition-all shadow-xl shadow-gray-900/20 mt-2">
                         Entrar al Sistema
                     </button>
+                    <button type="button" id="bypassBtn-mobile"
+                        class="w-full bg-transparent text-gray-500 hover:text-emerald-600 py-3 rounded-2xl font-black text-sm active:scale-95 transition-all mt-1">
+                        Saltar Entrada (Modo Demo)
+                    </button>
                 </form>
 
                 <!-- Chips de negocios -->
@@ -194,6 +198,10 @@ export const renderLogin = () => {
                         <button type="submit"
                             class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-colors shadow-lg">
                             Entrar al Sistema
+                        </button>
+                        <button type="button" id="bypassBtn-desktop"
+                            class="w-full bg-transparent text-gray-500 hover:text-gray-900 py-3 rounded-xl font-bold text-sm transition-colors mt-2">
+                            Saltar Entrada (Modo Demo)
                         </button>
                     </form>
                 </div>
@@ -306,7 +314,19 @@ export const renderLogin = () => {
             } else {
                 localStorage.removeItem('currentUser');
                 localStorage.removeItem('authToken');
-                errorDiv.textContent = res.error || 'Credenciales incorrectas.';
+                const errorMsg = res.error || 'Credenciales incorrectas.';
+                errorDiv.innerHTML = `<div>${errorMsg}</div>`;
+                
+                // Si es un error del servidor, de conexión o base de datos offline, mostramos el botón de bypass de emergencia
+                if (errorMsg.includes('servidor') || errorMsg.includes('fetch') || errorMsg.includes('conn') || errorMsg.includes('error')) {
+                    const demoBtn = document.createElement('button');
+                    demoBtn.type = 'button';
+                    demoBtn.className = 'mt-2 text-xs font-bold text-red-600 hover:text-red-800 underline block w-full text-center cursor-pointer';
+                    demoBtn.textContent = 'Entrar en modo demostración (sin conexión)';
+                    demoBtn.addEventListener('click', () => triggerBypass(username));
+                    errorDiv.appendChild(demoBtn);
+                }
+                
                 errorDiv.classList.remove('hidden');
                 submitBtn.innerHTML = originalBtnText;
                 submitBtn.disabled = false;
@@ -317,11 +337,53 @@ export const renderLogin = () => {
             if (loadingOverlay) {
                 loadingOverlay.remove();
             }
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('authToken');
+            
+            errorDiv.innerHTML = `<div>Fallo al conectar con el servidor.</div>`;
+            const demoBtn = document.createElement('button');
+            demoBtn.type = 'button';
+            demoBtn.className = 'mt-2 text-xs font-bold text-red-600 hover:text-red-800 underline block w-full text-center cursor-pointer';
+            demoBtn.textContent = 'Entrar en modo demostración (sin conexión)';
+            demoBtn.addEventListener('click', () => triggerBypass(username));
+            errorDiv.appendChild(demoBtn);
+            
+            errorDiv.classList.remove('hidden');
             submitBtn.innerHTML = originalBtnText;
             submitBtn.disabled = false;
             lucide.createIcons();
         }
     };
+
+    const triggerBypass = (username) => {
+        let u = (username || '').trim().toLowerCase();
+        if (u === 'areli') {
+            u = 'arelys';
+        }
+        
+        // Configurar tenant
+        if (u === 'santi') {
+            localStorage.setItem('currentUser', 'santi');
+            localStorage.setItem('authToken', 'bypass-token-santi');
+            api.showToast('Accediendo en Modo Demo (El Gallo Azul)', false);
+            navigateTo('/market');
+        } else {
+            localStorage.setItem('currentUser', 'arelys');
+            localStorage.setItem('authToken', 'bypass-token-arelys');
+            api.showToast('Accediendo en Modo Demo (Oh-Nails)', false);
+            navigateTo('/boutique-welcome');
+        }
+    };
+
+    // Mobile bypass
+    document.getElementById('bypassBtn-mobile')?.addEventListener('click', () => {
+        triggerBypass(document.getElementById('username').value);
+    });
+
+    // Desktop bypass
+    document.getElementById('bypassBtn-desktop')?.addEventListener('click', () => {
+        triggerBypass(document.getElementById('username-desktop').value);
+    });
 
     // Mobile form
     document.getElementById('loginForm')?.addEventListener('submit', (e) => {
