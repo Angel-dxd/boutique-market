@@ -68,17 +68,32 @@ const router = async () => {
         }
     }
 
-    // Aplicar animación de transición (Turbo Feel)
-    const appContainer = document.getElementById('app');
-    appContainer.classList.remove('view-transition');
-    void appContainer.offsetWidth; 
-    appContainer.classList.add('view-transition');
+    const getBaseRoute = (p) => {
+        if (p.startsWith('/market')) return 'market';
+        if (p.startsWith('/boutique-welcome')) return 'boutique';
+        return p;
+    };
 
-    // Ejecuta el render con suavizado nativo si está disponible
-    if (document.startViewTransition) {
-        document.startViewTransition(() => route.render());
-    } else {
+    const newBase = getBaseRoute(path);
+    const isSubRouteTransition = window.__currentBaseRoute__ && window.__currentBaseRoute__ === newBase;
+    window.__currentBaseRoute__ = newBase;
+
+    if (isSubRouteTransition) {
+        // Carga la pestaña directamente sin parpadeos ni animaciones de página completa
         route.render();
+    } else {
+        // Aplicar animación de transición (Turbo Feel) solo cuando cambiamos de layout principal
+        const appContainer = document.getElementById('app');
+        appContainer.classList.remove('view-transition');
+        void appContainer.offsetWidth; 
+        appContainer.classList.add('view-transition');
+
+        // Ejecuta el render con suavizado nativo si está disponible
+        if (document.startViewTransition) {
+            document.startViewTransition(() => route.render());
+        } else {
+            route.render();
+        }
     }
 
     // --- TURBO PREFETCH ---

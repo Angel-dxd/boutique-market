@@ -16,6 +16,7 @@ const NAV_ITEMS = [
 ];
 
 let marketLayoutMounted = false;
+let tabContainers = {};
 
 /**
  * Renderiza el layout principal del Market.
@@ -81,10 +82,12 @@ export const renderMarketLayout = () => {
 
         document.getElementById('logoutBtn')?.addEventListener('click', () => {
             marketLayoutMounted = false;
+            tabContainers = {};
             navigateTo('/logout-confirmation', { from: 'market' });
         });
         document.getElementById('logoutBtnMobile')?.addEventListener('click', () => {
             marketLayoutMounted = false;
+            tabContainers = {};
             navigateTo('/logout-confirmation', { from: 'market' });
         });
         document.getElementById('changePwdBtn')?.addEventListener('click', () => {
@@ -129,6 +132,7 @@ export const renderMarketLayout = () => {
         lucide.createIcons();
         document.getElementById('logoutBtn')?.addEventListener('click', () => {
             marketLayoutMounted = false;
+            tabContainers = {};
             navigateTo('/logout-confirmation', { from: 'market' });
         });
         document.getElementById('changePwdBtn')?.addEventListener('click', () => {
@@ -136,9 +140,25 @@ export const renderMarketLayout = () => {
         });
     }
 
-    // Skeleton mientras carga
     const contentContainer = document.getElementById('layout-content');
-    contentContainer.innerHTML = `
+
+    // Ocultar todas las pestañas cacheadas
+    Object.values(tabContainers).forEach(el => el.classList.add('hidden'));
+
+    if (tabContainers[path]) {
+        // Mostrar instantáneamente si ya está en caché
+        tabContainers[path].classList.remove('hidden');
+        return;
+    }
+
+    // Crear un nuevo contenedor para la pestaña activa
+    const tabEl = document.createElement('div');
+    tabEl.className = 'w-full animate-in fade-in duration-200';
+    tabContainers[path] = tabEl;
+    contentContainer.appendChild(tabEl);
+
+    // Skeleton mientras carga
+    tabEl.innerHTML = `
         <div class="space-y-4 animate-pulse">
             <div class="h-8 bg-gray-200 rounded-2xl w-1/2"></div>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -150,17 +170,17 @@ export const renderMarketLayout = () => {
         </div>`;
 
     if (path === '/market') {
-        import('./home.js').then(m => m.renderMarketHome(contentContainer));
+        import('./home.js').then(m => m.renderMarketHome(tabEl));
     } else if (path === '/market/pedidos') {
-        import('./pedidos.js').then(m => m.renderPedidos(contentContainer));
+        import('./pedidos.js').then(m => m.renderPedidos(tabEl));
     } else if (path === '/market/proveedores') {
-        import('./proveedores.js').then(m => m.renderProveedores(contentContainer));
+        import('./proveedores.js').then(m => m.renderProveedores(tabEl));
     } else if (path === '/market/inventario') {
-        import('./inventario.js').then(m => m.renderInventario(contentContainer));
+        import('./inventario.js').then(m => m.renderInventario(tabEl));
     } else if (path === '/market/estadisticas') {
-        import('./estadisticas.js').then(m => m.renderEstadisticas(contentContainer));
+        import('./estadisticas.js').then(m => m.renderEstadisticas(tabEl));
     } else {
-        contentContainer.innerHTML = `<h2 class="text-xl font-bold">WIP: ${path}</h2>`;
+        tabEl.innerHTML = `<h2 class="text-xl font-bold">WIP: ${path}</h2>`;
     }
 };
 
