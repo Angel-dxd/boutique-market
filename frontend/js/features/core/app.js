@@ -20,8 +20,10 @@ const routes = {
     },
     '/logout-confirmation': {
         render: () => {
-            // Determina el origen desde el estado del historial
-            const from = history.state?.from || 'boutique';
+            // Determina el origen desde el estado del historial con fallback en currentUser de localStorage
+            const currentUser = localStorage.getItem('currentUser') || 'arelys';
+            const defaultFrom = currentUser === 'santi' ? 'market' : 'boutique';
+            const from = history.state?.from || defaultFrom;
             renderLogoutModal(from);
         },
         type: 'public'
@@ -43,6 +45,9 @@ const routes = {
  */
 export const navigateTo = (url, state = {}) => {
     window.location.hash = url;
+    if (state && Object.keys(state).length > 0) {
+        history.replaceState(state, '');
+    }
 };
 
 /**
