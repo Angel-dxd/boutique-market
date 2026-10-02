@@ -5,7 +5,7 @@
  */
 const fs = require('fs');
 const path = require('path');
-const db = require('../config/db'); // Contains tenantContext
+const db = require('../config/db');
 const configPath = path.join(__dirname, '../../config.json');
 let configData = {};
 
@@ -37,7 +37,7 @@ class MessengerService {
      */
     async sendMessage(type, data) {
         // Enforce the tenant context correctly isolating the configuration
-        const tenant = db.tenantContext.getStore() || 'market';
+        const tenant = 'ariel';
         const tenantConfig = configData[tenant];
 
         if (!tenantConfig || !tenantConfig.whatsapp) {
@@ -49,12 +49,9 @@ class MessengerService {
         let messageText = '';
 
         // Template Selection Logic based on the user request restrictions
-        if (type === 'remind-appointment') {
-            const { client, date } = data;
-            messageText = `Hola ${client}, te recordamos tu cita en Oh-Nails para el ${date}. ¡Te esperamos!`;
-        } else if (type === 'contact-provider') {
+        if (type === 'contact-provider') {
             const { providerName, productName } = data;
-            messageText = `Hola Proveedor ${providerName}, solicitamos reponer stock de ${productName || 'nuestros suministros'}. Gracias, El Gallo Azul.`;
+            messageText = `Hola Proveedor ${providerName}, solicitamos reponer stock de ${productName || 'nuestros suministros'}. Gracias, Ariel.`;
         } else {
             return { success: false, error: 'Tipo de mensaje desconocido.' };
         }

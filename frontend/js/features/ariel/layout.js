@@ -8,11 +8,11 @@ import { showChangePasswordModal } from '../shared/modal.js';
 
 
 const NAV_ITEMS = [
-    { href: '/market',              icon: 'layout-dashboard', label: 'Inicio',       mobileLabel: 'Inicio' },
-    { href: '/market/pedidos',      icon: 'shopping-cart',    label: 'Pedidos',      mobileLabel: 'Pedidos' },
-    { href: '/market/inventario',   icon: 'package',          label: 'Inventario',   mobileLabel: 'Stock' },
-    { href: '/market/proveedores',  icon: 'users',            label: 'Proveedores',  mobileLabel: 'Socios' },
-    { href: '/market/estadisticas', icon: 'bar-chart-2',      label: 'Estadísticas', mobileLabel: 'Stats' },
+    { href: '/dashboard',              icon: 'layout-dashboard', label: 'Inicio',       mobileLabel: 'Inicio' },
+    { href: '/dashboard/pedidos',      icon: 'shopping-cart',    label: 'Pedidos',      mobileLabel: 'Pedidos' },
+    { href: '/dashboard/inventario',   icon: 'package',          label: 'Inventario',   mobileLabel: 'Stock' },
+    { href: '/dashboard/proveedores',  icon: 'users',            label: 'Proveedores',  mobileLabel: 'Socios' },
+    { href: '/dashboard/estadisticas', icon: 'bar-chart-2',      label: 'Estadísticas', mobileLabel: 'Stats' },
 ];
 
 let marketLayoutMounted = false;
@@ -21,9 +21,9 @@ let tabContainers = {};
 /**
  * Renderiza el layout principal del Market.
  */
-export const renderMarketLayout = () => {
+export const renderArielLayout = () => {
     const app = document.getElementById('app');
-    const path = window.location.hash.slice(1).replace(/\/+$/, '') || '/market';
+    const path = window.location.hash.slice(1).replace(/\/+$/, '') || '/dashboard';
 
     if (!marketLayoutMounted) {
         app.innerHTML = `
@@ -31,8 +31,8 @@ export const renderMarketLayout = () => {
                 <!-- Sidebar (solo md+) -->
                 <aside class="hidden md:flex w-20 lg:w-64 bg-slate-900 text-white flex-col fixed h-full transition-all duration-300 z-50">
                     <div class="p-4 md:p-6 flex justify-center lg:justify-start items-center gap-3">
-                        <div class="w-8 h-8 md:w-10 md:h-10 bg-indigo-500 rounded-xl flex items-center justify-center font-black text-lg md:text-xl shadow-lg shadow-indigo-500/50">G</div>
-                        <span class="font-black text-xl hidden lg:block tracking-tight text-white">GALLO AZUL</span>
+                        <div class="w-8 h-8 md:w-10 md:h-10 bg-indigo-500 rounded-xl flex items-center justify-center font-black text-lg md:text-xl shadow-lg shadow-indigo-500/50">A</div>
+                        <span class="font-black text-xl hidden lg:block tracking-tight text-white">ARIEL</span>
                     </div>
                     <nav id="market-sidebar-nav" class="flex-1 mt-4 md:mt-6 px-2 md:px-4 space-y-2">
                         ${renderSidebar(path)}
@@ -169,15 +169,15 @@ export const renderMarketLayout = () => {
             <div class="h-52 bg-gray-100 rounded-2xl"></div>
         </div>`;
 
-    if (path === '/market') {
+    if (path === '/dashboard') {
         import('./home.js').then(m => m.renderMarketHome(tabEl));
-    } else if (path === '/market/pedidos') {
+    } else if (path === '/dashboard/pedidos') {
         import('./pedidos.js').then(m => m.renderPedidos(tabEl));
-    } else if (path === '/market/proveedores') {
+    } else if (path === '/dashboard/proveedores') {
         import('./proveedores.js').then(m => m.renderProveedores(tabEl));
-    } else if (path === '/market/inventario') {
+    } else if (path === '/dashboard/inventario') {
         import('./inventario.js').then(m => m.renderInventario(tabEl));
-    } else if (path === '/market/estadisticas') {
+    } else if (path === '/dashboard/estadisticas') {
         import('./estadisticas.js').then(m => m.renderEstadisticas(tabEl));
     } else {
         tabEl.innerHTML = `<h2 class="text-xl font-bold">WIP: ${path}</h2>`;

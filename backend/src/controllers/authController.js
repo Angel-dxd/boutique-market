@@ -14,8 +14,8 @@ const SALT_ROUNDS = 10;
  * Registra un nuevo usuario en el sistema.
  * 
  * Si `ALLOW_PUBLIC_REGISTER=true` en el entorno, se permite el registro abierto.
- * De lo contrario, solo se permite registrar al primer usuario (bootstrap) o 
- * si la solicitud proviene de un usuario autenticado del mismo tenant.
+ * Si `ALLOW_PUBLIC_REGISTER=true` en el entorno, se permite el registro abierto.
+ * De lo contrario, solo se permite registrar al primer usuario (bootstrap).
  *
  * @async
  * @function register
@@ -31,22 +31,20 @@ const SALT_ROUNDS = 10;
 const register = async (req, res, next) => {
     try {
         const { username, password, email } = req.body;
-        const tenant = req.headers['x-tenant-id'] === 'santi' ? 'santi' : 'market';
 
         // Política de Registro:
         // - Si ALLOW_PUBLIC_REGISTER=true, registro abierto (desarrollo).
-        // - De lo contrario, solo permite el bootstrap (0 usuarios) o usuarios autenticados del mismo tenant.
+        // - De lo contrario, solo permite el bootstrap (0 usuarios).
         const allowPublicRegister = process.env.ALLOW_PUBLIC_REGISTER === 'true';
         if (!allowPublicRegister) {
             const [countRows] = await db.query('SELECT COUNT(*) AS total FROM users');
             const totalUsers = Number(countRows?.[0]?.total || 0);
             const isBootstrap = totalUsers === 0;
-            const sameTenantUser = req.user && req.user.tenant === tenant;
 
-            if (!isBootstrap && !sameTenantUser) {
+            if (!isBootstrap) {
                 return res.status(403).json({
                     success: false,
-                    errors: ['Registro deshabilitado: requiere sesión válida del mismo tenant.']
+                    errors: ['Registro deshabilitado: solo se permite un usuario inicial.']
                 });
             }
         }
@@ -107,7 +105,6 @@ const login = async (req, res, next) => {
         const match = await bcrypt.compare(password, user.password);
 
         if (match) {
-            const tenant = req.headers['x-tenant-id'] === 'santi' ? 'santi' : 'market';
             const secret = process.env.JWT_SECRET;
             if (!secret) {
                 return res.status(500).json({ success: false, errors: ['JWT_SECRET no configurado en el servidor.'] });
@@ -116,8 +113,7 @@ const login = async (req, res, next) => {
             const token = jwt.sign(
                 {
                     sub: user.id,
-                    username: user.username,
-                    tenant
+                    username: user.username
                 },
                 secret,
                 { expiresIn: process.env.JWT_EXPIRES_IN || '12h' }
@@ -127,7 +123,7 @@ const login = async (req, res, next) => {
                 success: true,
                 message: 'Login correcto',
                 token,
-                user: { id: user.id, username: user.username, tenant }
+                user: { id: user.id, username: user.username }
             });
         } else {
             res.status(401).json({ success: false, errors: ['Credenciales inválidas'] });

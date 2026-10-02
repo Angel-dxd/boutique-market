@@ -6,8 +6,7 @@
  */
 
 import { renderLogin } from '../auth/login.js';
-import { renderMarketLayout } from '../market/layout.js';
-import { renderBoutiqueLayout } from '../boutique/layout.js';
+import { renderArielLayout } from '../ariel/layout.js';
 import { renderLogoutModal } from '../shared/logoutModal.js';
 
 /**
@@ -20,20 +19,12 @@ const routes = {
     },
     '/logout-confirmation': {
         render: () => {
-            // Determina el origen desde el estado del historial con fallback en currentUser de localStorage
-            const currentUser = localStorage.getItem('currentUser') || 'arelys';
-            const defaultFrom = currentUser === 'santi' ? 'market' : 'boutique';
-            const from = history.state?.from || defaultFrom;
-            renderLogoutModal(from);
+            renderLogoutModal('ariel');
         },
         type: 'public'
     },
-    '/market': {
-        render: renderMarketLayout,
-        type: 'protected'
-    },
-    '/boutique-welcome': {
-        render: renderBoutiqueLayout,
+    '/dashboard': {
+        render: renderArielLayout,
         type: 'protected'
     }
 };
@@ -62,10 +53,8 @@ const router = async () => {
 
     if (!route) {
         // Manejo de sub-rutas dinámicas
-        if (path.startsWith('/market')) {
-            route = routes['/market'];
-        } else if (path.startsWith('/boutique-welcome')) {
-            route = routes['/boutique-welcome'];
+        if (path.startsWith('/dashboard')) {
+            route = routes['/dashboard'];
         } else {
             // 404: Redirigir al inicio
             navigateTo('/');
@@ -74,8 +63,7 @@ const router = async () => {
     }
 
     const getBaseRoute = (p) => {
-        if (p.startsWith('/market')) return 'market';
-        if (p.startsWith('/boutique-welcome')) return 'boutique';
+        if (p.startsWith('/dashboard')) return 'dashboard';
         return p;
     };
 

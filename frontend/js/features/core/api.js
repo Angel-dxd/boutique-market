@@ -157,11 +157,8 @@ const processResponse = async (res) => {
  * @returns {Object} Cabeceras completas.
  */
 const getHeaders = (extraHeaders = {}) => {
-    const currentUser = localStorage.getItem('currentUser') || 'market';
-    const tenantId = currentUser === 'santi' ? 'santi' : 'market';
     const token = localStorage.getItem('authToken');
     return {
-        'x-tenant-id': tenantId,
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...extraHeaders
     };
@@ -194,11 +191,13 @@ export const api = {
             return data;
         } catch (e) {
             hideLoading();
-            if (e.status === 401) {
+            if (e.status === 401 && localStorage.getItem('authToken') !== 'bypass-token-ariel') {
                 localStorage.removeItem('authToken');
                 window.location.hash = '/';
             }
-            showToast(e.message, true);
+            if (localStorage.getItem('authToken') !== 'bypass-token-ariel') {
+                showToast(e.message, true);
+            }
             console.error('API Error:', e);
             return { error: e.message };
         }

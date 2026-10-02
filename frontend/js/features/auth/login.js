@@ -76,9 +76,9 @@ export const renderLogin = () => {
                 <div class="absolute top-0 left-0 w-40 h-40 rounded-full bg-emerald-500 blur-3xl opacity-20 -translate-x-1/2 -translate-y-1/2"></div>
                 <div class="absolute bottom-0 right-0 w-32 h-32 rounded-full bg-blue-500 blur-3xl opacity-20 translate-x-1/2 translate-y-1/2"></div>
                 <div class="relative z-10">
-                    <div class="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center font-black text-3xl shadow-xl shadow-emerald-500/40 mx-auto mb-4">M</div>
-                    <h1 class="text-2xl font-black tracking-tight">Marquez Business</h1>
-                    <p class="text-gray-400 text-sm mt-1">Sistema de Gestión Familiar</p>
+                    <div class="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center font-black text-3xl shadow-xl shadow-emerald-500/40 mx-auto mb-4">A</div>
+                    <h1 class="text-2xl font-black tracking-tight">ARIEL</h1>
+                    <p class="text-gray-400 text-sm mt-1">Sistema de Gestión Central</p>
                 </div>
             </div>
 
@@ -123,16 +123,11 @@ export const renderLogin = () => {
                 </form>
 
                 <!-- Chips de negocios -->
-                <div class="grid grid-cols-2 gap-3 mt-8">
-                    <div class="bg-emerald-50 border border-emerald-100 p-3 rounded-2xl text-center">
-                        <div class="w-2 h-2 rounded-full bg-emerald-500 mx-auto mb-1"></div>
-                        <p class="text-xs font-bold text-emerald-700">Oh-Nails</p>
-                        <p class="text-[10px] text-emerald-500">Estética</p>
-                    </div>
+                <div class="mt-8">
                     <div class="bg-blue-50 border border-blue-100 p-3 rounded-2xl text-center">
                         <div class="w-2 h-2 rounded-full bg-blue-500 mx-auto mb-1"></div>
-                        <p class="text-xs font-bold text-blue-700">El Gallo Azul</p>
-                        <p class="text-[10px] text-blue-500">Pollería</p>
+                        <p class="text-xs font-bold text-blue-700">Ariel</p>
+                        <p class="text-[10px] text-blue-500">Gestión</p>
                     </div>
                 </div>
             </div>
@@ -148,26 +143,19 @@ export const renderLogin = () => {
                         <div class="absolute bottom-10 right-10 w-40 h-40 rounded-full bg-blue-500 blur-3xl"></div>
                     </div>
                     <div class="relative z-10">
-                        <h1 class="text-4xl font-bold mb-2">Bienvenido</h1>
+                        <h1 class="text-4xl font-bold mb-2">Bienvenido a ARIEL</h1>
                         <p class="text-gray-400">Sistema de Gestión Integral</p>
                     </div>
                     <div class="relative z-10 space-y-6">
                         <div class="bg-white/10 p-4 rounded-xl backdrop-blur-sm border border-white/10">
                             <div class="flex items-center gap-3 mb-2">
-                                <div class="w-3 h-3 rounded-full bg-[#059669]"></div>
-                                <span class="font-bold">Oh-Nails</span>
-                            </div>
-                            <p class="text-xs text-gray-400">Gestión de Estética</p>
-                        </div>
-                        <div class="bg-white/10 p-4 rounded-xl backdrop-blur-sm border border-white/10">
-                            <div class="flex items-center gap-3 mb-2">
                                 <div class="w-3 h-3 rounded-full bg-[#0077b6]"></div>
-                                <span class="font-bold">El Gallo Azul</span>
+                                <span class="font-bold">Ariel</span>
                             </div>
-                            <p class="text-xs text-gray-400">Gestión de Pollería</p>
+                            <p class="text-xs text-gray-400">Gestión de Negocio</p>
                         </div>
                     </div>
-                    <p class="text-xs text-gray-500 relative z-10">© 2026 Marquez Family Business</p>
+                    <p class="text-xs text-gray-500 relative z-10">© 2026 ARIEL</p>
                 </div>
                 <!-- Login Form Side -->
                 <div class="md:w-1/2 p-12 flex flex-col justify-center">
@@ -231,9 +219,6 @@ export const renderLogin = () => {
 
     const doLogin = async (username, password, errorDiv, submitBtn) => {
         let u = username.trim().toLowerCase();
-        if (u === 'areli') {
-            u = 'arelys';
-        }
         const originalBtnText = submitBtn.innerHTML;
         
         // 1. Feedback visual inmediato (Turbo feel)
@@ -241,12 +226,7 @@ export const renderLogin = () => {
         submitBtn.disabled = true;
         lucide.createIcons();
         
-        // 2. Configuramos temporalmente el tenant basado en el usuario
-        if (u === 'santi') {
-            localStorage.setItem('currentUser', 'santi');
-        } else {
-            localStorage.setItem('currentUser', 'arelys');
-        }
+        localStorage.setItem('currentUser', u);
 
         errorDiv.classList.add('hidden');
 
@@ -305,12 +285,7 @@ export const renderLogin = () => {
 
             if (res && res.success) {
                 localStorage.setItem('authToken', res.token);
-                
-                if (res.user.tenant === 'santi') {
-                    navigateTo('/market');
-                } else {
-                    navigateTo('/boutique-welcome');
-                }
+                navigateTo('/dashboard');
             } else {
                 localStorage.removeItem('currentUser');
                 localStorage.removeItem('authToken');
@@ -357,22 +332,11 @@ export const renderLogin = () => {
 
     const triggerBypass = (username) => {
         let u = (username || '').trim().toLowerCase();
-        if (u === 'areli') {
-            u = 'arelys';
-        }
         
-        // Configurar tenant
-        if (u === 'santi') {
-            localStorage.setItem('currentUser', 'santi');
-            localStorage.setItem('authToken', 'bypass-token-santi');
-            api.showToast('Accediendo en Modo Demo (El Gallo Azul)', false);
-            navigateTo('/market');
-        } else {
-            localStorage.setItem('currentUser', 'arelys');
-            localStorage.setItem('authToken', 'bypass-token-arelys');
-            api.showToast('Accediendo en Modo Demo (Oh-Nails)', false);
-            navigateTo('/boutique-welcome');
-        }
+        localStorage.setItem('currentUser', u || 'ariel');
+        localStorage.setItem('authToken', 'bypass-token-ariel');
+        api.showToast('Accediendo en Modo Demo (ARIEL)', false);
+        navigateTo('/dashboard');
     };
 
     // Mobile bypass

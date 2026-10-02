@@ -1,5 +1,5 @@
 /**
- * Configuración de Base de Datos Multi-tenant — Postgres (Supabase).
+ * Configuración de Base de Datos — Postgres (Supabase).
  *
  * Capa de compatibilidad: este módulo expone una API equivalente a la de
  * mysql2/promise para minimizar los cambios necesarios en los controllers
@@ -17,50 +17,36 @@
  * `rows.insertId` cuando aplica.
  */
 const { Pool } = require('pg');
-const { AsyncLocalStorage } = require('async_hooks');
 
-const tenantContext = new AsyncLocalStorage();
-const tenants = ['market', 'santi'];
-const pools = {};
+const connStr = process.env.DATABASE_URL_ARIEL;
+let pool;
 
-for (const tenant of tenants) {
-    const envVar = `DATABASE_URL_${tenant.toUpperCase()}`;
-    const connStr = process.env[envVar];
-    
-    if (connStr) {
-        console.log(`📡 Inicializando pool para tenant '${tenant}' usando ${envVar}...`);
-        pools[tenant] = new Pool({
-            connectionString: connStr,
-            ssl: { rejectUnauthorized: false },
-            max: 10, // Límite razonable para evitar saturar Supabase Free Tier
-            min: 0,  // Cerramos conexiones inactivas para liberar recursos
-            idleTimeoutMillis: 30000, 
-            connectionTimeoutMillis: 5000,
-            keepAlive: true, 
+if (connStr) {
+    console.log(`📡 Inicializando pool para 'ariel'...`);
+    pool = new Pool({
+        connectionString: connStr,
+        ssl: { rejectUnauthorized: false },
+        max: 10,
+        min: 0,
+        idleTimeoutMillis: 30000, 
+        connectionTimeoutMillis: 5000,
+        keepAlive: true, 
+    });
+
+    pool.query('SELECT 1')
+        .then(() => { 
+            console.log(`✅ ¡Conexión verificada con éxito para 'ariel'!`); 
+        })
+        .catch(err => {
+            console.error(`❌ ERROR de conexión inicial: ${err.message}`);
         });
-
-        // Test de conexión inicial (sin keep-alive agresivo que satura la base de datos)
-        pools[tenant].query('SELECT 1')
-            .then(() => { 
-                console.log(`✅ ¡Conexión verificada con éxito para '${tenant}'!`); 
-            })
-            .catch(err => {
-                console.error(`❌ ERROR de conexión inicial en tenant '${tenant}': ${err.message}`);
-            });
-    } else {
-        console.warn(`⚠️ ADVERTENCIA: La variable ${envVar} no está definida.`);
-        console.warn(`   El backend intentará arrancar, pero las consultas a '${tenant}' fallarán.`);
-    }
+} else {
+    console.warn(`⚠️ ADVERTENCIA: La variable DATABASE_URL_ARIEL no está definida.`);
 }
 
 // Caché para traducciones SQL (Turbo Translator)
 const sqlCache = new Map();
 
-/**
- * Traduce sintaxis MySQL → PostgreSQL con caché.
- * @param {string} sql
- * @returns {string} SQL adaptado a Postgres.
- */
 function adaptSql(sql) {
     if (sqlCache.has(sql)) return sqlCache.get(sql);
 
@@ -82,22 +68,12 @@ function adaptSql(sql) {
     return out;
 }
 
-/**
- * Ejecuta una consulta y devuelve resultados con shape compatible con mysql2.
- * @param {string} sql
- * @param {Array} params
- * @returns {Promise<[Array, Object]>}
- */
 async function runQuery(sql, params = []) {
-    const tenant = tenantContext.getStore() || 'market';
-    const pool = pools[tenant] || pools['market'];
+    if (!pool) throw new Error("La base de datos no está inicializada (DATABASE_URL_ARIEL).");
 
     const adapted = adaptSql(sql);
     const result = await pool.query(adapted, params);
 
-    // Devolvemos el array de filas pero le adjuntamos metadatos para
-    // mantener compatibilidad con el código que espera `result.affectedRows`
-    // o `result.insertId` (estilo mysql2).
     const rows = result.rows;
     Object.defineProperty(rows, 'affectedRows', { value: result.rowCount, enumerable: false });
     Object.defineProperty(rows, 'insertId', { value: rows[0]?.id ?? null, enumerable: false });
@@ -108,7 +84,6 @@ async function runQuery(sql, params = []) {
 const db = {
     query: runQuery,
     execute: runQuery,
-    tenantContext
 };
 
 module.exports = db;

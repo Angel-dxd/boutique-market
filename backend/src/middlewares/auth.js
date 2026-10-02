@@ -17,7 +17,6 @@ const getBearerToken = (authorizationHeader = '') => {
 
 /**
  * Verifica el token JWT y asocia el usuario a la petición (`req.user`).
- * También valida que el tenant (inquilino) coincida entre el token y la cabecera.
  * 
  * @param {Object} req - Objeto de petición Express.
  * @param {Object} options - Opciones de validación.
@@ -45,28 +44,10 @@ const verifyTokenAndAttachUser = (req, { required }) => {
 
     try {
         const decoded = jwt.verify(token, secret);
-        const tenantFromToken = decoded.tenant;
-        const tenantFromHeader = req.headers['x-tenant-id'];
 
-        if (!tenantFromToken) {
-            return {
-                status: 401,
-                body: { success: false, errors: ['Token inválido: tenant ausente.'] }
-            };
-        }
-
-        if (tenantFromHeader && tenantFromHeader !== tenantFromToken) {
-            return {
-                status: 403,
-                body: { success: false, errors: ['No autorizado: tenant no coincide con el token.'] }
-            };
-        }
-
-        req.headers['x-tenant-id'] = tenantFromToken;
         req.user = {
             id: decoded.sub,
-            username: decoded.username,
-            tenant: tenantFromToken
+            username: decoded.username
         };
         return null;
     } catch (error) {

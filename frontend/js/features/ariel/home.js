@@ -34,14 +34,14 @@ export const renderMarketHome = async (container) => {
         container.innerHTML = `
             <div class="p-4 md:p-8 w-full max-w-7xl mx-auto space-y-6 md:space-y-10">
                 <header>
-                    <h1 class="text-2xl md:text-4xl font-black text-gray-800 tracking-tight">Market Dashboard</h1>
-                    <p class="text-gray-500 font-medium text-sm md:text-base">Resumen general de El Gallo Azul</p>
+                    <h1 class="text-2xl md:text-4xl font-black text-gray-800 tracking-tight">Ariel Dashboard</h1>
+                    <p class="text-gray-500 font-medium text-sm md:text-base">Resumen general del negocio</p>
                 </header>
 
                 <!-- KPIs -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
                     <!-- Stock Crítico -->
-                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer" onclick="window.navigateTo('/market/inventario')">
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer" onclick="window.navigateTo('/dashboard/inventario')">
                         <div>
                             <p class="text-gray-400 font-bold uppercase text-xs tracking-wider">Stock Crítico</p>
                             <h2 class="text-2xl md:text-4xl font-black ${criticalStock > 0 ? 'text-red-500' : 'text-emerald-500'} mt-1 md:mt-2">${criticalStock}</h2>
@@ -53,7 +53,7 @@ export const renderMarketHome = async (container) => {
                     </div>
 
                     <!-- Facturas Pendientes -->
-                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer" onclick="window.navigateTo('/market/pedidos')">
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer" onclick="window.navigateTo('/dashboard/pedidos')">
                         <div>
                             <p class="text-gray-400 font-bold uppercase text-xs tracking-wider">Facturas Pendientes</p>
                             <h2 class="text-2xl md:text-4xl font-black text-blue-600 mt-1 md:mt-2">${pendingInvoices}</h2>
@@ -65,7 +65,7 @@ export const renderMarketHome = async (container) => {
                     </div>
 
                     <!-- Proveedores Activos -->
-                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer" onclick="window.navigateTo('/market/proveedores')">
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer" onclick="window.navigateTo('/dashboard/proveedores')">
                         <div>
                             <p class="text-gray-400 font-bold uppercase text-xs tracking-wider">Proveedores</p>
                             <h2 class="text-2xl md:text-4xl font-black text-purple-600 mt-1 md:mt-2">${activeSuppliers}</h2>
@@ -100,7 +100,7 @@ export const renderMarketHome = async (container) => {
                             const badgeColor = diffDays < 0 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700';
                             const label = diffDays < 0 ? 'Caducado' : `Caduca en ${diffDays} días`;
                             return `
-                                <div class="bg-white border border-red-100 rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:border-red-300 transition-colors" onclick="window.navigateTo('/market/inventario')">
+                                <div class="bg-white border border-red-100 rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:border-red-300 transition-colors" onclick="window.navigateTo('/dashboard/inventario')">
                                     <div class="min-w-0 flex-1">
                                         <h4 class="font-bold text-gray-800 text-sm truncate">${p.title}</h4>
                                         <p class="text-xs text-gray-400 mt-0.5">Stock: ${p.stock} uds</p>
@@ -172,8 +172,8 @@ export const renderMarketHome = async (container) => {
         lucide.createIcons();
 
         // Bind Actions
-        document.getElementById('btnInv').addEventListener('click', () => navigateTo('/market/inventario'));
-        document.getElementById('btnOrders').addEventListener('click', () => navigateTo('/market/pedidos'));
+        document.getElementById('btnInv').addEventListener('click', () => navigateTo('/dashboard/inventario'));
+        document.getElementById('btnOrders').addEventListener('click', () => navigateTo('/dashboard/pedidos'));
 
         // Calculator Logic
         const calcModal = document.getElementById('calcModal');

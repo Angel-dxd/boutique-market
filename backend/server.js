@@ -20,11 +20,7 @@ const { authLimiter, generalLimiter } = require('./src/middlewares/rateLimiter')
 logger.info('--- BACKEND STARTING ---');
 logger.info(`Hora: ${new Date().toISOString()} | PID: ${process.pid}`);
 
-/**
- * Contexto de Tenant: Permite el aislamiento de datos por base de datos
- * dependiendo del identificador enviado en la cabecera 'x-tenant-id'.
- */
-const { tenantContext } = require('./src/config/db');
+
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -68,11 +64,7 @@ app.use(compression());
 // en las rutas de autenticación para prevenir ataques de fuerza bruta.
 app.use('/api/', generalLimiter);
 
-// ─── Middleware Multitenant ───────────────────────────────────────────────────
-app.use((req, res, next) => {
-    const tenantId = req.headers['x-tenant-id'] === 'santi' ? 'santi' : 'market';
-    tenantContext.run(tenantId, () => next());
-});
+
 
 // ─── Rutas ────────────────────────────────────────────────────────────────────
 const { requireAuth } = require('./src/middlewares/auth');
@@ -98,20 +90,19 @@ app.use('/api/finance', requireAuth, financeRoutes);
 app.use('/api/calendar', requireAuth, calendarRoutes);
 app.use('/api/messages', requireAuth, messageRoutes);
 app.use('/api/gallery', requireAuth, galleryRoutes);
-app.use('/api/nails', requireAuth, require('./src/routes/nailsRoutes'));
 
 // ─── Swagger UI (Documentación de la API) ────────────────────────────────────
 // Disponible en /api/docs — accesible en cualquier entorno.
 const swaggerUi = require('swagger-ui-express');
 const openApiSpec = require('./src/config/swagger');
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec, {
-    customSiteTitle: 'Boutique Market API Docs',
+    customSiteTitle: 'Ariel API Docs',
     customCss: '.swagger-ui .topbar { background-color: #1e293b; }'
 }));
 
 app.get('/', (req, res) => {
     res.json({
-        message: 'Boutique & Market API Running',
+        message: 'Ariel API Running',
         status: 'Online',
         environment: process.env.NODE_ENV || 'development',
         docs: '/api/docs'
