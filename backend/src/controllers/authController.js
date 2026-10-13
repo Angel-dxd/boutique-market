@@ -90,9 +90,6 @@ const login = async (req, res, next) => {
         // Normalizar nombre de usuario (mapear areli coloquial a arelys oficial)
         if (username) {
             username = username.trim().toLowerCase();
-            if (username === 'areli') {
-                username = 'arelys';
-            }
         }
 
         // Buscar usuario

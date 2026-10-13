@@ -140,10 +140,9 @@ CREATE TABLE IF NOT EXISTS users (
     created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
 );
 
--- Usuarios iniciales (Passwords: arelys123 / santi123)
+-- Usuarios iniciales (Passwords: ariel123)
 -- Hash bcrypt real generado para el primer acceso
 INSERT INTO users (username, password, role) VALUES 
-('arelys', '$2b$10$u5B3TIaqePMksf6iHVH6KuVzoAW./VIL250kPCVGOIeq1SC65MBwy', 'user'),
-('santi', '$2b$10$K3L7hHzSftB35/3Ofip.PudEY00k5ENiLYdm1KQlfRdBrTOSOwuFK', 'user')
+('ariel', '$2a$10$ezPQP8WWFN0lzoiBWtP5Xeq47L.7V8y.NnjP36bS9Cdrigj/Kta76', 'user')
 ON CONFLICT (username) DO NOTHING;
 

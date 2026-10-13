@@ -105,9 +105,9 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- ============================================================
--- USUARIO INICIAL (contraseña: arelys123)
+-- USUARIO INICIAL (contraseña: ariel123)
 -- Hash bcrypt generado con 10 rounds
 -- ============================================================
 INSERT INTO users (username, password, role)
-VALUES ('arelys', '$2b$10$u5B3TIaqePMksf6iHVH6KuVzoAW./VIL250kPCVGOIeq1SC65MBwy', 'user')
+VALUES ('ariel', '$2a$10$ezPQP8WWFN0lzoiBWtP5Xeq47L.7V8y.NnjP36bS9Cdrigj/Kta76', 'user')
 ON CONFLICT (username) DO NOTHING;
