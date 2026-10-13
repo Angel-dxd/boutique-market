@@ -25,7 +25,9 @@ const getTransactions = async (req, res, next) => {
             amount: r.amount,
             type: r.type,
             category: r.category,
-            date: r.date
+            date: r.date,
+            description: r.description,
+            provider_id: r.provider_id
         }));
         res.status(200).json(transactions);
     } catch (err) { next(err); }
@@ -57,8 +59,8 @@ const createTransaction = async (req, res, next) => {
         }
 
         const [result] = await db.query(
-            `INSERT INTO finance (amount, type, category, date) VALUES (?, ?, ?, ?)`,
-            [parseFloat(amount), type, category || description, date ? new Date(date) : new Date()]
+            `INSERT INTO finance (amount, type, category, date, description, provider_id) VALUES (?, ?, ?, ?, ?, ?)`,
+            [parseFloat(amount), type, category || null, date ? new Date(date) : new Date(), description || null, req.body.provider_id || null]
         );
 
         res.status(201).json({ id: result.insertId, amount, type, category, date });
@@ -89,8 +91,8 @@ const updateTransaction = async (req, res, next) => {
         const { amount, type, category, date, description } = req.body;
 
         const [result] = await db.query(
-            `UPDATE finance SET amount=?, type=?, category=?, date=? WHERE id=?`,
-            [parseFloat(amount), type, category || description, date ? new Date(date) : new Date(), id]
+            `UPDATE finance SET amount=?, type=?, category=?, date=?, description=?, provider_id=? WHERE id=?`,
+            [parseFloat(amount), type, category || null, date ? new Date(date) : new Date(), description || null, req.body.provider_id || null, id]
         );
         if (result.affectedRows === 0) { const e = new Error('Rechazado: La transacción no existe'); e.status = 404; throw e; }
 

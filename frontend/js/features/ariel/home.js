@@ -1,223 +1,97 @@
 /**
- * market/home.js
- * Vista de resumen (Dashboard) para El Gallo Azul.
- * Muestra KPIs de inventario, facturas pendientes y accesos rápidos.
+ * ariel/home.js
+ * Vista de resumen (Dashboard) para ARIEL.
+ * Muestra KPIs de Rendimiento (Beneficio, Ingresos, Gastos).
  */
 import { api } from '../core/api.js';
 import { navigateTo } from '../core/app.js';
 
-/**
- * Renderiza el contenido de la página de inicio del Market.
- * @param {HTMLElement} container - El elemento donde se inyectará el HTML.
- */
 export const renderMarketHome = async (container) => {
     const render = async () => {
-        // Fetch real data from MySQL API directly instead of local store to persist on F5
-        const [productsResponse, invoicesResponse, suppliersResponse, alertsResponse] = await Promise.all([
-            api.get('/products'),
-            api.get('/invoices'),
-            api.get('/providers'),
-            api.get('/products/alerts')
-        ]);
+        const financeResponse = await api.get('/finance');
+        const finances = financeResponse.error ? [] : (financeResponse.data || financeResponse || []);
 
-        const products = productsResponse.error ? [] : (productsResponse.data || productsResponse);
-        const invoices = invoicesResponse.error ? [] : (invoicesResponse.data || invoicesResponse);
-        const suppliers = suppliersResponse.error ? [] : (suppliersResponse.data || suppliersResponse);
-        const alerts = alertsResponse.error ? [] : (alertsResponse.data || alertsResponse || []);
-
-        // KPIs
-        const criticalStock = products.filter(p => parseInt(p.stock) <= parseInt(p.min_stock)).length;
-        const pendingInvoices = invoices.length;
-        const totalDebt = invoices.reduce((acc, inv) => acc + parseFloat(inv.amount || 0), 0);
-        const activeSuppliers = suppliers.length;
+        const totalIncome = finances.filter(f => f.type === 'income').reduce((acc, f) => acc + parseFloat(f.amount || 0), 0);
+        const totalExpenses = finances.filter(f => f.type === 'expense').reduce((acc, f) => acc + parseFloat(f.amount || 0), 0);
+        const rawProfit = totalIncome - totalExpenses;
+        const profitMargin = totalIncome > 0 ? ((rawProfit / totalIncome) * 100).toFixed(1) : 0;
 
         container.innerHTML = `
             <div class="p-4 md:p-8 w-full max-w-7xl mx-auto space-y-6 md:space-y-10">
                 <header>
                     <h1 class="text-2xl md:text-4xl font-black text-gray-800 tracking-tight">Ariel Dashboard</h1>
-                    <p class="text-gray-500 font-medium text-sm md:text-base">Resumen general del negocio</p>
+                    <p class="text-gray-500 font-medium text-sm md:text-base">Resumen general del rendimiento</p>
                 </header>
 
                 <!-- KPIs -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
-                    <!-- Stock Crítico -->
-                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer" onclick="window.navigateTo('/dashboard/inventario')">
-                        <div>
-                            <p class="text-gray-400 font-bold uppercase text-xs tracking-wider">Stock Crítico</p>
-                            <h2 class="text-2xl md:text-4xl font-black ${criticalStock > 0 ? 'text-red-500' : 'text-emerald-500'} mt-1 md:mt-2">${criticalStock}</h2>
-                            <p class="text-xs text-gray-400 mt-1">Productos bajo mínimo</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                    
+                    <!-- Rendimiento (Beneficio) -->
+                    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 md:p-8 rounded-3xl shadow-lg border border-indigo-500 flex flex-col justify-between group hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer text-white" onclick="window.navigateTo('/dashboard/rendimiento')">
+                        <div class="flex justify-between items-start">
+                            <p class="text-indigo-100 font-bold uppercase text-xs tracking-wider">Beneficio Bruto</p>
+                            <i data-lucide="trending-up" class="w-8 h-8 text-white opacity-80"></i>
                         </div>
-                        <div class="p-4 rounded-2xl ${criticalStock > 0 ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500'}">
-                            <i data-lucide="alert-triangle" width="32"></i>
-                        </div>
-                    </div>
-
-                    <!-- Facturas Pendientes -->
-                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer" onclick="window.navigateTo('/dashboard/pedidos')">
-                        <div>
-                            <p class="text-gray-400 font-bold uppercase text-xs tracking-wider">Facturas Pendientes</p>
-                            <h2 class="text-2xl md:text-4xl font-black text-blue-600 mt-1 md:mt-2">${pendingInvoices}</h2>
-                            <p class="text-xs text-gray-400 mt-1">Total: ${totalDebt.toFixed(2)}€</p>
-                        </div>
-                        <div class="p-4 rounded-2xl bg-blue-50 text-blue-600">
-                            <i data-lucide="file-text" width="32"></i>
+                        <div class="mt-6">
+                            <h2 class="text-4xl md:text-5xl font-black">${rawProfit.toFixed(2)}€</h2>
+                            <p class="text-sm text-indigo-100 mt-2 font-medium bg-white/20 inline-block px-3 py-1.5 rounded-full">Margen de beneficio: ${profitMargin}%</p>
                         </div>
                     </div>
 
-                    <!-- Proveedores Activos -->
-                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer" onclick="window.navigateTo('/dashboard/proveedores')">
-                        <div>
-                            <p class="text-gray-400 font-bold uppercase text-xs tracking-wider">Proveedores</p>
-                            <h2 class="text-2xl md:text-4xl font-black text-purple-600 mt-1 md:mt-2">${activeSuppliers}</h2>
-                            <p class="text-xs text-gray-400 mt-1">Registrados</p>
+                    <!-- Ingresos -->
+                    <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-between group hover:shadow-md transition-all cursor-pointer" onclick="window.navigateTo('/dashboard/rendimiento')">
+                        <div class="flex justify-between items-start">
+                            <p class="text-gray-400 font-bold uppercase text-xs tracking-wider">Ingresos Totales</p>
+                            <div class="p-3 rounded-xl bg-emerald-50 text-emerald-500"><i data-lucide="arrow-up-circle" class="w-6 h-6"></i></div>
                         </div>
-                        <div class="p-4 rounded-2xl bg-purple-50 text-purple-600">
-                            <i data-lucide="users" width="32"></i>
+                        <div class="mt-4">
+                            <h2 class="text-3xl md:text-4xl font-black text-emerald-600">${totalIncome.toFixed(2)}€</h2>
+                            <p class="text-sm text-gray-400 mt-2 font-medium">Histórico acumulado</p>
+                        </div>
+                    </div>
+
+                    <!-- Gastos -->
+                    <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-between group hover:shadow-md transition-all cursor-pointer" onclick="window.navigateTo('/dashboard/rendimiento')">
+                        <div class="flex justify-between items-start">
+                            <p class="text-gray-400 font-bold uppercase text-xs tracking-wider">Gastos Totales</p>
+                            <div class="p-3 rounded-xl bg-red-50 text-red-500"><i data-lucide="arrow-down-circle" class="w-6 h-6"></i></div>
+                        </div>
+                        <div class="mt-4">
+                            <h2 class="text-3xl md:text-4xl font-black text-red-500">${totalExpenses.toFixed(2)}€</h2>
+                            <p class="text-sm text-gray-400 mt-2 font-medium">Desglosado en módulo</p>
                         </div>
                     </div>
                 </div>
-
-                <!-- Alertas de Caducidad -->
-                ${alerts.length > 0 ? `
-                <div class="bg-red-50/50 border border-red-100 rounded-[2rem] p-5 md:p-6 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
-                            <h3 class="text-base md:text-lg font-black text-red-700">Productos Próximos a Vencer</h3>
-                        </div>
-                        <span class="bg-red-100 text-red-700 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                            ${alerts.length} ${alerts.length === 1 ? 'Alerta' : 'Alertas'}
-                        </span>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-                        ${alerts.map(p => {
-                            const expiry = new Date(p.expiration_date);
-                            const today = new Date();
-                            today.setHours(0, 0, 0, 0);
-                            expiry.setHours(0, 0, 0, 0);
-                            const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                            const formattedDate = expiry.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-                            const badgeColor = diffDays < 0 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700';
-                            const label = diffDays < 0 ? 'Caducado' : `Caduca en ${diffDays} días`;
-                            return `
-                                <div class="bg-white border border-red-100 rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:border-red-300 transition-colors" onclick="window.navigateTo('/dashboard/inventario')">
-                                    <div class="min-w-0 flex-1">
-                                        <h4 class="font-bold text-gray-800 text-sm truncate">${p.title}</h4>
-                                        <p class="text-xs text-gray-400 mt-0.5">Stock: ${p.stock} uds</p>
-                                    </div>
-                                    <span class="shrink-0 text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${badgeColor}">
-                                        ${label}
-                                    </span>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-                ` : ''}
 
                 <!-- Quick Actions -->
                 <div>
-                    <h3 class="text-base md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Acciones Rápidas</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
-                        <button id="btnInv" class="p-4 md:p-8 bg-white border border-gray-200 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group">
-                            <div class="p-3 md:p-4 bg-emerald-100 text-emerald-600 rounded-2xl w-fit mb-3 md:mb-4 group-hover:scale-110 transition-transform">
-                                <i data-lucide="package" class="w-6 h-6 md:w-8 md:h-8"></i>
+                    <h3 class="text-base md:text-xl font-bold text-gray-800 mb-4 md:mb-6">Accesos directos</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                        
+                        <button id="btnFinance" class="p-6 md:p-8 bg-white border border-gray-200 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group flex items-center gap-6" onclick="window.navigateTo('/dashboard/rendimiento')">
+                            <div class="p-4 bg-indigo-100 text-indigo-600 rounded-2xl group-hover:scale-110 transition-transform">
+                                <i data-lucide="wallet" class="w-8 h-8"></i>
                             </div>
-                            <h4 class="text-base md:text-xl font-black text-gray-800">Inventario</h4>
-                            <p class="text-xs md:text-sm text-gray-500 mt-1">Gestionar stock y productos</p>
+                            <div>
+                                <h4 class="text-lg font-black text-gray-800">Rendimiento Financiero</h4>
+                                <p class="text-sm text-gray-500 mt-1">Registrar gastos e ingresos diarios</p>
+                            </div>
                         </button>
 
-                        <button id="btnOrders" class="p-4 md:p-8 bg-white border border-gray-200 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group">
-                            <div class="p-3 md:p-4 bg-blue-100 text-blue-600 rounded-2xl w-fit mb-3 md:mb-4 group-hover:scale-110 transition-transform">
-                                <i data-lucide="shopping-cart" class="w-6 h-6 md:w-8 md:h-8"></i>
+                        <button id="btnProfile" class="p-6 md:p-8 bg-white border border-gray-200 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left group flex items-center gap-6" onclick="window.navigateTo('/dashboard/perfil')">
+                            <div class="p-4 bg-gray-100 text-gray-600 rounded-2xl group-hover:scale-110 transition-transform">
+                                <i data-lucide="user" class="w-8 h-8"></i>
                             </div>
-                            <h4 class="text-base md:text-xl font-black text-gray-800">Pedidos</h4>
-                            <p class="text-xs md:text-sm text-gray-500 mt-1">Registrar facturas y compras</p>
+                            <div>
+                                <h4 class="text-lg font-black text-gray-800">Mi Perfil</h4>
+                                <p class="text-sm text-gray-500 mt-1">Ajustar datos personales y preferencias</p>
+                            </div>
                         </button>
-
-                        <button id="btnCalc" class="p-4 md:p-8 bg-[#1e293b] text-white rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-left group relative overflow-hidden">
-                            <div class="absolute top-0 right-0 p-8 md:p-12 opacity-10">
-                                <i data-lucide="calculator" width="80"></i>
-                            </div>
-                            <div class="p-3 md:p-4 bg-gray-700/50 rounded-2xl w-fit mb-3 md:mb-4 group-hover:scale-110 transition-transform backdrop-blur-sm">
-                                <i data-lucide="calculator" class="w-6 h-6 md:w-8 md:h-8"></i>
-                            </div>
-                            <h4 class="text-base md:text-xl font-black">Calculadora</h4>
-                            <p class="text-xs md:text-sm text-gray-400 mt-1">Herramienta rápida</p>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Simple Calculator Modal -->
-                <div id="calcModal" class="fixed inset-0 z-50 bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm">
-                    <div class="bg-gray-900 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-gray-800">
-                        <div class="flex justify-between items-center mb-4 text-white">
-                            <span class="font-bold">Calculadora</span>
-                            <button id="closeCalc"><i data-lucide="x"></i></button>
-                        </div>
-                        <input id="calcDisplay" class="w-full bg-black/50 text-right text-4xl text-white p-4 rounded-xl mb-4 font-mono tracking-widest outline-none border border-gray-800" readonly value="0" />
-                        <div class="grid grid-cols-4 gap-2">
-                            ${['C', '÷', '×', '⌫', '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '=', '0', '.'].map(k => {
-            const isOp = ['÷', '×', '-', '+', '='].includes(k);
-            const isAction = ['C', '⌫'].includes(k);
-            const colSpan = k === '0' ? 'col-span-2' : '';
-            const bg = isOp ? 'bg-orange-500 text-white' : isAction ? 'bg-gray-600 text-white' : 'bg-gray-800 text-gray-200';
-            return `<button class="${colSpan} ${bg} p-4 rounded-xl font-bold text-xl active:scale-95 transition-transform calc-btn" data-val="${k}">${k}</button>`;
-        }).join('')}
-                        </div>
                     </div>
                 </div>
             </div>
         `;
         lucide.createIcons();
-
-        // Bind Actions
-        document.getElementById('btnInv').addEventListener('click', () => navigateTo('/dashboard/inventario'));
-        document.getElementById('btnOrders').addEventListener('click', () => navigateTo('/dashboard/pedidos'));
-
-        // Calculator Logic
-        const calcModal = document.getElementById('calcModal');
-        const display = document.getElementById('calcDisplay');
-        let currentExp = '';
-
-        document.getElementById('btnCalc').addEventListener('click', () => {
-            calcModal.classList.remove('hidden');
-            calcModal.classList.add('flex');
-        });
-
-        document.getElementById('closeCalc').addEventListener('click', () => {
-            calcModal.classList.add('hidden');
-            calcModal.classList.remove('flex');
-            currentExp = '';
-            display.value = '0';
-        });
-
-        document.querySelectorAll('.calc-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const val = btn.getAttribute('data-val');
-                if (val === 'C') {
-                    currentExp = '';
-                    display.value = '0';
-                } else if (val === '⌫') {
-                    currentExp = currentExp.slice(0, -1);
-                    display.value = currentExp || '0';
-                } else if (val === '=') {
-                    try {
-                        // Safe eval equivalent
-                        const safeExp = currentExp.replace('×', '*').replace('÷', '/');
-                        display.value = eval(safeExp) || 0; // Keeping it simple for vanilla JS demo
-                        currentExp = display.value;
-                    } catch {
-                        display.value = 'Error';
-                        currentExp = '';
-                    }
-                } else {
-                    if (val === '.' && currentExp.includes('.') && !['+', '-', '×', '÷'].some(op => currentExp.includes(op))) return; // simple check
-                    currentExp += val;
-                    display.value = currentExp;
-                }
-            });
-        });
 
         // Hack for global navigation from onclick
         window.navigateTo = navigateTo;

@@ -1,17 +1,25 @@
-# Blueprint de despliegue para Render (https://render.com).
-# Subiendo este archivo al repositorio, Render detectará automáticamente el
-# servicio al hacer "New from Blueprint".
+# Blueprint de despliegue para Render (https://render.com)
+# Proyecto: ARIEL — Sistema de gestión personal
 #
-# IMPORTANTE: las variables marcadas con `sync: false` deben configurarse
-# manualmente desde el dashboard (no se versionan).
+# INSTRUCCIONES:
+#   1. Ve a https://render.com → New → Blueprint
+#   2. Conecta este repositorio y selecciona la rama: proyecto-ariel
+#   3. Las variables con `sync: false` debes configurarlas manualmente
+#      en el dashboard de Render (Environment → Add Secret)
+#
+# Variables que DEBES rellenar manualmente:
+#   - DATABASE_URL_ARIEL  → connection string de Supabase (URI mode, port 6543)
+#   - JWT_SECRET          → openssl rand -hex 64
+#   - ENCRYPTION_KEY      → exactamente 32 caracteres aleatorios
+#   - ALLOWED_ORIGINS     → URL de tu frontend en Vercel (ej: https://ariel-market.vercel.app)
 
 services:
   - type: web
-    name: boutique-market-api
+    name: ariel-api
     runtime: node
     region: frankfurt
     plan: free
-    branch: main
+    branch: proyecto-ariel
     rootDir: backend
     buildCommand: npm install
     startCommand: node server.js
@@ -26,12 +34,10 @@ services:
       - key: ALLOW_PUBLIC_REGISTER
         value: "false"
       - key: ALLOWED_ORIGINS
-        sync: false   # https://boutique-market.vercel.app,https://*.vercel.app
+        sync: false   # https://ariel-market.vercel.app  (URL de Vercel — sin barra final)
       - key: JWT_SECRET
-        sync: false   # cadena aleatoria de 64+ caracteres
-      - key: DATABASE_URL_MARKET
-        sync: false   # connectionString Supabase del tenant 'market'
-      - key: DATABASE_URL_SANTI
-        sync: false   # connectionString Supabase del tenant 'santi'
+        sync: false   # genera con: openssl rand -hex 64
+      - key: DATABASE_URL_ARIEL
+        sync: false   # Supabase → Project Settings → Database → Connection string → URI (port 6543)
       - key: ENCRYPTION_KEY
-        sync: false   # 32 bytes hex para cifrado de email (utils/crypto)
+        sync: false   # exactamente 32 caracteres aleatorios

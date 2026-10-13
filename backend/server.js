@@ -78,6 +78,7 @@ const financeRoutes = require('./src/routes/financeRoutes');
 const calendarRoutes = require('./src/routes/calendarRoutes');
 const messageRoutes = require('./src/routes/messageRoutes');
 const galleryRoutes = require('./src/routes/galleryRoutes');
+const profileRoutes = require('./src/routes/profileRoutes');
 
 // authLimiter se aplica exclusivamente a las rutas de autenticación
 app.use('/api/auth', authLimiter, authRoutes);
@@ -90,6 +91,7 @@ app.use('/api/finance', requireAuth, financeRoutes);
 app.use('/api/calendar', requireAuth, calendarRoutes);
 app.use('/api/messages', requireAuth, messageRoutes);
 app.use('/api/gallery', requireAuth, galleryRoutes);
+app.use('/api/profile', requireAuth, profileRoutes);
 
 // ─── Swagger UI (Documentación de la API) ────────────────────────────────────
 // Disponible en /api/docs — accesible en cualquier entorno.

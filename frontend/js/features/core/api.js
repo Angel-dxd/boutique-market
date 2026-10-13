@@ -9,7 +9,7 @@ const API_URL = window.__API_URL__
     || window.REACT_APP_API_URL 
     || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
         ? 'http://localhost:3000/api' 
-        : 'https://boutique-market.onrender.com/api');
+        : 'https://ariel-api.onrender.com/api');
 
 // --- SISTEMA DE CACHÉ Y CARGA ---
 const cache = new Map();
@@ -171,7 +171,15 @@ export const api = {
     hideLoading,
     showToast,
     get: async (endpoint) => {
-        // Consultar caché primero
+        if (localStorage.getItem('authToken') === 'bypass-token-ariel') {
+            return new Promise(resolve => setTimeout(() => {
+                let data = [];
+                if (endpoint === '/finance') data = JSON.parse(localStorage.getItem('demo_finance')) || [];
+                if (endpoint === '/profile') data = JSON.parse(localStorage.getItem('demo_profile')) || {};
+                resolve(data);
+            }, 300));
+        }
+        
         const cached = cache.get(endpoint);
         if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
             return cached.data;
@@ -179,14 +187,9 @@ export const api = {
 
         showLoading();
         try {
-            const res = await fetch(`${API_URL}${endpoint}`, {
-                headers: getHeaders()
-            });
+            const res = await fetch(`${API_URL}${endpoint}`, { headers: getHeaders() });
             const data = await processResponse(res);
-            
-            // Guardar en caché
             cache.set(endpoint, { data, timestamp: Date.now() });
-            
             hideLoading();
             return data;
         } catch (e) {
@@ -195,15 +198,27 @@ export const api = {
                 localStorage.removeItem('authToken');
                 window.location.hash = '/';
             }
-            if (localStorage.getItem('authToken') !== 'bypass-token-ariel') {
-                showToast(e.message, true);
-            }
+            showToast(e.message, true);
             console.error('API Error:', e);
             return { error: e.message };
         }
     },
     post: async (endpoint, payloadData) => {
-        clearCache(); // Limpiar caché al escribir
+        if (localStorage.getItem('authToken') === 'bypass-token-ariel') {
+            return new Promise(resolve => setTimeout(() => {
+                if (endpoint === '/finance') {
+                    const finances = JSON.parse(localStorage.getItem('demo_finance')) || [];
+                    payloadData.id = Date.now();
+                    payloadData.date = new Date().toISOString();
+                    finances.push(payloadData);
+                    localStorage.setItem('demo_finance', JSON.stringify(finances));
+                }
+                showToast('Operación completada con éxito.');
+                resolve({ success: true, ...payloadData });
+            }, 400));
+        }
+
+        clearCache();
         showLoading();
         try {
             const res = await fetch(`${API_URL}${endpoint}`, {
@@ -213,12 +228,11 @@ export const api = {
             });
             const data = await processResponse(res);
             hideLoading();
-
             showToast('Operación completada con éxito.');
             return data;
         } catch (e) {
             hideLoading();
-            if (e.status === 401) {
+            if (e.status === 401 && localStorage.getItem('authToken') !== 'bypass-token-ariel') {
                 localStorage.removeItem('authToken');
                 window.location.hash = '/';
             }
@@ -228,7 +242,17 @@ export const api = {
         }
     },
     put: async (endpoint, payloadData) => {
-        clearCache(); // Limpiar caché al escribir
+        if (localStorage.getItem('authToken') === 'bypass-token-ariel') {
+            return new Promise(resolve => setTimeout(() => {
+                if (endpoint === '/profile') {
+                    localStorage.setItem('demo_profile', JSON.stringify(payloadData));
+                }
+                showToast('Los cambios se han guardado.');
+                resolve({ success: true });
+            }, 400));
+        }
+
+        clearCache();
         showLoading();
         try {
             const res = await fetch(`${API_URL}${endpoint}`, {
@@ -238,12 +262,11 @@ export const api = {
             });
             const data = await processResponse(res);
             hideLoading();
-
             showToast('Los cambios se han guardado.');
             return data;
         } catch (e) {
             hideLoading();
-            if (e.status === 401) {
+            if (e.status === 401 && localStorage.getItem('authToken') !== 'bypass-token-ariel') {
                 localStorage.removeItem('authToken');
                 window.location.hash = '/';
             }
@@ -253,7 +276,14 @@ export const api = {
         }
     },
     delete: async (endpoint) => {
-        clearCache(); // Limpiar caché al escribir
+        if (localStorage.getItem('authToken') === 'bypass-token-ariel') {
+            return new Promise(resolve => setTimeout(() => {
+                showToast('Registro eliminado exitosamente.');
+                resolve({ success: true });
+            }, 400));
+        }
+
+        clearCache();
         showLoading();
         try {
             const res = await fetch(`${API_URL}${endpoint}`, {
@@ -262,12 +292,11 @@ export const api = {
             });
             const data = await processResponse(res);
             hideLoading();
-
             showToast('Registro eliminado exitosamente.');
             return data;
         } catch (e) {
             hideLoading();
-            if (e.status === 401) {
+            if (e.status === 401 && localStorage.getItem('authToken') !== 'bypass-token-ariel') {
                 localStorage.removeItem('authToken');
                 window.location.hash = '/';
             }

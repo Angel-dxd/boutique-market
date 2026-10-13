@@ -11,7 +11,7 @@ const _BACKEND_ROOT = window.__API_URL__
     ? window.__API_URL__.replace(/\/api$/, '')
     : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:3000'
-        : 'https://boutique-market-api.onrender.com');
+        : 'https://ariel-api.onrender.com');
 
 /**
  * Warm-up ping: lanza una petición ligera al backend en cuanto carga la pantalla

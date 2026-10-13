@@ -1,7 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "outputDirectory": ".",
-  "rewrites": [],
+  "rewrites": [
+    { "source": "/((?!css|js|favicon|robots).*)", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",

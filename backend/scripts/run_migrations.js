@@ -1,77 +1,75 @@
 /**
  * scripts/run_migrations.js
- * Script para ejecutar las migraciones de base de datos multitenant.
- * Intenta aplicar de forma segura e idempotente las nuevas columnas en Oh-Nails y El Gallo Azul.
+ * Ejecuta migraciones de BD para el proyecto ARIEL.
+ * Se ejecuta automáticamente al arrancar el servidor (server.js).
+ * Es idempotente: usa IF NOT EXISTS / IF EXISTS para no fallar si ya están aplicadas.
  */
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const { Pool } = require('pg');
 
-const tenants = ['market', 'santi'];
+const migrations = [
+    // Asegurar columnas personales en users (por si la BD viene del schema base)
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(255) DEFAULT NULL;`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date DATE DEFAULT NULL;`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(50) DEFAULT NULL;`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS address_street VARCHAR(255) DEFAULT NULL;`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS address_number VARCHAR(50) DEFAULT NULL;`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS address_city VARCHAR(100) DEFAULT NULL;`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS address_state VARCHAR(100) DEFAULT NULL;`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS address_zip VARCHAR(50) DEFAULT NULL;`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS address_country VARCHAR(100) DEFAULT NULL;`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS profession VARCHAR(255) DEFAULT NULL;`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS professional_scope VARCHAR(255) DEFAULT NULL;`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS language VARCHAR(10) DEFAULT 'es';`,
 
-const migrations = {
-    market: [
-        `ALTER TABLE gallery ADD COLUMN IF NOT EXISTS client_id INT DEFAULT NULL;`,
-        `
-        DO $$
-        BEGIN
-            IF NOT EXISTS (
-                SELECT 1 FROM information_schema.table_constraints 
-                WHERE constraint_name = 'fk_gallery_client'
-            ) THEN
-                ALTER TABLE gallery ADD CONSTRAINT fk_gallery_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL;
-            END IF;
-        END $$;
-        `
-    ],
-    santi: [
-        `ALTER TABLE inventory ADD COLUMN IF NOT EXISTS expiration_date DATE DEFAULT NULL;`,
-        `ALTER TABLE gallery ADD COLUMN IF NOT EXISTS client_id INT DEFAULT NULL;`,
-        `
-        DO $$
-        BEGIN
-            IF NOT EXISTS (
-                SELECT 1 FROM information_schema.table_constraints 
-                WHERE constraint_name = 'fk_gallery_client'
-            ) THEN
-                ALTER TABLE gallery ADD CONSTRAINT fk_gallery_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL;
-            END IF;
-        END $$;
-        `
-    ]
-};
+    // Asegurar columnas extendidas en finance
+    `ALTER TABLE finance ADD COLUMN IF NOT EXISTS description TEXT DEFAULT NULL;`,
+    `ALTER TABLE finance ADD COLUMN IF NOT EXISTS provider_id INT DEFAULT NULL;`,
+
+    // Asegurar FK de finance → providers
+    `
+    DO $$
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_finance_provider') THEN
+            ALTER TABLE finance ADD CONSTRAINT fk_finance_provider 
+                FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE SET NULL;
+        END IF;
+    END;
+    $$;
+    `,
+
+    // Asegurar columna expiration_date en inventory
+    `ALTER TABLE inventory ADD COLUMN IF NOT EXISTS expiration_date DATE DEFAULT NULL;`,
+];
 
 async function execute() {
-    console.log('🚀 Iniciando ejecutor de migraciones para Boutique Market...');
-    
-    for (const tenant of tenants) {
-        const envVar = `DATABASE_URL_${tenant.toUpperCase()}`;
-        const connStr = process.env[envVar];
-        
-        if (!connStr || connStr.includes('<ref>') || connStr.includes('<password>')) {
-            console.warn(`⚠️ Saltando migración para '${tenant}' (DATABASE_URL no configurado o contiene plantillas).`);
-            continue;
-        }
+    const connStr = process.env.DATABASE_URL_ARIEL;
 
-        console.log(`📡 Conectando a Supabase para tenant '${tenant}'...`);
-        const pool = new Pool({
-            connectionString: connStr,
-            ssl: { rejectUnauthorized: false }
-        });
-
-        try {
-            const queries = migrations[tenant] || [];
-            for (const sql of queries) {
-                console.log(`⚡ Ejecutando en '${tenant}':\n   ${sql.trim().split('\n')[0]}...`);
-                await pool.query(sql);
-            }
-            console.log(`✅ Migración completada con éxito para '${tenant}'.\n`);
-        } catch (err) {
-            console.error(`❌ ERROR al migrar '${tenant}': ${err.message}\n`);
-        } finally {
-            await pool.end();
-        }
+    if (!connStr || connStr.includes('<ref>') || connStr.includes('<password>')) {
+        console.warn('⚠️  DATABASE_URL_ARIEL no configurado o contiene plantillas. Saltando migraciones.');
+        return;
     }
-    
+
+    console.log('🚀 Iniciando migraciones ARIEL...');
+    const pool = new Pool({
+        connectionString: connStr,
+        ssl: { rejectUnauthorized: false }
+    });
+
+    try {
+        for (const sql of migrations) {
+            const preview = sql.trim().split('\n')[0].substring(0, 80);
+            console.log(`⚡ ${preview}...`);
+            await pool.query(sql);
+        }
+        console.log('✅ Migraciones ARIEL completadas con éxito.');
+    } catch (err) {
+        console.error(`❌ ERROR en migración ARIEL: ${err.message}`);
+        // No relanzamos el error: si el schema ya está correcto, el servidor debe seguir
+    } finally {
+        await pool.end();
+    }
+
     console.log('🏁 Proceso de migración finalizado.');
 }
 

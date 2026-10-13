@@ -1,25 +1,20 @@
 /**
- * market/layout.js
- * Componente de diseño (Shell) para el módulo de El Gallo Azul (Market).
+ * ariel/layout.js
+ * Componente de diseño (Shell) para ARIEL.
  * Gestiona la barra lateral (sidebar), navegación móvil y carga de vistas.
  */
 import { navigateTo } from '../core/app.js';
-import { showChangePasswordModal } from '../shared/modal.js';
-
 
 const NAV_ITEMS = [
     { href: '/dashboard',              icon: 'layout-dashboard', label: 'Inicio',       mobileLabel: 'Inicio' },
-    { href: '/dashboard/pedidos',      icon: 'shopping-cart',    label: 'Pedidos',      mobileLabel: 'Pedidos' },
-    { href: '/dashboard/inventario',   icon: 'package',          label: 'Inventario',   mobileLabel: 'Stock' },
-    { href: '/dashboard/proveedores',  icon: 'users',            label: 'Proveedores',  mobileLabel: 'Socios' },
-    { href: '/dashboard/estadisticas', icon: 'bar-chart-2',      label: 'Estadísticas', mobileLabel: 'Stats' },
+    { href: '/dashboard/rendimiento',  icon: 'wallet',           label: 'Rendimiento',  mobileLabel: 'Finanzas' },
 ];
 
 let marketLayoutMounted = false;
 let tabContainers = {};
 
 /**
- * Renderiza el layout principal del Market.
+ * Renderiza el layout principal de Ariel.
  */
 export const renderArielLayout = () => {
     const app = document.getElementById('app');
@@ -37,10 +32,10 @@ export const renderArielLayout = () => {
                     <nav id="market-sidebar-nav" class="flex-1 mt-4 md:mt-6 px-2 md:px-4 space-y-2">
                         ${renderSidebar(path)}
                         <div class="pt-4 mt-4 border-t border-slate-700 space-y-1">
-                            <button id="changePwdBtn"
+                            <button id="profileBtn"
                                 class="w-full nav-item flex items-center justify-center lg:justify-start gap-3 p-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
-                                <i data-lucide="key-round" class="w-5 h-5 md:w-6 md:h-6"></i>
-                                <span class="hidden lg:block font-bold">Seguridad</span>
+                                <i data-lucide="user" class="w-5 h-5 md:w-6 md:h-6"></i>
+                                <span class="hidden lg:block font-bold">Perfil</span>
                             </button>
                             <button id="logoutBtn"
                                 class="w-full nav-item flex items-center justify-center lg:justify-start gap-3 p-3 rounded-xl hover:bg-red-900/50 text-red-400 hover:text-red-200 transition-colors">
@@ -70,9 +65,9 @@ export const renderArielLayout = () => {
                                 ${isActive ? '<div class="absolute top-0 w-8 h-0.5 bg-indigo-500 rounded-full"></div>' : ''}
                             </a>`;
                         }).join('')}
-                        <button id="logoutBtnMobile" class="relative flex flex-col items-center justify-center flex-1 gap-0.5 text-red-400">
-                            <i data-lucide="log-out" class="w-5 h-5"></i>
-                            <span class="text-[10px] font-bold leading-none">Salir</span>
+                        <button id="profileBtnMobile" class="relative flex flex-col items-center justify-center flex-1 gap-0.5 text-gray-400">
+                            <i data-lucide="user" class="w-5 h-5"></i>
+                            <span class="text-[10px] font-bold leading-none">Perfil</span>
                         </button>
                     </div>
                 </nav>
@@ -85,13 +80,11 @@ export const renderArielLayout = () => {
             tabContainers = {};
             navigateTo('/logout-confirmation', { from: 'market' });
         });
-        document.getElementById('logoutBtnMobile')?.addEventListener('click', () => {
-            marketLayoutMounted = false;
-            tabContainers = {};
-            navigateTo('/logout-confirmation', { from: 'market' });
+        document.getElementById('profileBtn')?.addEventListener('click', () => {
+            navigateTo('/dashboard/perfil');
         });
-        document.getElementById('changePwdBtn')?.addEventListener('click', () => {
-            showChangePasswordModal();
+        document.getElementById('profileBtnMobile')?.addEventListener('click', () => {
+            navigateTo('/dashboard/perfil');
         });
 
         marketLayoutMounted = true;
@@ -100,10 +93,10 @@ export const renderArielLayout = () => {
         document.getElementById('market-sidebar-nav').innerHTML = `
             ${renderSidebar(path)}
             <div class="pt-4 mt-4 border-t border-slate-700 space-y-1">
-                <button id="changePwdBtn"
+                <button id="profileBtn"
                     class="w-full nav-item flex items-center justify-center lg:justify-start gap-3 p-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
-                    <i data-lucide="key-round" class="w-5 h-5 md:w-6 md:h-6"></i>
-                    <span class="hidden lg:block font-bold">Seguridad</span>
+                    <i data-lucide="user" class="w-5 h-5 md:w-6 md:h-6"></i>
+                    <span class="hidden lg:block font-bold">Perfil</span>
                 </button>
                 <button id="logoutBtn"
                     class="w-full nav-item flex items-center justify-center lg:justify-start gap-3 p-3 rounded-xl hover:bg-red-900/50 text-red-400 hover:text-red-200 transition-colors">
@@ -119,7 +112,6 @@ export const renderArielLayout = () => {
                 const isActive = a.getAttribute('href') === path;
                 a.className = `relative flex flex-col items-center justify-center flex-1 gap-0.5 transition-colors ${isActive ? 'text-indigo-600' : 'text-gray-400'}`;
                 
-                // Ensure the active indicator exists or is removed
                 const indicator = a.querySelector('.absolute.top-0');
                 if (isActive && !indicator) {
                     a.insertAdjacentHTML('beforeend', '<div class="absolute top-0 w-8 h-0.5 bg-indigo-500 rounded-full"></div>');
@@ -135,8 +127,8 @@ export const renderArielLayout = () => {
             tabContainers = {};
             navigateTo('/logout-confirmation', { from: 'market' });
         });
-        document.getElementById('changePwdBtn')?.addEventListener('click', () => {
-            showChangePasswordModal();
+        document.getElementById('profileBtn')?.addEventListener('click', () => {
+            navigateTo('/dashboard/perfil');
         });
     }
 
@@ -170,17 +162,16 @@ export const renderArielLayout = () => {
         </div>`;
 
     if (path === '/dashboard') {
-        import('./home.js').then(m => m.renderMarketHome(tabEl));
-    } else if (path === '/dashboard/pedidos') {
-        import('./pedidos.js').then(m => m.renderPedidos(tabEl));
-    } else if (path === '/dashboard/proveedores') {
-        import('./proveedores.js').then(m => m.renderProveedores(tabEl));
-    } else if (path === '/dashboard/inventario') {
-        import('./inventario.js').then(m => m.renderInventario(tabEl));
-    } else if (path === '/dashboard/estadisticas') {
-        import('./estadisticas.js').then(m => m.renderEstadisticas(tabEl));
+        import('./home.js').then(m => m.renderMarketHome(tabEl)).catch(err => {
+            console.error("Error loading home:", err);
+            tabEl.innerHTML = '<p class="text-red-500">Error cargando inicio.</p>';
+        });
+    } else if (path === '/dashboard/rendimiento') {
+        import('./rendimiento.js').then(m => m.renderRendimiento(tabEl));
+    } else if (path === '/dashboard/perfil') {
+        import('./perfil.js').then(m => m.renderPerfil(tabEl));
     } else {
-        tabEl.innerHTML = `<h2 class="text-xl font-bold">WIP: ${path}</h2>`;
+        tabEl.innerHTML = `<h2 class="text-xl font-bold">404 No Encontrado: ${path}</h2>`;
     }
 };
 
