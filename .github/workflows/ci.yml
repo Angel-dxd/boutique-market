@@ -52,6 +52,8 @@ jobs:
         env:
           NODE_ENV: test
           JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci_test_secret_key_minimum_32_chars' }}
+          # Clave solo de prueba: el módulo de cifrado se niega a arrancar sin ella
+          ENCRYPTION_KEY: ci-test-only-key-32-chars-xxxxxx
           ALLOW_PUBLIC_REGISTER: 'true'
         run: npm test
 
