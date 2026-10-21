@@ -28,7 +28,9 @@ export const renderBoutiqueHome = async (container) => {
         api.get(`/calendar/dashboard?today=${todayStr}&tomorrow=${tomorrowStr}`)
     ]);
 
-    const realClientCount = Array.isArray(clientsRes) ? clientsRes.length : 0;
+    // La API devuelve { success, data: [...] }; se acepta también un array plano por compatibilidad
+    const clientList = Array.isArray(clientsRes) ? clientsRes : (clientsRes.data || []);
+    const realClientCount = clientsRes.error ? 0 : clientList.length;
 
     // Si error o falla la BD, defaults seguros
     const todayList = dashRes.error ? [] : (dashRes.today || []);

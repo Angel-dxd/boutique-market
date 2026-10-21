@@ -154,3 +154,8 @@ backend/*.db
 # Scripts de desarrollo (solo los temporales)
 test_*.sh
 debug_*.sh
+# Volcados con datos reales de los negocios: nunca se suben al repositorio
+backend/data_market.sql
+backend/migration_market.sql
+backend/migration_santi.sql
+backend/scripts/seed_users.js

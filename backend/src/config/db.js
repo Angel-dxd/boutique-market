@@ -23,6 +23,9 @@ const tenantContext = new AsyncLocalStorage();
 const tenants = ['market', 'santi'];
 const pools = {};
 
+// Supabase exige SSL; el Postgres local de docker-compose no lo usa (DB_SSL=false).
+const sslConfig = process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false };
+
 for (const tenant of tenants) {
     const envVar = `DATABASE_URL_${tenant.toUpperCase()}`;
     const connStr = process.env[envVar];
@@ -31,7 +34,7 @@ for (const tenant of tenants) {
         console.log(`📡 Inicializando pool para tenant '${tenant}' usando ${envVar}...`);
         pools[tenant] = new Pool({
             connectionString: connStr,
-            ssl: { rejectUnauthorized: false },
+            ssl: sslConfig,
             max: 10, // Límite razonable para evitar saturar Supabase Free Tier
             min: 0,  // Cerramos conexiones inactivas para liberar recursos
             idleTimeoutMillis: 30000, 

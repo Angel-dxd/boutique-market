@@ -5,6 +5,7 @@
  */
 import { navigateTo } from '../core/app.js';
 import { api } from '../core/api.js';
+import { DEMO_TOKEN_PREFIX } from '../core/demoApi.js';
 
 // ─── URL base (mismo origen que api.js) ──────────────────────────────────────
 const _BACKEND_ROOT = window.__API_URL__
@@ -94,7 +95,7 @@ export const renderLogin = () => {
                             <i data-lucide="user" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5"></i>
                             <input type="text" id="username"
                                 class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all text-gray-800 font-medium text-base"
-                                placeholder="Ej: arelys" required autocomplete="username" />
+                                placeholder="Tu usuario" required autocomplete="username" />
                         </div>
                     </div>
                     <div>
@@ -116,10 +117,19 @@ export const renderLogin = () => {
                         class="w-full bg-gray-900 text-white py-4 rounded-2xl font-black text-base hover:bg-gray-800 active:scale-95 transition-all shadow-xl shadow-gray-900/20 mt-2">
                         Entrar al Sistema
                     </button>
-                    <button type="button" id="bypassBtn-mobile"
-                        class="w-full bg-transparent text-gray-500 hover:text-emerald-600 py-3 rounded-2xl font-black text-sm active:scale-95 transition-all mt-1">
-                        Saltar Entrada (Modo Demo)
-                    </button>
+                    <div class="mt-3 pt-4 border-t border-gray-100">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider text-center mb-2">Probar la demo · datos ficticios</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" data-demo="arelys"
+                                class="py-3 rounded-2xl border border-emerald-200 text-emerald-700 font-bold text-sm hover:bg-emerald-50 active:scale-95 transition-all">
+                                Oh-Nails
+                            </button>
+                            <button type="button" data-demo="santi"
+                                class="py-3 rounded-2xl border border-blue-200 text-blue-700 font-bold text-sm hover:bg-blue-50 active:scale-95 transition-all">
+                                El Gallo Azul
+                            </button>
+                        </div>
+                    </div>
                 </form>
 
                 <!-- Chips de negocios -->
@@ -179,7 +189,7 @@ export const renderLogin = () => {
                                 <i data-lucide="user" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" width="20"></i>
                                 <input type="text" id="username-desktop"
                                     class="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all"
-                                    placeholder="Ej: arelys" required />
+                                    placeholder="Tu usuario" required />
                             </div>
                         </div>
                         <div>
@@ -199,10 +209,19 @@ export const renderLogin = () => {
                             class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-colors shadow-lg">
                             Entrar al Sistema
                         </button>
-                        <button type="button" id="bypassBtn-desktop"
-                            class="w-full bg-transparent text-gray-500 hover:text-gray-900 py-3 rounded-xl font-bold text-sm transition-colors mt-2">
-                            Saltar Entrada (Modo Demo)
-                        </button>
+                        <div class="mt-4 pt-5 border-t border-gray-100">
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider text-center mb-3">Probar la demo · datos ficticios</p>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button type="button" data-demo="arelys"
+                                    class="py-3 rounded-xl border border-emerald-200 text-emerald-700 font-bold text-sm hover:bg-emerald-50 transition-colors">
+                                    Oh-Nails
+                                </button>
+                                <button type="button" data-demo="santi"
+                                    class="py-3 rounded-xl border border-blue-200 text-blue-700 font-bold text-sm hover:bg-blue-50 transition-colors">
+                                    El Gallo Azul
+                                </button>
+                            </div>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -364,25 +383,20 @@ export const renderLogin = () => {
         // Configurar tenant
         if (u === 'santi') {
             localStorage.setItem('currentUser', 'santi');
-            localStorage.setItem('authToken', 'bypass-token-santi');
-            api.showToast('Accediendo en Modo Demo (El Gallo Azul)', false);
+            localStorage.setItem('authToken', `${DEMO_TOKEN_PREFIX}santi`);
+            api.showToast('Modo demo: El Gallo Azul con datos ficticios', false);
             navigateTo('/market');
         } else {
             localStorage.setItem('currentUser', 'arelys');
-            localStorage.setItem('authToken', 'bypass-token-arelys');
-            api.showToast('Accediendo en Modo Demo (Oh-Nails)', false);
+            localStorage.setItem('authToken', `${DEMO_TOKEN_PREFIX}arelys`);
+            api.showToast('Modo demo: Oh-Nails con datos ficticios', false);
             navigateTo('/boutique-welcome');
         }
     };
 
-    // Mobile bypass
-    document.getElementById('bypassBtn-mobile')?.addEventListener('click', () => {
-        triggerBypass(document.getElementById('username').value);
-    });
-
-    // Desktop bypass
-    document.getElementById('bypassBtn-desktop')?.addEventListener('click', () => {
-        triggerBypass(document.getElementById('username-desktop').value);
+    // Accesos al modo demo (datos ficticios, sin conexión con el backend)
+    document.querySelectorAll('[data-demo]').forEach(btn => {
+        btn.addEventListener('click', () => triggerBypass(btn.dataset.demo));
     });
 
     // Mobile form

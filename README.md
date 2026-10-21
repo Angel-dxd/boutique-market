@@ -1,88 +1,115 @@
-# 🧾 Boutique Market — Sistema de Gestión Multitenant Cloud-Native
+# 🧾 Boutique Market — Sistema de Gestión Multitenant
 
-> **Trabajo de Fin de Grado · Desarrollo de Aplicaciones Multiplataforma (DAM)**
-> Plataforma web integral para la gestión de dos negocios familiares reales, construida con arquitectura **Serverless / Cloud-First** utilizando Node.js, PostgreSQL (Supabase) y Vercel.
+[![CI](https://github.com/Angel-dxd/boutique-market/actions/workflows/ci.yml/badge.svg)](https://github.com/Angel-dxd/boutique-market/actions/workflows/ci.yml)
+
+> **Proyecto final · Desarrollo de Aplicaciones Multiplataforma (DAM)**
+> Plataforma web que usan a diario dos negocios familiares reales, con una API en Node.js y una base de datos PostgreSQL aislada para cada negocio.
+
+**🔗 Demo:** [boutique-market.vercel.app](https://boutique-market.vercel.app) → pulsa **Oh-Nails** o **El Gallo Azul** en *"Probar la demo"*
+**📖 API:** [documentación Swagger](https://boutique-market-api.onrender.com/api/docs/)
+
+> La demo funciona íntegramente en el navegador con **datos ficticios**: no se conecta con el backend ni con las bases de datos de los negocios, y los cambios que hagas se borran al cerrar la pestaña.
 
 ---
 
 ## 📖 ¿Qué es este proyecto?
 
-**Boutique Market** es una aplicación web full-stack diseñada para digitalizar la gestión de dos negocios familiares independientes: **Oh-Nails** (Salón de manicura) y **El Gallo Azul** (Pollería).
+**Boutique Market** digitaliza la gestión de dos negocios familiares independientes: **Oh-Nails** (salón de manicura) y **El Gallo Azul** (pollería).
 
-El sistema utiliza una arquitectura **Multitenant**, donde un único despliegue sirve a ambos negocios manteniendo sus datos completamente aislados en bases de datos PostgreSQL independientes alojadas en la nube.
+Un único despliegue sirve a los dos negocios, pero cada uno tiene **su propia base de datos PostgreSQL**: el backend identifica el tenant en cada petición y nunca mezcla sus datos.
 
 ---
 
-## 🏗️ Arquitectura técnica (Cloud Stack)
+## 🏗️ Arquitectura
 
 | Capa | Tecnología | Plataforma |
 |---|---|---|
-| **Frontend** | Vanilla JS (ES6+) + Tailwind CSS | **Vercel** (Despliegue Continuo) |
-| **Backend** | Node.js + Express.js | **Render** (Web Service) |
-| **Base de Datos** | PostgreSQL (Multitenant) | **Supabase** (Managed Cloud) |
-| **Seguridad** | JWT + AES-256-CBC + Bcrypt | — |
+| **Frontend** | JavaScript (ES6+, módulos) + Tailwind CSS | **Vercel** |
+| **Backend** | Node.js + Express · Zod · Winston · Swagger | **Render** |
+| **Base de datos** | PostgreSQL, una base de datos por tenant | **Supabase** |
+| **Seguridad** | JWT · bcrypt · AES-256-CBC · Helmet · rate limiting | — |
+| **Calidad** | Jest + Supertest · GitHub Actions · Docker | — |
+
+```
+Navegador ──HTTPS──▶ Vercel (frontend) ──fetch /api + x-tenant-id──▶ Render (API Express)
+                                                                    ├──▶ PostgreSQL · market (Oh-Nails)
+                                                                    └──▶ PostgreSQL · santi  (El Gallo Azul)
+```
 
 ---
 
 ## 🏢 Los dos negocios
 
-- **Oh-Nails (Tenant: `market`)**: Gestión de citas, cartera de clientas recurrentes, finanzas y galería de trabajos.
-- **El Gallo Azul (Tenant: `santi`)**: Gestión de inventario con alertas de stock, proveedores y pedidos de compra.
+- **Oh-Nails (tenant `market`)**: agenda de citas, clientas recurrentes con aviso de inactividad a 30 días, finanzas y galería de trabajos.
+- **El Gallo Azul (tenant `santi`)**: inventario con alertas de stock y caducidad, proveedores, facturas y estadísticas.
 
 ---
 
-## 🔒 Seguridad de Nivel Industrial
+## 🔒 Seguridad
 
-- **Autenticación**: JWT (JSON Web Tokens) verificados por middleware en cada petición.
-- **Cifrado de Datos**: Los correos electrónicos y datos sensibles se almacenan cifrados con **AES-256-CBC** en la base de datos.
-- **Seguridad Multitenant**: Aislamiento garantizado mediante `AsyncLocalStorage` de Node.js, propagando el contexto del tenant de forma segura sin variables globales.
-- **Protección de Cabeceras**: Implementación de **Helmet.js** para prevenir ataques comunes como XSS y Clickjacking.
-
----
-
-## 🚀 Instalación y Desarrollo Local
-
-### Requisitos previos
-
-- [Node.js](https://nodejs.org/) v18+
-- [Git](https://git-scm.com/)
-
-### Configuración
-
-1. **Clonar el repositorio:**
-   ```bash
-   git clone https://github.com/Angel-dxd/boutique-market.git
-   cd boutique-market
-   ```
-
-2. **Instalar dependencias:**
-   ```bash
-   cd backend && npm install
-   ```
-
-3. **Configurar Variables de Entorno:**
-   Copia el archivo `backend/.env.example` a `backend/.env` y rellena las credenciales de tus proyectos de **Supabase**.
-
-4. **Inicializar Base de Datos:**
-   Ejecuta el contenido de `backend/schema_postgres.sql` en el SQL Editor de tu Dashboard de Supabase.
-
-5. **Lanzar en local:**
-   ```bash
-   # Backend
-   cd backend && npm run dev
-   # Frontend
-   # Abre el archivo frontend/index.html o usa un servidor estático (Live Server)
-   ```
+- **Autenticación**: JWT verificado por middleware en cada petición. El tenant viaja dentro del token: si la cabecera `x-tenant-id` no coincide, la API responde **403**.
+- **Aislamiento multitenant**: `AsyncLocalStorage` propaga el contexto del tenant durante toda la petición, sin variables globales ni fugas entre peticiones concurrentes.
+- **Cifrado**: datos sensibles cifrados con **AES-256-CBC** (IV único por registro) y contraseñas con **bcrypt**.
+- **Cabeceras y abuso**: **Helmet**, CORS restringido por entorno y **rate limiting** en autenticación y API.
+- **Datos**: el repositorio no contiene datos reales; los entornos locales usan *seeds* ficticios.
 
 ---
 
-## 📈 KPIs y Dashboard
+## 🐳 Ejecutar en local con Docker (recomendado)
 
-El sistema incluye un módulo de estadísticas que calcula automáticamente:
-- **Rentabilidad**: Comparativa de ingresos vs gastos en tiempo real.
-- **Stock Crítico**: Alertas automáticas cuando un producto baja del mínimo establecido.
-- **Fidelización**: Identificación de clientas que no han visitado el salón en los últimos 30 días.
+Requisitos: [Docker](https://www.docker.com/) con Docker Compose.
+
+```bash
+git clone https://github.com/Angel-dxd/boutique-market.git
+cd boutique-market
+docker compose up --build
+```
+
+| Servicio | URL |
+|---|---|
+| Frontend | http://localhost:4200 |
+| API | http://localhost:3000 |
+| Documentación | http://localhost:3000/api/docs |
+
+Usuarios de prueba: **`arelys`** (Oh-Nails) y **`santi`** (El Gallo Azul), contraseña **`demo1234`**.
+
+Docker crea un PostgreSQL con **dos bases de datos** (`market` y `santi`), aplica el esquema (`backend/schema_postgres.sql`) y carga datos ficticios (`backend/db/seed_*.sql`), igual que la arquitectura de producción. Para empezar desde cero: `docker compose down -v`.
 
 ---
 
-*Desarrollado por [Ángel Xavier](https://github.com/Angel-dxd) · 2026*
+## 🛠️ Ejecutar sin Docker
+
+Requisitos: Node.js 20+ y una base de datos PostgreSQL por tenant (por ejemplo, Supabase).
+
+```bash
+cd backend
+npm install
+cp .env.example .env     # rellena DATABASE_URL_MARKET, DATABASE_URL_SANTI, JWT_SECRET y ENCRYPTION_KEY
+npm run dev              # API en http://localhost:3000
+
+cd ../frontend
+npm install
+npm run dev              # frontend en http://localhost:4200
+```
+
+---
+
+## 🧪 Tests
+
+```bash
+cd backend && npm test
+```
+
+El CI (GitHub Actions) ejecuta los tests en Node 20 y 22 y, después, levanta el stack completo con Docker para comprobar el login y el aislamiento entre tenants.
+
+---
+
+## 📈 KPIs del dashboard
+
+- **Rentabilidad**: ingresos frente a gastos en tiempo real.
+- **Stock crítico**: alertas cuando un producto baja del mínimo o está próximo a caducar.
+- **Fidelización**: clientas que no han vuelto al salón en los últimos 30 días.
+
+---
+
+*Desarrollado por [Ángel Xavier Pons Márquez](https://github.com/Angel-dxd) · 2026*

@@ -55,7 +55,7 @@ async function execute() {
         console.log(`📡 Conectando a Supabase para tenant '${tenant}'...`);
         const pool = new Pool({
             connectionString: connStr,
-            ssl: { rejectUnauthorized: false }
+            ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false }
         });
 
         try {

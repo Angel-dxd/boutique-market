@@ -4,6 +4,8 @@
  * Gestiona cabeceras multitenant, autenticación, notificaciones (toasts) y errores.
  */
 
+import { demoRequest, isDemoSession } from './demoApi.js';
+
 // URL base de la API. Prioridad: Inyección manual > Variable de entorno > Localhost (Desarrollo) > Render (Producción).
 const API_URL = window.__API_URL__ 
     || window.REACT_APP_API_URL 
@@ -106,7 +108,7 @@ const showToast = (message, isError = false) => {
     const iconColor = isError ? 'text-red-600 bg-red-100' : 'text-emerald-400 bg-transparent';
     const svgIcon = isError 
         ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
-        : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+        : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
 
     // Diseño elegante: píldora pequeña en móvil (centrada arriba del menú), normal en desktop
     toast.className = `fixed z-[9999] border ${bgColor} px-3 py-2 sm:px-4 sm:py-3 rounded-full sm:rounded-2xl shadow-xl transition-all duration-300 ease-out flex items-center gap-2 sm:gap-3 ` +
@@ -174,21 +176,23 @@ export const api = {
     hideLoading,
     showToast,
     get: async (endpoint) => {
-        // Consultar caché primero
-        const cached = cache.get(endpoint);
+        // Consultar caché primero (la clave incluye la sesión para no mezclar datos entre negocios)
+        const cacheKey = `${localStorage.getItem('currentUser') || 'market'}:${localStorage.getItem('authToken') || ''}:${endpoint}`;
+        const cached = cache.get(cacheKey);
         if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
             return cached.data;
         }
 
         showLoading();
         try {
-            const res = await fetch(`${API_URL}${endpoint}`, {
-                headers: getHeaders()
-            });
-            const data = await processResponse(res);
+            const data = isDemoSession()
+                ? await demoRequest('GET', endpoint)
+                : await processResponse(await fetch(`${API_URL}${endpoint}`, {
+                    headers: getHeaders()
+                }));
             
             // Guardar en caché
-            cache.set(endpoint, { data, timestamp: Date.now() });
+            cache.set(cacheKey, { data, timestamp: Date.now() });
             
             hideLoading();
             return data;
@@ -207,12 +211,13 @@ export const api = {
         clearCache(); // Limpiar caché al escribir
         showLoading();
         try {
-            const res = await fetch(`${API_URL}${endpoint}`, {
-                method: 'POST',
-                headers: getHeaders({ 'Content-Type': 'application/json' }),
-                body: JSON.stringify(payloadData)
-            });
-            const data = await processResponse(res);
+            const data = isDemoSession()
+                ? await demoRequest('POST', endpoint, payloadData)
+                : await processResponse(await fetch(`${API_URL}${endpoint}`, {
+                    method: 'POST',
+                    headers: getHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify(payloadData)
+                }));
             hideLoading();
 
             showToast('Operación completada con éxito.');
@@ -232,12 +237,13 @@ export const api = {
         clearCache(); // Limpiar caché al escribir
         showLoading();
         try {
-            const res = await fetch(`${API_URL}${endpoint}`, {
-                method: 'PUT',
-                headers: getHeaders({ 'Content-Type': 'application/json' }),
-                body: JSON.stringify(payloadData)
-            });
-            const data = await processResponse(res);
+            const data = isDemoSession()
+                ? await demoRequest('PUT', endpoint, payloadData)
+                : await processResponse(await fetch(`${API_URL}${endpoint}`, {
+                    method: 'PUT',
+                    headers: getHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify(payloadData)
+                }));
             hideLoading();
 
             showToast('Los cambios se han guardado.');
@@ -257,11 +263,12 @@ export const api = {
         clearCache(); // Limpiar caché al escribir
         showLoading();
         try {
-            const res = await fetch(`${API_URL}${endpoint}`, {
-                method: 'DELETE',
-                headers: getHeaders()
-            });
-            const data = await processResponse(res);
+            const data = isDemoSession()
+                ? await demoRequest('DELETE', endpoint)
+                : await processResponse(await fetch(`${API_URL}${endpoint}`, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+                }));
             hideLoading();
 
             showToast('Registro eliminado exitosamente.');

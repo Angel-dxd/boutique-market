@@ -1,0 +1,58 @@
+# Entorno local completo de Boutique Market: PostgreSQL (un base de datos por tenant),
+# API Node.js y frontend estático. Todos los datos son ficticios.
+#
+#   docker compose up --build
+#
+#   Frontend → http://localhost:4200   (usuarios: arelys / santi · contraseña: demo1234)
+#   API      → http://localhost:3000   (documentación: http://localhost:3000/api/docs)
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: boutique
+      POSTGRES_PASSWORD: boutique
+      POSTGRES_DB: postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./backend/db/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+      - ./backend/schema_postgres.sql:/seed/schema_postgres.sql:ro
+      - ./backend/db/seed_market.sql:/seed/seed_market.sql:ro
+      - ./backend/db/seed_santi.sql:/seed/seed_santi.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U boutique -d santi"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL_MARKET: postgres://boutique:boutique@db:5432/market
+      DATABASE_URL_SANTI: postgres://boutique:boutique@db:5432/santi
+      DB_SSL: "false"
+      # Claves solo para desarrollo local: en producción se definen en Render
+      JWT_SECRET: local-dev-only-jwt-secret-change-me-0123456789abcdef0123456789abcdef
+      JWT_EXPIRES_IN: 12h
+      ENCRYPTION_KEY: local-dev-only-key-32-chars-xxxx
+      ALLOWED_ORIGINS: http://localhost:4200,http://127.0.0.1:4200
+      ALLOW_PUBLIC_REGISTER: "false"
+    ports:
+      - "3000:3000"
+
+  web:
+    image: nginx:1.27-alpine
+    depends_on:
+      - api
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    ports:
+      - "4200:80"
+
+volumes:
+  db-data:

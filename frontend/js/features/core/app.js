@@ -9,6 +9,7 @@ import { renderLogin } from '../auth/login.js';
 import { renderMarketLayout } from '../market/layout.js';
 import { renderBoutiqueLayout } from '../boutique/layout.js';
 import { renderLogoutModal } from '../shared/logoutModal.js';
+import { isDemoSession, toggleDemoBadge } from './demoApi.js';
 
 /**
  * Definición de rutas disponibles y sus respectivos renders.
@@ -111,6 +112,9 @@ const router = async () => {
         api.get('/providers').catch(() => {});
         api.get('/gallery?limit=12').catch(() => {}); // Pre-carga de uñas (Turbo)
     }
+
+    // Etiqueta visible cuando la sesión es de demo (datos ficticios)
+    toggleDemoBadge(route.type === 'protected' && isDemoSession());
 };
 
 // Handle Browser History (hashchange instead of popstate)

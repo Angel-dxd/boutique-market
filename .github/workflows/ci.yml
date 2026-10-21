@@ -3,8 +3,10 @@
 # Se ejecuta en cada push a main y en cada Pull Request.
 #
 # Jobs:
-#   test → Instala dependencias y ejecuta la suite Jest completa
-#          con variables de entorno de prueba (sin BD real).
+#   test   → Instala dependencias y ejecuta la suite Jest completa
+#            con variables de entorno de prueba (sin BD real).
+#   docker → Levanta el stack completo (Postgres + API + web) con
+#            docker compose y comprueba login y aislamiento de tenants.
 ##############################################################
 
 name: CI — Tests
@@ -22,7 +24,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [20.x, 22.x]
 
     steps:
       # 1. Checkout del código
@@ -55,9 +57,42 @@ jobs:
 
       # 5. Subir reporte de cobertura (opcional, informativo)
       - name: Upload coverage report
-        if: matrix.node-version == '20.x'
+        if: matrix.node-version == '22.x'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: backend/coverage/
           if-no-files-found: ignore
+
+  docker:
+    name: Docker stack (smoke test)
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build and start services
+        run: docker compose up -d --build --wait
+
+      - name: Smoke test
+        run: |
+          set -e
+          curl -fsS http://localhost:3000/ | grep -q Online
+          TOKEN=$(curl -fsS -X POST http://localhost:3000/api/auth/login \
+            -H 'Content-Type: application/json' -H 'x-tenant-id: market' \
+            -d '{"username":"arelys","password":"demo1234"}' | jq -r .token)
+          curl -fsS http://localhost:3000/api/clients \
+            -H "Authorization: Bearer $TOKEN" -H 'x-tenant-id: market' | jq -e '.data | length > 0'
+          # Un token de 'market' no puede leer datos de 'santi'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/api/products \
+            -H "Authorization: Bearer $TOKEN" -H 'x-tenant-id: santi')" = "403"
+
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

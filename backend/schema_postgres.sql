@@ -140,10 +140,6 @@ CREATE TABLE IF NOT EXISTS users (
     created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
 );
 
--- Usuarios iniciales (Passwords: arelys123 / santi123)
--- Hash bcrypt real generado para el primer acceso
-INSERT INTO users (username, password, role) VALUES 
-('arelys', '$2b$10$u5B3TIaqePMksf6iHVH6KuVzoAW./VIL250kPCVGOIeq1SC65MBwy', 'user'),
-('santi', '$2b$10$K3L7hHzSftB35/3Ofip.PudEY00k5ENiLYdm1KQlfRdBrTOSOwuFK', 'user')
-ON CONFLICT (username) DO NOTHING;
+-- Los usuarios no se crean aquí: en local los genera db/seed_*.sql con datos
+-- ficticios y en producción se gestionan directamente en Supabase.
 

@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.env
+.env.*
+!.env.example
+tests
+coverage
+*.sql
+*.db
+src/data
+db
+scripts/seed_users.js
+test.sh
