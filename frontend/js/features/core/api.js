@@ -9,7 +9,7 @@ const API_URL = window.__API_URL__
     || window.REACT_APP_API_URL 
     || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
         ? 'http://localhost:3000/api' 
-        : 'https://ariel-api.onrender.com/api');
+        : 'https://ariel-api-9ahp.onrender.com/api');
 
 // --- SISTEMA DE CACHÉ Y CARGA ---
 const cache = new Map();

@@ -53,7 +53,8 @@ async function execute() {
     console.log('🚀 Iniciando migraciones ARIEL...');
     const pool = new Pool({
         connectionString: connStr,
-        ssl: { rejectUnauthorized: false }
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: 10000 // Si la BD no responde, el servidor debe arrancar igualmente
     });
 
     try {
