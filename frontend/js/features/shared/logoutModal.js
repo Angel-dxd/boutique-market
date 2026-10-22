@@ -1,21 +1,17 @@
 /**
  * shared/logoutModal.js
  * Modal de confirmación de cierre de sesión.
- * Adapta su estilo visual según el tenant (Boutique vs Market).
  */
 import { navigateTo } from '../core/app.js';
 
 /**
  * Renderiza el modal de logout.
- * @param {string} from - El origen de la petición ('boutique' o 'market').
  */
-export const renderLogoutModal = (from) => {
+export const renderLogoutModal = () => {
     const app = document.getElementById('app');
 
-    // Determinamos el estilo y nombre basado en el tenant
-    const isBoutique = from === 'boutique';
-    const color = isBoutique ? 'bg-emerald-600' : 'bg-orange-500';
-    const name = isBoutique ? 'Oh-Nails' : 'El Gallo Azul';
+    const color = 'bg-indigo-500';
+    const name = 'ARIEL';
 
     // Limpiamos el contenedor
     app.innerHTML = '';
@@ -90,10 +86,6 @@ export const renderLogoutModal = (from) => {
     });
 
     document.getElementById('cancelLogout').addEventListener('click', () => {
-        if (isBoutique) {
-            navigateTo('/boutique-welcome');
-        } else {
-            navigateTo('/market');
-        }
+        navigateTo('/dashboard');
     });
 };

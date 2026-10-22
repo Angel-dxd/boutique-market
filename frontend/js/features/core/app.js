@@ -19,7 +19,7 @@ const routes = {
     },
     '/logout-confirmation': {
         render: () => {
-            renderLogoutModal('ariel');
+            renderLogoutModal();
         },
         type: 'public'
     },
@@ -97,7 +97,6 @@ const router = async () => {
         api.get('/dashboard/stats').catch(() => {});
         api.get('/products').catch(() => {});
         api.get('/providers').catch(() => {});
-        api.get('/gallery?limit=12').catch(() => {}); // Pre-carga de uñas (Turbo)
     }
 };
 
